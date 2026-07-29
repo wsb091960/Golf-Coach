@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <meta
+    name="description"
+    content="WSBCO Golf Coach professional coaching dashboard"
+  >
+
+  <title>{{ page_title }} | {{ app_name }}</title>
+
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', path='/css/dashboard.css') }}"
+  >
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          GC
+        </div>
+
+        <div>
+          <p class="brand-eyebrow">
+            Professional Coaching Platform
+          </p>
+
+          <h1>{{ app_name }}</h1>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <span class="version">
+          Version {{ version }}
+        </span>
+
+        <button
+          class="profile-button"
+          type="button"
+          aria-label="Coach profile"
+        >
+          WB
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+
+      <section class="welcome-panel">
+        <div class="welcome-copy">
+          <p class="section-eyebrow">
+            Coach Dashboard
+          </p>
+
+          <h2>
+            Build better players with connected coaching data.
+          </h2>
+
+          <p>
+            Manage students, organize lesson sessions, import Garmin R10
+            launch data, and turn performance metrics into clear coaching
+            priorities.
+          </p>
+        </div>
+
+        <div class="welcome-actions">
+          <a class="button button-primary" href="/students">
+            Add Student
+          </a>
+
+          <a class="button button-secondary" href="/sessions">
+            New Session
+          </a>
+        </div>
+      </section>
+
+      <section aria-labelledby="summary-heading">
+        <div class="section-heading">
+          <div>
+            <p class="section-eyebrow">
+              Overview
+            </p>
+
+            <h2 id="summary-heading">
+              Coaching activity
+            </h2>
+          </div>
+
+          <span class="system-status">
+            <span class="status-dot"></span>
+            System online
+          </span>
+        </div>
+
+        <div class="summary-grid">
+          {% for card in summary_cards %}
+          <article class="summary-card">
+            <p class="summary-label">
+              {{ card.label }}
+            </p>
+
+            <p class="summary-value">
+              {{ card.value }}
+            </p>
+
+            <p class="summary-detail">
+              {{ card.detail }}
+            </p>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section aria-labelledby="navigation-heading">
+        <div class="section-heading">
+          <div>
+            <p class="section-eyebrow">
+              Coaching Tools
+            </p>
+
+            <h2 id="navigation-heading">
+              Choose a workspace
+            </h2>
+          </div>
+        </div>
+
+        <div class="navigation-grid">
+          {% for card in navigation_cards %}
+          <a class="navigation-card" href="{{ card.href }}">
+            <div class="navigation-card-top">
+              <div class="module-icon module-icon-{{ card.icon }}">
+                {% if card.icon == "students" %}
+                  <span aria-hidden="true">ST</span>
+                {% elif card.icon == "sessions" %}
+                  <span aria-hidden="true">SE</span>
+                {% elif card.icon == "import" %}
+                  <span aria-hidden="true">R10</span>
+                {% else %}
+                  <span aria-hidden="true">CA</span>
+                {% endif %}
+              </div>
+
+              <span class="module-status">
+                {{ card.status }}
+              </span>
+            </div>
+
+            <h3>{{ card.title }}</h3>
+
+            <p>{{ card.description }}</p>
+
+            <span class="card-link">
+              Open workspace
+              <span aria-hidden="true">→</span>
+            </span>
+          </a>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="next-step-panel">
+        <div>
+          <p class="section-eyebrow">
+            Development Roadmap
+          </p>
+
+          <h2>
+            Next: build Student Management
+          </h2>
+
+          <p>
+            The next module will add student profiles, player goals,
+            contact details, preferred clubs, and lesson history.
+          </p>
+        </div>
+
+        <a class="button button-light" href="/students">
+          Start Students Module
+        </a>
+      </section>
+
+    </main>
+
+    <footer>
+      <p>
+        {{ app_name }} · Professional Player Development
+      </p>
+
+      <p>
+        FastAPI application version {{ version }}
+      </p>
+    </footer>
+
+  </div>
+</body>
+</html>

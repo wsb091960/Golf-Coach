@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>{{ page_title }} | {{ app_name }}</title>
+
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', path='/css/dashboard.css') }}"
+  >
+
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', path='/css/students.css') }}"
+  >
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <header class="topbar">
+      <div class="brand">
+        <a class="brand-mark brand-link" href="/">
+          GC
+        </a>
+
+        <div>
+          <p class="brand-eyebrow">
+            Professional Coaching Platform
+          </p>
+
+          <h1>{{ app_name }}</h1>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <a class="topbar-link" href="/">
+          Dashboard
+        </a>
+
+        <span class="version">
+          Version {{ version }}
+        </span>
+
+        <button class="profile-button" type="button">
+          WB
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+
+      <section class="page-heading">
+        <div>
+          <p class="section-eyebrow">
+            Player Management
+          </p>
+
+          <h2>Students</h2>
+
+          <p>
+            Create player profiles and track each golfer’s
+            goals, development, and lesson history.
+          </p>
+        </div>
+
+        <a class="button button-secondary-dark" href="/">
+          Back to Dashboard
+        </a>
+      </section>
+
+      <section class="student-layout">
+
+        <article class="form-card">
+          <div class="card-heading">
+            <p class="section-eyebrow">
+              New Player
+            </p>
+
+            <h2>Add Student</h2>
+          </div>
+
+          <form action="/students" method="post">
+
+            <div class="form-grid">
+
+              <div class="field">
+                <label for="first_name">
+                  First Name
+                </label>
+
+                <input
+                  id="first_name"
+                  name="first_name"
+                  type="text"
+                  autocomplete="given-name"
+                  required
+                >
+              </div>
+
+              <div class="field">
+                <label for="last_name">
+                  Last Name
+                </label>
+
+                <input
+                  id="last_name"
+                  name="last_name"
+                  type="text"
+                  autocomplete="family-name"
+                  required
+                >
+              </div>
+
+              <div class="field">
+                <label for="email">
+                  Email
+                </label>
+
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                >
+              </div>
+
+              <div class="field">
+                <label for="phone">
+                  Phone
+                </label>
+
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  autocomplete="tel"
+                >
+              </div>
+
+              <div class="field">
+                <label for="skill_level">
+                  Skill Level
+                </label>
+
+                <select id="skill_level" name="skill_level">
+                  <option value="">Select level</option>
+                  <option value="Beginner">Beginner</option>
+                  <option value="Developing">Developing</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                  <option value="Competitive">Competitive</option>
+                  <option value="Professional">Professional</option>
+                </select>
+              </div>
+
+              <div class="field field-full">
+                <label for="primary_goal">
+                  Primary Coaching Goal
+                </label>
+
+                <textarea
+                  id="primary_goal"
+                  name="primary_goal"
+                  rows="4"
+                  placeholder="Example: Improve iron contact and reduce left misses."
+                ></textarea>
+              </div>
+
+            </div>
+
+            <button class="button button-save" type="submit">
+              Save Student
+            </button>
+
+          </form>
+        </article>
+
+        <section class="student-list-card">
+
+          <div class="student-list-heading">
+            <div>
+              <p class="section-eyebrow">
+                Player Roster
+              </p>
+
+              <h2>
+                Active Students
+              </h2>
+            </div>
+
+            <span class="student-count">
+              {{ students | length }}
+            </span>
+          </div>
+
+          {% if students %}
+
+          <div class="student-list">
+            {% for student in students %}
+
+            <article class="student-card">
+
+              <div class="student-avatar">
+                {{ student.first_name[:1] }}
+                {{ student.last_name[:1] }}
+              </div>
+
+              <div class="student-info">
+                <h3>
+                  {{ student.first_name }}
+                  {{ student.last_name }}
+                </h3>
+
+                <p class="student-level">
+                  {{ student.skill_level or "Skill level not set" }}
+                </p>
+
+                {% if student.primary_goal %}
+                <p class="student-goal">
+                  {{ student.primary_goal }}
+                </p>
+                {% endif %}
+
+                <div class="student-contact">
+                  {% if student.email %}
+                  <span>{{ student.email }}</span>
+                  {% endif %}
+
+                  {% if student.phone %}
+                  <span>{{ student.phone }}</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="student-actions">
+                <button
+                  class="student-open-button"
+                  type="button"
+                  disabled
+                >
+                  Open
+                </button>
+
+                <form
+                  action="/students/{{ student.id }}/delete"
+                  method="post"
+                >
+                  <button
+                    class="student-delete-button"
+                    type="submit"
+                    onclick="return confirm('Delete this student?')"
+                  >
+                    Delete
+                  </button>
+                </form>
+              </div>
+
+            </article>
+
+            {% endfor %}
+          </div>
+
+          {% else %}
+
+          <div class="empty-state">
+            <div class="empty-icon">
+              ST
+            </div>
+
+            <h3>No students yet</h3>
+
+            <p>
+              Add your first student using the form.
+            </p>
+          </div>
+
+          {% endif %}
+
+        </section>
+
+      </section>
+
+    </main>
+
+    <footer>
+      <p>
+        {{ app_name }} · Student Management
+      </p>
+
+      <p>
+        Temporary development storage
+      </p>
+    </footer>
+
+  </div>
+</body>
+</html>

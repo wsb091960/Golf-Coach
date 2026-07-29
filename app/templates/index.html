@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>{{ app_name }}</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f5f7;
+      color: #1f2933;
+    }
+
+    header {
+      background: #163d2a;
+      color: white;
+      padding: 24px;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin: 0;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 14px;
+      background: #e8f5ec;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>{{ app_name }}</h1>
+    <p>Python Cloud Coaching Platform</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Application started successfully</h2>
+
+      <p>
+        This is the first working version of the
+        WSBCO Golf Coach web application.
+      </p>
+
+      <div class="status">
+        Version {{ version }}
+      </div>
+    </section>
+  </main>
+</body>
+</html>
+6. Run the application
+
+Return to the terminal and run:
+
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+Codespaces should detect port 8000 and offer an Open in Browser button.
+
+You should see:
+
+WSBCO Golf Coach
+Python Cloud Coaching Platform
+Application started successfully
+
+Also test:
+
+/health
+
+at the end of the preview URL. It should display:
+
+{
+  "status": "ok",
+  "application": "WSBCO Golf Coach"
+}

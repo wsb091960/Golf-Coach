@@ -1,0 +1,844 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', path='css/students.css') }}"
+>
+{% endblock %}
+
+{% block topbar_actions %}
+<div class="topbar-action-group">
+
+    <a
+        class="button button--secondary"
+        href="/students/{{ student.id }}/edit"
+    >
+        Edit Student
+    </a>
+
+    <a
+        class="button button--primary"
+        href="/sessions/new?student_id={{ student.id }}"
+    >
+        <span aria-hidden="true">＋</span>
+        New Session
+    </a>
+
+</div>
+{% endblock %}
+
+{% block content %}
+
+{% if created %}
+<div
+    class="alert alert--success"
+    role="status"
+>
+    Student profile created successfully.
+</div>
+{% endif %}
+
+{% if updated %}
+<div
+    class="alert alert--success"
+    role="status"
+>
+    Student profile updated successfully.
+</div>
+{% endif %}
+
+
+<section class="student-profile-header">
+
+    <div class="student-profile-header__identity">
+
+        <div
+            class="student-profile-avatar"
+            aria-hidden="true"
+        >
+            {{ student.first_name[:1] | upper }}
+            {{ student.last_name[:1] | upper }}
+        </div>
+
+        <div>
+
+            <p class="section-eyebrow">
+                Student Profile
+            </p>
+
+            <h2 class="section-title">
+                {{ student.full_name }}
+            </h2>
+
+            <div class="student-profile-meta">
+
+                {% if student.skill_level %}
+                <span>
+                    {{ student.skill_level }}
+                </span>
+                {% endif %}
+
+                {% if student.dominant_hand %}
+                <span>
+                    {{ student.dominant_hand }}-Handed
+                </span>
+                {% endif %}
+
+                {% if student.handicap_index is not none %}
+                <span>
+                    Handicap {{ student.handicap_index }}
+                </span>
+                {% endif %}
+
+                {% if student.is_active %}
+                <span class="status-badge status-badge--active">
+                    Active
+                </span>
+                {% else %}
+                <span class="status-badge status-badge--inactive">
+                    Inactive
+                </span>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="student-profile-header__actions">
+
+        <a
+            class="button button--secondary"
+            href="/students"
+        >
+            Back to Roster
+        </a>
+
+        <a
+            class="button button--secondary"
+            href="/students/{{ student.id }}/edit"
+        >
+            Edit Profile
+        </a>
+
+        <a
+            class="button button--primary"
+            href="/sessions/new?student_id={{ student.id }}"
+        >
+            New Session
+        </a>
+
+    </div>
+
+</section>
+
+
+<section
+    class="student-metric-grid"
+    aria-label="Student summary"
+>
+
+    <article class="student-metric-card">
+
+        <span class="student-metric-card__label">
+            Total Sessions
+        </span>
+
+        <strong class="student-metric-card__value">
+            {{ sessions | length }}
+        </strong>
+
+        <span class="student-metric-card__note">
+            Recorded coaching sessions
+        </span>
+
+    </article>
+
+
+    <article class="student-metric-card">
+
+        <span class="student-metric-card__label">
+            Total Shots
+        </span>
+
+        <strong class="student-metric-card__value">
+            {% set shot_total = namespace(value=0) %}
+
+            {% for session in sessions %}
+                {% set shot_total.value =
+                    shot_total.value +
+                    (session.shots | default([], true) | length)
+                %}
+            {% endfor %}
+
+            {{ shot_total.value }}
+        </strong>
+
+        <span class="student-metric-card__note">
+            Launch-monitor shots
+        </span>
+
+    </article>
+
+
+    <article class="student-metric-card">
+
+        <span class="student-metric-card__label">
+            Handicap Index
+        </span>
+
+        <strong class="student-metric-card__value">
+
+            {% if student.handicap_index is not none %}
+                {{ student.handicap_index }}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+        <span class="student-metric-card__note">
+            Current player index
+        </span>
+
+    </article>
+
+
+    <article class="student-metric-card">
+
+        <span class="student-metric-card__label">
+            Latest Session
+        </span>
+
+        <strong class="student-metric-card__value student-metric-card__value--date">
+
+            {% if sessions %}
+                {{ sessions[0].session_date.strftime("%b %d, %Y") }}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+        <span class="student-metric-card__note">
+            Most recent activity
+        </span>
+
+    </article>
+
+</section>
+
+
+<section class="student-detail-grid">
+
+    <div class="student-detail-grid__main">
+
+        <article class="profile-panel">
+
+            <div class="profile-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Coaching History
+                    </p>
+
+                    <h3 class="panel__title">
+                        Recent Sessions
+                    </h3>
+
+                </div>
+
+                <a
+                    class="text-link"
+                    href="/sessions?student_id={{ student.id }}"
+                >
+                    View All
+                </a>
+
+            </div>
+
+
+            {% if sessions %}
+
+            <div class="session-history">
+
+                {% for session in sessions[:8] %}
+
+                <a
+                    class="session-history__item"
+                    href="/sessions/{{ session.id }}"
+                >
+
+                    <div class="session-history__date">
+
+                        <span>
+                            {{ session.session_date.strftime("%b") }}
+                        </span>
+
+                        <strong>
+                            {{ session.session_date.strftime("%d") }}
+                        </strong>
+
+                        <small>
+                            {{ session.session_date.strftime("%Y") }}
+                        </small>
+
+                    </div>
+
+                    <div class="session-history__content">
+
+                        <div class="session-history__title-row">
+
+                            <strong>
+                                {{ session.session_type or "Coaching Session" }}
+                            </strong>
+
+                            {% if session.primary_club %}
+                            <span class="club-badge">
+                                {{ session.primary_club }}
+                            </span>
+                            {% endif %}
+
+                        </div>
+
+                        <div class="session-history__meta">
+
+                            <span>
+                                {{
+                                    session.shots
+                                    | default([], true)
+                                    | length
+                                }}
+                                shots
+                            </span>
+
+                            {% if session.location %}
+                            <span>
+                                {{ session.location }}
+                            </span>
+                            {% endif %}
+
+                            {% if session.duration_minutes %}
+                            <span>
+                                {{ session.duration_minutes }} minutes
+                            </span>
+                            {% endif %}
+
+                        </div>
+
+                        {% if session.summary %}
+                        <p class="session-history__summary">
+                            {{ session.summary }}
+                        </p>
+                        {% elif session.coach_notes %}
+                        <p class="session-history__summary">
+                            {{ session.coach_notes }}
+                        </p>
+                        {% endif %}
+
+                    </div>
+
+                    <span
+                        class="session-history__arrow"
+                        aria-hidden="true"
+                    >
+                        ›
+                    </span>
+
+                </a>
+
+                {% endfor %}
+
+            </div>
+
+            {% else %}
+
+            <div class="empty-state">
+
+                <span
+                    class="empty-state__icon"
+                    aria-hidden="true"
+                >
+                    ◷
+                </span>
+
+                <h4>
+                    No coaching sessions yet
+                </h4>
+
+                <p>
+                    Create the first session for this student to begin
+                    tracking swing data, launch-monitor results, and
+                    coaching progress.
+                </p>
+
+                <a
+                    class="button button--primary"
+                    href="/sessions/new?student_id={{ student.id }}"
+                >
+                    Create First Session
+                </a>
+
+            </div>
+
+            {% endif %}
+
+        </article>
+
+
+        <article class="profile-panel">
+
+            <div class="profile-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Player Development
+                    </p>
+
+                    <h3 class="panel__title">
+                        Coaching Goals
+                    </h3>
+
+                </div>
+
+                <a
+                    class="text-link"
+                    href="/students/{{ student.id }}/edit"
+                >
+                    Edit Goals
+                </a>
+
+            </div>
+
+            <div class="profile-panel__body">
+
+                {% if student.goals %}
+
+                <div class="long-form-content">
+                    {{ student.goals | replace("\n", "<br>") | safe }}
+                </div>
+
+                {% else %}
+
+                <div class="inline-empty-state">
+
+                    <p>
+                        No development goals have been recorded for this
+                        student.
+                    </p>
+
+                    <a
+                        class="button button--secondary"
+                        href="/students/{{ student.id }}/edit"
+                    >
+                        Add Coaching Goals
+                    </a>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </article>
+
+
+        <article class="profile-panel">
+
+            <div class="profile-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Coach Workspace
+                    </p>
+
+                    <h3 class="panel__title">
+                        Coaching Notes
+                    </h3>
+
+                </div>
+
+                <a
+                    class="text-link"
+                    href="/students/{{ student.id }}/edit"
+                >
+                    Edit Notes
+                </a>
+
+            </div>
+
+            <div class="profile-panel__body">
+
+                {% if student.notes %}
+
+                <div class="long-form-content">
+                    {{ student.notes | replace("\n", "<br>") | safe }}
+                </div>
+
+                {% else %}
+
+                <div class="inline-empty-state">
+
+                    <p>
+                        No general coaching notes have been recorded.
+                    </p>
+
+                    <a
+                        class="button button--secondary"
+                        href="/students/{{ student.id }}/edit"
+                    >
+                        Add Notes
+                    </a>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </article>
+
+    </div>
+
+
+    <aside class="student-detail-grid__sidebar">
+
+        <article class="profile-panel">
+
+            <div class="profile-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Contact
+                    </p>
+
+                    <h3 class="panel__title">
+                        Student Information
+                    </h3>
+
+                </div>
+
+            </div>
+
+            <div class="profile-information-list">
+
+                <div class="profile-information-item">
+
+                    <span class="profile-information-item__label">
+                        Full Name
+                    </span>
+
+                    <strong>
+                        {{ student.full_name }}
+                    </strong>
+
+                </div>
+
+
+                <div class="profile-information-item">
+
+                    <span class="profile-information-item__label">
+                        Email
+                    </span>
+
+                    {% if student.email %}
+
+                    <a href="mailto:{{ student.email }}">
+                        {{ student.email }}
+                    </a>
+
+                    {% else %}
+
+                    <span class="table-muted">
+                        Not provided
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="profile-information-item">
+
+                    <span class="profile-information-item__label">
+                        Phone
+                    </span>
+
+                    {% if student.phone %}
+
+                    <a href="tel:{{ student.phone }}">
+                        {{ student.phone }}
+                    </a>
+
+                    {% else %}
+
+                    <span class="table-muted">
+                        Not provided
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="profile-information-item">
+
+                    <span class="profile-information-item__label">
+                        Skill Level
+                    </span>
+
+                    <strong>
+                        {{ student.skill_level or "Not specified" }}
+                    </strong>
+
+                </div>
+
+
+                <div class="profile-information-item">
+
+                    <span class="profile-information-item__label">
+                        Dominant Hand
+                    </span>
+
+                    <strong>
+                        {{ student.dominant_hand or "Not specified" }}
+                    </strong>
+
+                </div>
+
+
+                <div class="profile-information-item">
+
+                    <span class="profile-information-item__label">
+                        Student Status
+                    </span>
+
+                    {% if student.is_active %}
+
+                    <span class="status-badge status-badge--active">
+                        Active
+                    </span>
+
+                    {% else %}
+
+                    <span class="status-badge status-badge--inactive">
+                        Inactive
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="profile-information-item">
+
+                    <span class="profile-information-item__label">
+                        Profile Created
+                    </span>
+
+                    <strong>
+
+                        {% if student.created_at %}
+                            {{ student.created_at.strftime("%b %d, %Y") }}
+                        {% else %}
+                            —
+                        {% endif %}
+
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+        <article class="profile-panel">
+
+            <div class="profile-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Workflow
+                    </p>
+
+                    <h3 class="panel__title">
+                        Quick Actions
+                    </h3>
+
+                </div>
+
+            </div>
+
+            <div class="profile-quick-actions">
+
+                <a
+                    class="profile-quick-action"
+                    href="/sessions/new?student_id={{ student.id }}"
+                >
+
+                    <span
+                        class="profile-quick-action__icon"
+                        aria-hidden="true"
+                    >
+                        ＋
+                    </span>
+
+                    <span>
+
+                        <strong>
+                            New Session
+                        </strong>
+
+                        <small>
+                            Start a coaching session
+                        </small>
+
+                    </span>
+
+                </a>
+
+
+                <a
+                    class="profile-quick-action"
+                    href="/garmin?student_id={{ student.id }}"
+                >
+
+                    <span
+                        class="profile-quick-action__icon"
+                        aria-hidden="true"
+                    >
+                        ⇧
+                    </span>
+
+                    <span>
+
+                        <strong>
+                            Import Garmin Data
+                        </strong>
+
+                        <small>
+                            Upload R10 shot data
+                        </small>
+
+                    </span>
+
+                </a>
+
+
+                <a
+                    class="profile-quick-action"
+                    href="/analysis?student_id={{ student.id }}"
+                >
+
+                    <span
+                        class="profile-quick-action__icon"
+                        aria-hidden="true"
+                    >
+                        ⌁
+                    </span>
+
+                    <span>
+
+                        <strong>
+                            Analyze Performance
+                        </strong>
+
+                        <small>
+                            Review shot trends
+                        </small>
+
+                    </span>
+
+                </a>
+
+
+                <a
+                    class="profile-quick-action"
+                    href="/reports?student_id={{ student.id }}"
+                >
+
+                    <span
+                        class="profile-quick-action__icon"
+                        aria-hidden="true"
+                    >
+                        ▤
+                    </span>
+
+                    <span>
+
+                        <strong>
+                            Build Report
+                        </strong>
+
+                        <small>
+                            Create a coaching report
+                        </small>
+
+                    </span>
+
+                </a>
+
+            </div>
+
+        </article>
+
+
+        <article class="profile-panel profile-panel--danger">
+
+            <div class="profile-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow panel__eyebrow--danger">
+                        Record Management
+                    </p>
+
+                    <h3 class="panel__title">
+                        Delete Student
+                    </h3>
+
+                </div>
+
+            </div>
+
+            <div class="profile-panel__body">
+
+                <p class="danger-description">
+                    Deleting this student may also remove related sessions,
+                    shots, imports, and coaching history.
+                </p>
+
+                <form
+                    method="post"
+                    action="/students/{{ student.id }}/delete"
+                    onsubmit="return confirmDelete(
+                        'Delete {{ student.full_name }} and all related coaching records?'
+                    );"
+                >
+
+                    <button
+                        class="button button--danger"
+                        type="submit"
+                    >
+                        Delete Student
+                    </button>
+
+                </form>
+
+            </div>
+
+        </article>
+
+    </aside>
+
+</section>
+
+{% endblock %}

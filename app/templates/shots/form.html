@@ -1,0 +1,986 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', path='css/shots.css') }}"
+>
+{% endblock %}
+
+{% block topbar_actions %}
+<div class="topbar-action-group">
+
+    {% if session %}
+    <a
+        class="button button--secondary"
+        href="/sessions/{{ session.id }}"
+    >
+        Back to Session
+    </a>
+    {% else %}
+    <a
+        class="button button--secondary"
+        href="/shots"
+    >
+        Back to Shots
+    </a>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <p class="section-eyebrow">
+            Launch Monitor
+        </p>
+
+        <h2 class="section-title">
+            {{ page_heading }}
+        </h2>
+
+        <p class="section-description">
+            Enter or update launch-monitor measurements for one golf shot.
+        </p>
+
+    </div>
+
+</section>
+
+
+{% if session %}
+
+<section class="shot-session-banner">
+
+    <div>
+
+        <span class="shot-session-banner__label">
+            Coaching Session
+        </span>
+
+        <strong>
+            {{ session.session_type or "Coaching Session" }}
+        </strong>
+
+        {% if session.session_date %}
+        <small>
+            {{ session.session_date.strftime("%B %d, %Y") }}
+        </small>
+        {% endif %}
+
+    </div>
+
+    {% if student %}
+    <div>
+
+        <span class="shot-session-banner__label">
+            Student
+        </span>
+
+        <a href="/students/{{ student.id }}">
+            {{ student.full_name }}
+        </a>
+
+    </div>
+    {% endif %}
+
+    {% if session.primary_club %}
+    <div>
+
+        <span class="shot-session-banner__label">
+            Session Club
+        </span>
+
+        <span class="club-badge">
+            {{ session.primary_club }}
+        </span>
+
+    </div>
+    {% endif %}
+
+</section>
+
+{% endif %}
+
+
+<form
+    method="post"
+    action="{{ form_action }}"
+    class="shot-form"
+>
+
+    <input
+        type="hidden"
+        name="session_id"
+        value="{{ form_values.session_id }}"
+    >
+
+
+    <div class="shot-form-grid">
+
+
+        <!-- ==================================================
+             SHOT IDENTIFICATION
+        =================================================== -->
+
+        <section class="shot-form-card">
+
+            <div class="shot-form-card__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Shot Record
+                    </p>
+
+                    <h3 class="panel__title">
+                        Shot Information
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="shot-form-card__body">
+
+                <div class="field-row field-row--two">
+
+                    <div class="field">
+
+                        <label for="shot_number">
+                            Shot Number
+                        </label>
+
+                        <input
+                            id="shot_number"
+                            type="number"
+                            name="shot_number"
+                            min="1"
+                            step="1"
+                            value="{{ form_values.shot_number }}"
+                            placeholder="1"
+                        >
+
+                        {% if errors.shot_number %}
+                        <div class="field-error">
+                            {{ errors.shot_number }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="club">
+                            Club *
+                        </label>
+
+                        <select
+                            id="club"
+                            name="club"
+                            required
+                        >
+
+                            <option value="">
+                                Select Club
+                            </option>
+
+                            {% for club_name in club_options %}
+                            <option
+                                value="{{ club_name }}"
+                                {% if form_values.club == club_name %}
+                                selected
+                                {% endif %}
+                            >
+                                {{ club_name }}
+                            </option>
+                            {% endfor %}
+
+                        </select>
+
+                        {% if errors.club %}
+                        <div class="field-error">
+                            {{ errors.club }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="shot_shape">
+                        Shot Shape
+                    </label>
+
+                    <select
+                        id="shot_shape"
+                        name="shot_shape"
+                    >
+
+                        <option value="">
+                            Select Shot Shape
+                        </option>
+
+                        {% for shape in shot_shape_options %}
+                        <option
+                            value="{{ shape }}"
+                            {% if form_values.shot_shape == shape %}
+                            selected
+                            {% endif %}
+                        >
+                            {{ shape }}
+                        </option>
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="notes">
+                        Shot Notes
+                    </label>
+
+                    <textarea
+                        id="notes"
+                        name="notes"
+                        rows="5"
+                        placeholder="Strike location, contact quality, intended target, swing feel, or coaching observation..."
+                    >{{ form_values.notes }}</textarea>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             DISTANCE
+        =================================================== -->
+
+        <section class="shot-form-card">
+
+            <div class="shot-form-card__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Ball Flight
+                    </p>
+
+                    <h3 class="panel__title">
+                        Distance
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="shot-form-card__body">
+
+                <div class="field-row field-row--two">
+
+                    <div class="field">
+
+                        <label for="carry_distance">
+                            Carry Distance
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="carry_distance"
+                                type="number"
+                                name="carry_distance"
+                                min="0"
+                                step="0.1"
+                                value="{{ form_values.carry_distance }}"
+                                placeholder="0.0"
+                            >
+
+                            <span class="input-unit">
+                                yd
+                            </span>
+
+                        </div>
+
+                        {% if errors.carry_distance %}
+                        <div class="field-error">
+                            {{ errors.carry_distance }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="total_distance">
+                            Total Distance
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="total_distance"
+                                type="number"
+                                name="total_distance"
+                                min="0"
+                                step="0.1"
+                                value="{{ form_values.total_distance }}"
+                                placeholder="0.0"
+                            >
+
+                            <span class="input-unit">
+                                yd
+                            </span>
+
+                        </div>
+
+                        {% if errors.total_distance %}
+                        <div class="field-error">
+                            {{ errors.total_distance }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="field-row field-row--two">
+
+                    <div class="field">
+
+                        <label for="horizontal_distance">
+                            Horizontal Distance
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="horizontal_distance"
+                                type="number"
+                                name="horizontal_distance"
+                                step="0.1"
+                                value="{{ form_values.horizontal_distance }}"
+                                placeholder="0.0"
+                            >
+
+                            <span class="input-unit">
+                                yd
+                            </span>
+
+                        </div>
+
+                        {% if errors.horizontal_distance %}
+                        <div class="field-error">
+                            {{ errors.horizontal_distance }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="lateral_distance">
+                            Lateral Distance
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="lateral_distance"
+                                type="number"
+                                name="lateral_distance"
+                                step="0.1"
+                                value="{{ form_values.lateral_distance }}"
+                                placeholder="Negative left, positive right"
+                            >
+
+                            <span class="input-unit">
+                                yd
+                            </span>
+
+                        </div>
+
+                        {% if errors.lateral_distance %}
+                        <div class="field-error">
+                            {{ errors.lateral_distance }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="apex_height">
+                        Apex Height
+                    </label>
+
+                    <div class="input-with-unit">
+
+                        <input
+                            id="apex_height"
+                            type="number"
+                            name="apex_height"
+                            min="0"
+                            step="0.1"
+                            value="{{ form_values.apex_height }}"
+                            placeholder="0.0"
+                        >
+
+                        <span class="input-unit">
+                            ft
+                        </span>
+
+                    </div>
+
+                    {% if errors.apex_height %}
+                    <div class="field-error">
+                        {{ errors.apex_height }}
+                    </div>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             SPEED AND EFFICIENCY
+        =================================================== -->
+
+        <section class="shot-form-card">
+
+            <div class="shot-form-card__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Impact
+                    </p>
+
+                    <h3 class="panel__title">
+                        Speed and Efficiency
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="shot-form-card__body">
+
+                <div class="field-row field-row--two">
+
+                    <div class="field">
+
+                        <label for="ball_speed">
+                            Ball Speed
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="ball_speed"
+                                type="number"
+                                name="ball_speed"
+                                min="0"
+                                step="0.1"
+                                value="{{ form_values.ball_speed }}"
+                                placeholder="0.0"
+                            >
+
+                            <span class="input-unit">
+                                mph
+                            </span>
+
+                        </div>
+
+                        {% if errors.ball_speed %}
+                        <div class="field-error">
+                            {{ errors.ball_speed }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="club_speed">
+                            Club Speed
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="club_speed"
+                                type="number"
+                                name="club_speed"
+                                min="0"
+                                step="0.1"
+                                value="{{ form_values.club_speed }}"
+                                placeholder="0.0"
+                            >
+
+                            <span class="input-unit">
+                                mph
+                            </span>
+
+                        </div>
+
+                        {% if errors.club_speed %}
+                        <div class="field-error">
+                            {{ errors.club_speed }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="smash_factor">
+                        Smash Factor
+                    </label>
+
+                    <input
+                        id="smash_factor"
+                        type="number"
+                        name="smash_factor"
+                        min="0.50"
+                        max="2.00"
+                        step="0.01"
+                        value="{{ form_values.smash_factor }}"
+                        placeholder="1.40"
+                    >
+
+                    {% if errors.smash_factor %}
+                    <div class="field-error">
+                        {{ errors.smash_factor }}
+                    </div>
+                    {% endif %}
+
+                    <small class="field-help">
+                        Ball speed divided by club speed.
+                    </small>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             LAUNCH CONDITIONS
+        =================================================== -->
+
+        <section class="shot-form-card">
+
+            <div class="shot-form-card__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Initial Flight
+                    </p>
+
+                    <h3 class="panel__title">
+                        Launch Conditions
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="shot-form-card__body">
+
+                <div class="field-row field-row--two">
+
+                    <div class="field">
+
+                        <label for="launch_angle">
+                            Launch Angle
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="launch_angle"
+                                type="number"
+                                name="launch_angle"
+                                step="0.1"
+                                value="{{ form_values.launch_angle }}"
+                                placeholder="0.0"
+                            >
+
+                            <span class="input-unit">
+                                °
+                            </span>
+
+                        </div>
+
+                        {% if errors.launch_angle %}
+                        <div class="field-error">
+                            {{ errors.launch_angle }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="launch_direction">
+                            Launch Direction
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="launch_direction"
+                                type="number"
+                                name="launch_direction"
+                                step="0.1"
+                                value="{{ form_values.launch_direction }}"
+                                placeholder="Negative left, positive right"
+                            >
+
+                            <span class="input-unit">
+                                °
+                            </span>
+
+                        </div>
+
+                        {% if errors.launch_direction %}
+                        <div class="field-error">
+                            {{ errors.launch_direction }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="field-row field-row--two">
+
+                    <div class="field">
+
+                        <label for="spin_rate">
+                            Spin Rate
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="spin_rate"
+                                type="number"
+                                name="spin_rate"
+                                min="0"
+                                step="1"
+                                value="{{ form_values.spin_rate }}"
+                                placeholder="0"
+                            >
+
+                            <span class="input-unit">
+                                rpm
+                            </span>
+
+                        </div>
+
+                        {% if errors.spin_rate %}
+                        <div class="field-error">
+                            {{ errors.spin_rate }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="spin_axis">
+                            Spin Axis
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="spin_axis"
+                                type="number"
+                                name="spin_axis"
+                                step="0.1"
+                                value="{{ form_values.spin_axis }}"
+                                placeholder="Negative left, positive right"
+                            >
+
+                            <span class="input-unit">
+                                °
+                            </span>
+
+                        </div>
+
+                        {% if errors.spin_axis %}
+                        <div class="field-error">
+                            {{ errors.spin_axis }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             CLUB DELIVERY
+        =================================================== -->
+
+        <section class="shot-form-card shot-form-card--full">
+
+            <div class="shot-form-card__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Swing Delivery
+                    </p>
+
+                    <h3 class="panel__title">
+                        Club Delivery
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="shot-form-card__body">
+
+                <div class="field-row field-row--four">
+
+                    <div class="field">
+
+                        <label for="club_path">
+                            Club Path
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="club_path"
+                                type="number"
+                                name="club_path"
+                                step="0.1"
+                                value="{{ form_values.club_path }}"
+                                placeholder="0.0"
+                            >
+
+                            <span class="input-unit">
+                                °
+                            </span>
+
+                        </div>
+
+                        {% if errors.club_path %}
+                        <div class="field-error">
+                            {{ errors.club_path }}
+                        </div>
+                        {% endif %}
+
+                        <small class="field-help">
+                            Negative is left; positive is right.
+                        </small>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="club_face">
+                            Club Face
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="club_face"
+                                type="number"
+                                name="club_face"
+                                step="0.1"
+                                value="{{ form_values.club_face }}"
+                                placeholder="0.0"
+                            >
+
+                            <span class="input-unit">
+                                °
+                            </span>
+
+                        </div>
+
+                        {% if errors.club_face %}
+                        <div class="field-error">
+                            {{ errors.club_face }}
+                        </div>
+                        {% endif %}
+
+                        <small class="field-help">
+                            Negative is closed; positive is open.
+                        </small>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="face_to_path">
+                            Face-to-Path
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="face_to_path"
+                                type="number"
+                                name="face_to_path"
+                                step="0.1"
+                                value="{{ form_values.face_to_path }}"
+                                placeholder="0.0"
+                            >
+
+                            <span class="input-unit">
+                                °
+                            </span>
+
+                        </div>
+
+                        {% if errors.face_to_path %}
+                        <div class="field-error">
+                            {{ errors.face_to_path }}
+                        </div>
+                        {% endif %}
+
+                        <small class="field-help">
+                            Face angle relative to club path.
+                        </small>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="attack_angle">
+                            Attack Angle
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                id="attack_angle"
+                                type="number"
+                                name="attack_angle"
+                                step="0.1"
+                                value="{{ form_values.attack_angle }}"
+                                placeholder="0.0"
+                            >
+
+                            <span class="input-unit">
+                                °
+                            </span>
+
+                        </div>
+
+                        {% if errors.attack_angle %}
+                        <div class="field-error">
+                            {{ errors.attack_angle }}
+                        </div>
+                        {% endif %}
+
+                        <small class="field-help">
+                            Negative is downward; positive is upward.
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    {% if errors.session_id %}
+    <div class="form-level-error">
+        {{ errors.session_id }}
+    </div>
+    {% endif %}
+
+
+    <div class="form-buttons">
+
+        {% if session %}
+        <a
+            class="button button--secondary"
+            href="/sessions/{{ session.id }}"
+        >
+            Cancel
+        </a>
+        {% elif shot %}
+        <a
+            class="button button--secondary"
+            href="/shots/{{ shot.id }}"
+        >
+            Cancel
+        </a>
+        {% else %}
+        <a
+            class="button button--secondary"
+            href="/shots"
+        >
+            Cancel
+        </a>
+        {% endif %}
+
+        <button
+            type="submit"
+            class="button button--primary"
+        >
+            {{ submit_label }}
+        </button>
+
+    </div>
+
+</form>
+
+{% endblock %}

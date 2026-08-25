@@ -1,0 +1,792 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', path='css/sessions.css') }}"
+>
+{% endblock %}
+
+{% block topbar_actions %}
+<a
+    class="button button--primary"
+    href="/sessions/new{% if student_id %}?student_id={{ student_id }}{% endif %}"
+>
+    <span aria-hidden="true">＋</span>
+    New Session
+</a>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <p class="section-eyebrow">
+            Session Management
+        </p>
+
+        <h2 class="section-title">
+            {% if selected_student %}
+                {{ selected_student.full_name }} Sessions
+            {% else %}
+                Coaching Sessions
+            {% endif %}
+        </h2>
+
+        <p class="section-description">
+            Review lesson history, launch-monitor activity,
+            coaching notes, and player development records.
+        </p>
+
+    </div>
+
+    <div class="page-header__actions">
+
+        {% if selected_student %}
+
+        <a
+            class="button button--secondary"
+            href="/students/{{ selected_student.id }}"
+        >
+            Student Profile
+        </a>
+
+        <a
+            class="button button--secondary"
+            href="/sessions"
+        >
+            All Sessions
+        </a>
+
+        {% endif %}
+
+        <a
+            class="button button--primary"
+            href="/sessions/new{% if student_id %}?student_id={{ student_id }}{% endif %}"
+        >
+            New Session
+        </a>
+
+    </div>
+
+</section>
+
+
+{% if request.query_params.get("deleted") == "1" %}
+
+<div
+    class="alert alert--success"
+    role="status"
+>
+    Coaching session deleted successfully.
+</div>
+
+{% endif %}
+
+
+<section class="session-summary-grid">
+
+    <article class="summary-card">
+
+        <span class="summary-card__label">
+            Total Sessions
+        </span>
+
+        <strong class="summary-card__value">
+            {{ sessions | length }}
+        </strong>
+
+        <span class="summary-card__note">
+            Sessions currently displayed
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="summary-card__label">
+            Total Shots
+        </span>
+
+        <strong class="summary-card__value">
+
+            {% set shot_total = namespace(value=0) %}
+
+            {% for session in sessions %}
+                {% set shot_total.value =
+                    shot_total.value +
+                    (
+                        session.shots
+                        | default([], true)
+                        | length
+                    )
+                %}
+            {% endfor %}
+
+            {{ shot_total.value }}
+
+        </strong>
+
+        <span class="summary-card__note">
+            Launch-monitor shots recorded
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="summary-card__label">
+            Students Coached
+        </span>
+
+        <strong class="summary-card__value">
+
+            {% set student_ids = [] %}
+
+            {% for session in sessions %}
+                {% if session.student_id not in student_ids %}
+                    {% set _ = student_ids.append(session.student_id) %}
+                {% endif %}
+            {% endfor %}
+
+            {{ student_ids | length }}
+
+        </strong>
+
+        <span class="summary-card__note">
+            Unique students represented
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="summary-card__label">
+            Latest Session
+        </span>
+
+        <strong class="summary-card__value summary-card__value--date">
+
+            {% if sessions and sessions[0].session_date %}
+                {{ sessions[0].session_date.strftime("%b %d, %Y") }}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+        <span class="summary-card__note">
+            Most recent coaching activity
+        </span>
+
+    </article>
+
+</section>
+
+
+<section class="sessions-panel">
+
+    <div class="sessions-panel__header">
+
+        <div>
+
+            <p class="panel__eyebrow">
+                Session Directory
+            </p>
+
+            <h3 class="panel__title">
+                Session History
+            </h3>
+
+        </div>
+
+        <div class="sessions-toolbar">
+
+            <div class="search-field">
+
+                <label
+                    class="visually-hidden"
+                    for="session-search"
+                >
+                    Search coaching sessions
+                </label>
+
+                <span
+                    class="search-field__icon"
+                    aria-hidden="true"
+                >
+                    ⌕
+                </span>
+
+                <input
+                    id="session-search"
+                    class="search-field__input"
+                    type="search"
+                    placeholder="Search student, type, club, or location"
+                    autocomplete="off"
+                >
+
+            </div>
+
+            <div class="filter-field">
+
+                <label
+                    class="visually-hidden"
+                    for="session-type-filter"
+                >
+                    Filter by session type
+                </label>
+
+                <select
+                    id="session-type-filter"
+                    class="select-control"
+                >
+                    <option value="all">
+                        All Session Types
+                    </option>
+
+                    <option value="lesson">
+                        Lesson
+                    </option>
+
+                    <option value="playing lesson">
+                        Playing Lesson
+                    </option>
+
+                    <option value="practice session">
+                        Practice Session
+                    </option>
+
+                    <option value="club fitting">
+                        Club Fitting
+                    </option>
+
+                    <option value="launch monitor session">
+                        Launch Monitor Session
+                    </option>
+
+                    <option value="on-course assessment">
+                        On-Course Assessment
+                    </option>
+
+                    <option value="short game session">
+                        Short Game Session
+                    </option>
+
+                    <option value="putting session">
+                        Putting Session
+                    </option>
+
+                    <option value="swing evaluation">
+                        Swing Evaluation
+                    </option>
+
+                    <option value="tournament preparation">
+                        Tournament Preparation
+                    </option>
+
+                    <option value="follow-up">
+                        Follow-Up
+                    </option>
+
+                    <option value="other">
+                        Other
+                    </option>
+                </select>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {% if sessions %}
+
+    <div class="table-wrapper">
+
+        <table
+            class="sessions-table"
+            id="sessions-table"
+        >
+
+            <thead>
+
+                <tr>
+
+                    <th scope="col">
+                        Date
+                    </th>
+
+                    <th scope="col">
+                        Student
+                    </th>
+
+                    <th scope="col">
+                        Session
+                    </th>
+
+                    <th scope="col">
+                        Focus
+                    </th>
+
+                    <th scope="col">
+                        Club
+                    </th>
+
+                    <th scope="col">
+                        Shots
+                    </th>
+
+                    <th scope="col">
+                        Duration
+                    </th>
+
+                    <th scope="col">
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for session in sessions %}
+
+                <tr
+                    class="session-row"
+                    data-student="{{
+                        session.student.full_name
+                        | default('', true)
+                        | lower
+                    }}"
+                    data-type="{{
+                        session.session_type
+                        | default('', true)
+                        | lower
+                    }}"
+                    data-club="{{
+                        session.primary_club
+                        | default('', true)
+                        | lower
+                    }}"
+                    data-location="{{
+                        session.location
+                        | default('', true)
+                        | lower
+                    }}"
+                    data-focus="{{
+                        session.focus_area
+                        | default('', true)
+                        | lower
+                    }}"
+                >
+
+                    <td>
+
+                        <a
+                            class="session-date"
+                            href="/sessions/{{ session.id }}"
+                        >
+
+                            {% if session.session_date %}
+
+                            <span class="session-date__month">
+                                {{ session.session_date.strftime("%b") }}
+                            </span>
+
+                            <strong class="session-date__day">
+                                {{ session.session_date.strftime("%d") }}
+                            </strong>
+
+                            <small class="session-date__year">
+                                {{ session.session_date.strftime("%Y") }}
+                            </small>
+
+                            {% else %}
+
+                            <strong>
+                                —
+                            </strong>
+
+                            {% endif %}
+
+                        </a>
+
+                    </td>
+
+
+                    <td>
+
+                        {% if session.student %}
+
+                        <a
+                            class="session-student"
+                            href="/students/{{ session.student.id }}"
+                        >
+
+                            <span
+                                class="session-student__avatar"
+                                aria-hidden="true"
+                            >
+                                {{ session.student.first_name[:1] | upper }}
+                                {{ session.student.last_name[:1] | upper }}
+                            </span>
+
+                            <span class="session-student__details">
+
+                                <strong>
+                                    {{ session.student.full_name }}
+                                </strong>
+
+                                <small>
+                                    Student #{{ session.student.id }}
+                                </small>
+
+                            </span>
+
+                        </a>
+
+                        {% else %}
+
+                        <span class="table-muted">
+                            Student unavailable
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="session-type-cell">
+
+                            <a
+                                href="/sessions/{{ session.id }}"
+                            >
+                                <strong>
+                                    {{ session.session_type or "Coaching Session" }}
+                                </strong>
+                            </a>
+
+                            {% if session.location %}
+
+                            <small>
+                                {{ session.location }}
+                            </small>
+
+                            {% endif %}
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        {% if session.focus_area %}
+
+                        <span class="focus-text">
+                            {{ session.focus_area }}
+                        </span>
+
+                        {% elif session.summary %}
+
+                        <span class="focus-text">
+                            {{ session.summary }}
+                        </span>
+
+                        {% else %}
+
+                        <span class="table-muted">
+                            Not specified
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        {% if session.primary_club %}
+
+                        <span class="club-badge">
+                            {{ session.primary_club }}
+                        </span>
+
+                        {% else %}
+
+                        <span class="table-muted">
+                            —
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="shot-count">
+
+                            {{
+                                session.shots
+                                | default([], true)
+                                | length
+                            }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        {% if session.duration_minutes %}
+
+                        <span class="duration-value">
+                            {{ session.duration_minutes }} min
+                        </span>
+
+                        {% else %}
+
+                        <span class="table-muted">
+                            —
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="row-actions">
+
+                            <a
+                                class="row-action"
+                                href="/sessions/{{ session.id }}"
+                                aria-label="View coaching session"
+                            >
+                                View
+                            </a>
+
+                            <a
+                                class="row-action"
+                                href="/sessions/{{ session.id }}/edit"
+                                aria-label="Edit coaching session"
+                            >
+                                Edit
+                            </a>
+
+                            <a
+                                class="row-action row-action--primary"
+                                href="/garmin/import?session_id={{ session.id }}"
+                                aria-label="Import launch monitor data"
+                            >
+                                Import
+                            </a>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <div
+        class="table-empty-filter"
+        id="session-filter-empty"
+        hidden
+    >
+
+        <span
+            class="empty-state__icon"
+            aria-hidden="true"
+        >
+            ⌕
+        </span>
+
+        <h4>
+            No matching sessions
+        </h4>
+
+        <p>
+            Try changing the search term or session-type filter.
+        </p>
+
+        <button
+            class="button button--secondary"
+            id="clear-session-filters"
+            type="button"
+        >
+            Clear Filters
+        </button>
+
+    </div>
+
+
+    {% else %}
+
+    <div class="empty-state">
+
+        <span
+            class="empty-state__icon"
+            aria-hidden="true"
+        >
+            ◷
+        </span>
+
+        <h3>
+            No coaching sessions recorded
+        </h3>
+
+        <p>
+            Create a session to begin tracking lesson notes,
+            practice priorities, swing data, and player progress.
+        </p>
+
+        <a
+            class="button button--primary"
+            href="/sessions/new{% if student_id %}?student_id={{ student_id }}{% endif %}"
+        >
+            Create First Session
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}
+
+
+{% block page_scripts %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput =
+        document.getElementById("session-search");
+
+    const typeFilter =
+        document.getElementById("session-type-filter");
+
+    const sessionRows =
+        Array.from(
+            document.querySelectorAll(".session-row")
+        );
+
+    const emptyMessage =
+        document.getElementById("session-filter-empty");
+
+    const clearButton =
+        document.getElementById("clear-session-filters");
+
+
+    function filterSessions() {
+
+        const searchValue =
+            searchInput
+                ? searchInput.value.trim().toLowerCase()
+                : "";
+
+        const typeValue =
+            typeFilter
+                ? typeFilter.value
+                : "all";
+
+        let visibleCount = 0;
+
+
+        sessionRows.forEach(function (row) {
+
+            const searchableText = [
+                row.dataset.student || "",
+                row.dataset.type || "",
+                row.dataset.club || "",
+                row.dataset.location || "",
+                row.dataset.focus || ""
+            ].join(" ");
+
+            const matchesSearch =
+                !searchValue ||
+                searchableText.includes(searchValue);
+
+            const matchesType =
+                typeValue === "all" ||
+                row.dataset.type === typeValue;
+
+            const isVisible =
+                matchesSearch && matchesType;
+
+            row.hidden = !isVisible;
+
+            if (isVisible) {
+                visibleCount += 1;
+            }
+
+        });
+
+
+        if (emptyMessage) {
+            emptyMessage.hidden = visibleCount !== 0;
+        }
+
+    }
+
+
+    searchInput?.addEventListener(
+        "input",
+        filterSessions
+    );
+
+
+    typeFilter?.addEventListener(
+        "change",
+        filterSessions
+    );
+
+
+    clearButton?.addEventListener(
+        "click",
+        function () {
+
+            if (searchInput) {
+                searchInput.value = "";
+            }
+
+            if (typeFilter) {
+                typeFilter.value = "all";
+            }
+
+            filterSessions();
+
+            searchInput?.focus();
+
+        }
+    );
+
+});
+
+</script>
+
+{% endblock %}

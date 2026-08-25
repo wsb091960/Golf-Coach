@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coaching Analysis | WSBCO Golf Coach</title>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+
+<style>
+.content-card{
+    background:#fff;
+    border:1px solid #dfe7e3;
+    border-radius:18px;
+    padding:22px;
+    margin-bottom:18px;
+}
+
+.analysis-table{
+    width:100%;
+    border-collapse:collapse;
+    white-space:nowrap;
+}
+
+.analysis-table th,
+.analysis-table td{
+    padding:12px;
+    border-bottom:1px solid #e8eeeb;
+    text-align:left;
+    font-size:12px;
+}
+
+.shape-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:12px;
+}
+
+.shape-card{
+    border:1px solid #dfe7e3;
+    border-radius:14px;
+    padding:16px;
+    background:#f8faf9;
+}
+
+.shape-card strong{
+    display:block;
+    font-size:24px;
+    margin-top:6px;
+}
+
+.shape-card span{
+    color:#728079;
+    font-size:11px;
+}
+
+.shape-badge{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:999px;
+    background:#edf4f1;
+    font-size:11px;
+    font-weight:700;
+}
+
+.metric-sub{
+    margin-top:6px;
+    color:#728079;
+    font-size:11px;
+}
+</style>
+</head>
+
+<body>
+<div class="app-shell">
+
+<aside class="sidebar">
+<div class="brand">
+<div class="brand-mark">GC</div>
+<div>
+<div class="brand-name">WSBCO</div>
+<div class="brand-subtitle">Golf Coach</div>
+</div>
+</div>
+
+<nav class="sidebar-nav">
+<a class="nav-item" href="/">Dashboard</a>
+<a class="nav-item" href="/students">Students</a>
+<a class="nav-item" href="/sessions">Sessions</a>
+<a class="nav-item" href="/imports/garmin">Garmin Import</a>
+<a class="nav-item active" href="/analysis">Coaching Analysis</a>
+<a class="nav-item" href="/biomechanics">Biomechanics</a>
+<a class="nav-item" href="/gapping">Gapping</a>
+</nav>
+</aside>
+
+<main class="main-content">
+
+<header class="topbar">
+<div>
+<div class="eyebrow">Performance Intelligence</div>
+<h1>Coaching Analysis</h1>
+<p class="page-subtitle">
+Club averages, attack angle, face-to-path, and shot-shape patterns from imported Garmin R10 shots.
+</p>
+</div>
+</header>
+
+<section class="metric-grid">
+
+<article class="metric-card">
+<div class="metric-header">Total Shots</div>
+<div class="metric-value">{{ total_shots }}</div>
+</article>
+
+<article class="metric-card">
+<div class="metric-header">Clubs Tracked</div>
+<div class="metric-value">{{ club_rows|length }}</div>
+</article>
+
+<article class="metric-card">
+<div class="metric-header">Average Attack Angle</div>
+
+<div class="metric-value">
+{% if average_attack is not none %}
+{{ "%.2f"|format(average_attack) }}°
+{% else %}
+—
+{% endif %}
+</div>
+
+<div class="metric-sub">
+Garmin R10 average
+</div>
+</article>
+
+<article class="metric-card">
+<div class="metric-header">Dominant Shot Shape</div>
+<div class="metric-value" style="font-size:24px">
+{{ dominant_shape }}
+</div>
+<div class="metric-sub">
+Most common included shot
+</div>
+</article>
+
+</section>
+
+
+<section class="content-card">
+
+<div class="panel-header">
+<div>
+<div class="panel-eyebrow">Shot Shape</div>
+<h2>Shape Distribution</h2>
+</div>
+</div>
+
+<div class="shape-grid">
+
+{% for row in shape_distribution %}
+
+<div class="shape-card">
+
+<span>{{ row.shape }}</span>
+
+<strong>
+{{ row.count }}
+</strong>
+
+<div class="metric-sub">
+{{ "%.1f"|format(row.pct) }}% of shots
+</div>
+
+</div>
+
+{% else %}
+
+<div class="shape-card">
+<span>No shot-shape data available.</span>
+</div>
+
+{% endfor %}
+
+</div>
+
+</section>
+
+
+<section class="content-card">
+
+<div class="panel-header">
+<div>
+<div class="panel-eyebrow">Club Averages</div>
+<h2>Performance Table</h2>
+</div>
+</div>
+
+<div class="table-wrap">
+
+<table class="analysis-table">
+
+<thead>
+<tr>
+<th>Club</th>
+<th>Shots</th>
+<th>Shape</th>
+<th>Carry</th>
+<th>Ball Speed</th>
+<th>Club Speed</th>
+<th>Smash</th>
+<th>Attack</th>
+<th>Path</th>
+<th>Face</th>
+<th>Face/Path</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for row in club_rows %}
+
+<tr>
+
+<td>{{ row.club }}</td>
+
+<td>{{ row.shots }}</td>
+
+<td>
+<span class="shape-badge">
+{{ row.dominant_shape }}
+</span>
+</td>
+
+<td>
+{{ "%.2f"|format(row.carry) if row.carry is not none else "—" }}
+</td>
+
+<td>
+{{ "%.2f"|format(row.ball_speed) if row.ball_speed is not none else "—" }}
+</td>
+
+<td>
+{{ "%.2f"|format(row.club_speed) if row.club_speed is not none else "—" }}
+</td>
+
+<td>
+{{ "%.2f"|format(row.smash) if row.smash is not none else "—" }}
+</td>
+
+<td>
+{% if row.attack is not none %}
+{{ "%.2f"|format(row.attack) }}°
+{% else %}
+—
+{% endif %}
+</td>
+
+<td>
+{{ "%.2f"|format(row.path) if row.path is not none else "—" }}
+</td>
+
+<td>
+{{ "%.2f"|format(row.face) if row.face is not none else "—" }}
+</td>
+
+<td>
+{{ "%.2f"|format(row.face_to_path) if row.face_to_path is not none else "—" }}
+</td>
+
+</tr>
+
+{% else %}
+
+<tr>
+<td colspan="11">
+Import Garmin R10 shot data to begin analysis.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+</div>
+
+</section>
+
+</main>
+</div>
+</body>
+</html>

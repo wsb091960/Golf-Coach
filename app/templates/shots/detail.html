@@ -1,0 +1,833 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', path='css/shots.css') }}"
+>
+{% endblock %}
+
+{% block topbar_actions %}
+<div class="topbar-action-group">
+
+    {% if session %}
+    <a
+        class="button button--secondary"
+        href="/sessions/{{ session.id }}"
+    >
+        Back to Session
+    </a>
+    {% endif %}
+
+    <a
+        class="button button--primary"
+        href="/shots/{{ shot.id }}/edit"
+    >
+        Edit Shot
+    </a>
+
+</div>
+{% endblock %}
+
+{% block content %}
+
+{% if created %}
+<div class="alert alert--success">
+    Shot added successfully.
+</div>
+{% endif %}
+
+{% if updated %}
+<div class="alert alert--success">
+    Shot updated successfully.
+</div>
+{% endif %}
+
+
+<section class="shot-detail-header">
+
+    <div class="shot-detail-header__main">
+
+        <p class="section-eyebrow">
+            Launch Monitor Shot
+        </p>
+
+        <h2 class="section-title">
+            {{ page_heading }}
+        </h2>
+
+        <div class="shot-detail-header__meta">
+
+            {% if student %}
+            <a
+                class="shot-detail-header__student"
+                href="/students/{{ student.id }}"
+            >
+                {{ student.full_name }}
+            </a>
+            {% endif %}
+
+            {% if session and session.session_date %}
+            <span>
+                {{ session.session_date.strftime("%B %d, %Y") }}
+            </span>
+            {% endif %}
+
+            {% if session and session.session_type %}
+            <span>
+                {{ session.session_type }}
+            </span>
+            {% endif %}
+
+            {% if shot.club %}
+            <span class="club-badge">
+                {{ shot.club }}
+            </span>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <div class="shot-flight-badge">
+
+        <span class="shot-flight-badge__label">
+            Shot Shape
+        </span>
+
+        <strong>
+            {{ shot.shot_shape or "Not Classified" }}
+        </strong>
+
+    </div>
+
+</section>
+
+
+<section class="shot-metric-grid">
+
+    <article class="shot-metric-card">
+
+        <span class="shot-metric-card__label">
+            Carry
+        </span>
+
+        <strong class="shot-metric-card__value">
+            {% if shot.carry_distance is not none %}
+                {{ "%.1f"|format(shot.carry_distance) }}
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+
+        <span class="shot-metric-card__unit">
+            yards
+        </span>
+
+    </article>
+
+
+    <article class="shot-metric-card">
+
+        <span class="shot-metric-card__label">
+            Total
+        </span>
+
+        <strong class="shot-metric-card__value">
+            {% if shot.total_distance is not none %}
+                {{ "%.1f"|format(shot.total_distance) }}
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+
+        <span class="shot-metric-card__unit">
+            yards
+        </span>
+
+    </article>
+
+
+    <article class="shot-metric-card">
+
+        <span class="shot-metric-card__label">
+            Ball Speed
+        </span>
+
+        <strong class="shot-metric-card__value">
+            {% if shot.ball_speed is not none %}
+                {{ "%.1f"|format(shot.ball_speed) }}
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+
+        <span class="shot-metric-card__unit">
+            mph
+        </span>
+
+    </article>
+
+
+    <article class="shot-metric-card">
+
+        <span class="shot-metric-card__label">
+            Club Speed
+        </span>
+
+        <strong class="shot-metric-card__value">
+            {% if shot.club_speed is not none %}
+                {{ "%.1f"|format(shot.club_speed) }}
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+
+        <span class="shot-metric-card__unit">
+            mph
+        </span>
+
+    </article>
+
+
+    <article class="shot-metric-card">
+
+        <span class="shot-metric-card__label">
+            Smash
+        </span>
+
+        <strong class="shot-metric-card__value">
+            {% if shot.smash_factor is not none %}
+                {{ "%.2f"|format(shot.smash_factor) }}
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+
+        <span class="shot-metric-card__unit">
+            ratio
+        </span>
+
+    </article>
+
+
+    <article class="shot-metric-card">
+
+        <span class="shot-metric-card__label">
+            Launch
+        </span>
+
+        <strong class="shot-metric-card__value">
+            {% if shot.launch_angle is not none %}
+                {{ "%.1f"|format(shot.launch_angle) }}
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+
+        <span class="shot-metric-card__unit">
+            degrees
+        </span>
+
+    </article>
+
+
+    <article class="shot-metric-card">
+
+        <span class="shot-metric-card__label">
+            Spin
+        </span>
+
+        <strong class="shot-metric-card__value">
+            {% if shot.spin_rate is not none %}
+                {{ "%.0f"|format(shot.spin_rate) }}
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+
+        <span class="shot-metric-card__unit">
+            rpm
+        </span>
+
+    </article>
+
+
+    <article class="shot-metric-card">
+
+        <span class="shot-metric-card__label">
+            Apex
+        </span>
+
+        <strong class="shot-metric-card__value">
+            {% if shot.apex_height is not none %}
+                {{ "%.1f"|format(shot.apex_height) }}
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+
+        <span class="shot-metric-card__unit">
+            feet
+        </span>
+
+    </article>
+
+</section>
+
+
+<div class="shot-detail-layout">
+
+    <main class="shot-detail-main">
+
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Ball Flight
+                    </p>
+
+                    <h3 class="panel__title">
+                        Launch and Distance
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <dl class="shot-data-grid">
+
+                    <div class="shot-data-item">
+                        <dt>Carry Distance</dt>
+                        <dd>
+                            {% if shot.carry_distance is not none %}
+                                {{ "%.1f"|format(shot.carry_distance) }} yd
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Total Distance</dt>
+                        <dd>
+                            {% if shot.total_distance is not none %}
+                                {{ "%.1f"|format(shot.total_distance) }} yd
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Horizontal Distance</dt>
+                        <dd>
+                            {% if shot.horizontal_distance is not none %}
+                                {{ "%.1f"|format(shot.horizontal_distance) }} yd
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Lateral Distance</dt>
+                        <dd>
+                            {% if shot.lateral_distance is not none %}
+                                {{ "%+.1f"|format(shot.lateral_distance) }} yd
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Launch Angle</dt>
+                        <dd>
+                            {% if shot.launch_angle is not none %}
+                                {{ "%.1f"|format(shot.launch_angle) }}°
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Launch Direction</dt>
+                        <dd>
+                            {% if shot.launch_direction is not none %}
+                                {{ "%+.1f"|format(shot.launch_direction) }}°
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Spin Rate</dt>
+                        <dd>
+                            {% if shot.spin_rate is not none %}
+                                {{ "%.0f"|format(shot.spin_rate) }} rpm
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Spin Axis</dt>
+                        <dd>
+                            {% if shot.spin_axis is not none %}
+                                {{ "%+.1f"|format(shot.spin_axis) }}°
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Apex Height</dt>
+                        <dd>
+                            {% if shot.apex_height is not none %}
+                                {{ "%.1f"|format(shot.apex_height) }} ft
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Shot Shape</dt>
+                        <dd>
+                            {{ shot.shot_shape or "Not classified" }}
+                        </dd>
+                    </div>
+
+                </dl>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Impact
+                    </p>
+
+                    <h3 class="panel__title">
+                        Speed and Efficiency
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <dl class="shot-data-grid">
+
+                    <div class="shot-data-item">
+                        <dt>Ball Speed</dt>
+                        <dd>
+                            {% if shot.ball_speed is not none %}
+                                {{ "%.1f"|format(shot.ball_speed) }} mph
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Club Speed</dt>
+                        <dd>
+                            {% if shot.club_speed is not none %}
+                                {{ "%.1f"|format(shot.club_speed) }} mph
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Smash Factor</dt>
+                        <dd>
+                            {% if shot.smash_factor is not none %}
+                                {{ "%.2f"|format(shot.smash_factor) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Shot Number</dt>
+                        <dd>
+                            {{ shot.shot_number or "—" }}
+                        </dd>
+                    </div>
+
+                </dl>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Swing Delivery
+                    </p>
+
+                    <h3 class="panel__title">
+                        Club Delivery
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <dl class="shot-data-grid">
+
+                    <div class="shot-data-item">
+                        <dt>Club Path</dt>
+                        <dd>
+                            {% if shot.club_path is not none %}
+                                {{ "%+.1f"|format(shot.club_path) }}°
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Club Face</dt>
+                        <dd>
+                            {% if shot.club_face is not none %}
+                                {{ "%+.1f"|format(shot.club_face) }}°
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Face-to-Path</dt>
+                        <dd>
+                            {% if shot.face_to_path is not none %}
+                                {{ "%+.1f"|format(shot.face_to_path) }}°
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="shot-data-item">
+                        <dt>Attack Angle</dt>
+                        <dd>
+                            {% if shot.attack_angle is not none %}
+                                {{ "%+.1f"|format(shot.attack_angle) }}°
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                </dl>
+
+
+                <div class="shot-direction-guide">
+
+                    <div>
+                        <strong>Path</strong>
+                        <span>
+                            Negative = left, positive = right
+                        </span>
+                    </div>
+
+                    <div>
+                        <strong>Face</strong>
+                        <span>
+                            Negative = closed, positive = open
+                        </span>
+                    </div>
+
+                    <div>
+                        <strong>Attack</strong>
+                        <span>
+                            Negative = downward, positive = upward
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Coaching Observation
+                    </p>
+
+                    <h3 class="panel__title">
+                        Shot Notes
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                {% if shot.notes %}
+
+                <div class="shot-notes">
+                    {{ shot.notes | replace("\n", "<br>") | safe }}
+                </div>
+
+                {% else %}
+
+                <div class="empty-state empty-state--compact">
+
+                    <h4>
+                        No notes recorded
+                    </h4>
+
+                    <p>
+                        Add strike quality, swing feel, intended target,
+                        or coaching observations for this shot.
+                    </p>
+
+                    <a
+                        class="button button--secondary"
+                        href="/shots/{{ shot.id }}/edit"
+                    >
+                        Add Notes
+                    </a>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <aside class="shot-detail-sidebar">
+
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Record
+                    </p>
+
+                    <h3 class="panel__title">
+                        Shot Details
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <dl class="shot-sidebar-list">
+
+                    <div>
+                        <dt>Shot ID</dt>
+                        <dd>#{{ shot.id }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Shot Number</dt>
+                        <dd>{{ shot.shot_number or "—" }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Club</dt>
+                        <dd>{{ shot.club or "—" }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Shape</dt>
+                        <dd>{{ shot.shot_shape or "—" }}</dd>
+                    </div>
+
+                    {% if session %}
+                    <div>
+                        <dt>Session</dt>
+                        <dd>
+                            <a href="/sessions/{{ session.id }}">
+                                View Session
+                            </a>
+                        </dd>
+                    </div>
+                    {% endif %}
+
+                    {% if student %}
+                    <div>
+                        <dt>Student</dt>
+                        <dd>
+                            <a href="/students/{{ student.id }}">
+                                {{ student.full_name }}
+                            </a>
+                        </dd>
+                    </div>
+                    {% endif %}
+
+                </dl>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Actions
+                    </p>
+
+                    <h3 class="panel__title">
+                        Quick Actions
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <div class="shot-action-list">
+
+                    <a
+                        class="button button--primary button--full"
+                        href="/shots/{{ shot.id }}/edit"
+                    >
+                        Edit Shot
+                    </a>
+
+                    {% if session %}
+                    <a
+                        class="button button--secondary button--full"
+                        href="/shots/new?session_id={{ session.id }}"
+                    >
+                        Add Another Shot
+                    </a>
+
+                    <a
+                        class="button button--secondary button--full"
+                        href="/sessions/{{ session.id }}"
+                    >
+                        Session Dashboard
+                    </a>
+                    {% endif %}
+
+                    <a
+                        class="button button--secondary button--full"
+                        href="/shots{% if session %}?session_id={{ session.id }}{% endif %}"
+                    >
+                        Shot List
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel panel--danger">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Danger Zone
+                    </p>
+
+                    <h3 class="panel__title">
+                        Delete Shot
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <p class="danger-copy">
+                    Deleting this shot permanently removes its launch-monitor
+                    measurements from the coaching session.
+                </p>
+
+                <form
+                    method="post"
+                    action="/shots/{{ shot.id }}/delete"
+                    onsubmit="return confirm('Delete this shot permanently?');"
+                >
+
+                    <button
+                        type="submit"
+                        class="button button--danger button--full"
+                    >
+                        Delete Shot
+                    </button>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </aside>
+
+</div>
+
+{% endblock %}

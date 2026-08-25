@@ -216,3 +216,23 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+app/media/session_videos/*
+
+# Local deployment/build artifacts
+*.zip
+*.swp
+
+# Backup/pre-release files
+*.pre_*
+
+# Local runtime data
+app/data/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment secrets
+.env
+.env.*

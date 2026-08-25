@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="/static/css/biomechanics.css?v=2.3.32">
+{% endblock %}
+
+{% block content %}
+<section class="bio-page">
+  <header class="bio-hero">
+    <div><p class="bio-kicker">2D COACHING LAB</p><h2>Swing &amp; Biomechanics</h2><p>Capture four verified positions and connect movement patterns to ball flight.</p></div>
+    <div class="bio-confidence"><strong id="confidenceValue">—</strong><span>analysis confidence</span></div>
+  </header>
+
+  <div class="bio-source-context" id="bioSourceContext" hidden>
+    <div><span>SESSION VIDEO</span><strong id="bioSourceStudent">Student</strong></div>
+    <a id="bioBackToSession" href="/sessions">Back to session</a>
+  </div>
+
+  <div class="bio-toolbar bio-card">
+    <label>Player handedness<select id="handedness"><option value="right">Right</option><option value="left">Left</option></select></label>
+    <label>Camera view<select id="cameraView"><option value="down-the-line">Down the line</option><option value="face-on">Face on</option></select></label>
+    <label class="bio-button bio-button--quiet">Choose another video<input id="videoInput" type="file" accept="video/*" hidden></label>
+    <button id="runAnalysis" class="bio-button bio-button--primary" type="button">Analyze Biomechanics</button>
+  </div>
+
+
+  <section class="bio-card session-goal-card" id="sessionGoalPanel">
+    <div><span>SESSION-NOTE OBJECTIVE</span><h3 id="sessionGoalText">No objective entered in Session Notes.</h3><p>The stated session objective drives the coaching plan; Garmin and video provide the supporting evidence.</p></div>
+    <button id="saveCoachingPlan" class="bio-button bio-button--primary" type="button" disabled>Save Plan to Coaching Observations</button>
+    <a id="reviewSavedPlan" class="bio-button bio-button--quiet" href="#" hidden>Review Session Notes</a>
+  </section>
+
+  <div class="bio-grid">
+    <section class="bio-card video-card">
+      <div class="bio-section-title"><div><span>VIDEO WORKSPACE</span><h3>Verified key frames</h3></div><span class="estimate-badge">2D estimate</span></div>
+      <div class="video-stage" id="videoStage">
+        <video id="swingVideo" controls playsinline preload="metadata"></video>
+        <canvas id="overlayCanvas"></canvas>
+        <div id="videoEmpty"><strong>Loading selected OnForm video…</strong><span id="videoEmptyDetail">Or choose a local MP4/MOV above</span></div>
+      </div>
+      <div class="finish-method-note"><strong>P10 method:</strong> <span id="finishMethodText">Down the line uses shoulder-to-pelvis stacking and does not require the nose.</span></div>
+      <div class="position-legend"><span><i class="legend-dot legend-dot--measured"></i><strong>Measured:</strong> P1, P4, P7, P10</span><span><i class="legend-dot legend-dot--visual"></i><strong>Visual checkpoint:</strong> P2, P3, P5, P6, P8, P9</span></div>
+      <div class="frame-strip" id="frameStrip"></div>
+      <div class="capture-row">
+        <button id="captureFrame" class="bio-button bio-button--primary" type="button">Capture current position</button>
+        <button id="clearFrame" class="bio-button bio-button--quiet" type="button">Clear this frame</button>
+      </div>
+      <div class="landmark-instruction" id="landmarkInstruction" role="status">Load a video, pause at Address, then capture the position.</div>
+      <p class="bio-help">After capture, click each prompted body landmark directly on the paused video. Green markers are coach-verified points.</p>
+    </section>
+
+    <aside class="bio-card priorities-card">
+      <div class="bio-section-title"><div><span>COACH VIEW</span><h3>Movement priorities</h3></div></div>
+      <div id="priorityList" class="empty-results">Complete at least one measured frame, then run the analysis.</div>
+      <div class="evidence-box"><strong>Evidence standard</strong><p>Video findings should agree with contact pattern. Garmin R10 data can strengthen the diagnosis but is not required.</p></div>
+    </aside>
+  </div>
+
+
+
+  <section class="bio-card xfactor-card" id="xFactorPanel">
+    <div class="bio-section-title"><div><span>ROTATIONAL SEPARATION</span><h3>2D X-factor estimate</h3></div><span class="estimate-badge">Face-on · P1/P4/P5</span></div>
+    <div id="xFactorStatus" class="xfactor-status">Complete P1, P4 and P5 in a face-on video, then run the analysis.</div>
+    <div id="xFactorMetrics" class="xfactor-metrics"></div>
+    <p class="bio-help">X-factor is thorax turn minus pelvis turn. X-factor stretch is the change in separation from P4 into P5. These are apparent-width estimates for within-player coaching comparisons—not laboratory 3D rotation.</p>
+  </section>
+
+  <section class="bio-card garmin-card" id="garminEvidence">
+    <div class="bio-section-title"><div><span>MEASURED GARMIN EVIDENCE</span><h3>Selected session shot</h3></div><label class="shot-picker">Shot<select id="garminShotSelect"><option value="">Loading shots…</option></select></label></div>
+    <div id="garminShotStatus" class="garmin-status">Garmin data is optional. Video-only analysis remains available.</div>
+    <div id="garminMetricGrid" class="garmin-metric-grid"></div>
+    <div id="correlationList" class="correlation-list"></div>
+  </section>
+
+  <section class="bio-card metrics-card">
+    <div class="bio-section-title"><div><span>BIOMECHANICAL PROFILE</span><h3>Measured checkpoints</h3></div></div>
+    <div id="metricGrid" class="metric-grid"><div class="empty-results">No verified measurements yet.</div></div>
+  </section>
+
+  <section class="bio-card sequence-card">
+    <div class="bio-section-title"><div><span>COACHING PROCESS</span><h3>Interpretation and decision sequence</h3></div><span class="process-badge">Video → evidence → intervention → proof</span></div>
+    <div class="interpret-grid interpret-grid--expanded">
+      <article class="process-step">
+        <div class="process-number">1</div><div><h4>Observe the movement</h4><p class="process-summary" id="observeSummary">Begin with the coach-verified frames—not a presumed swing fault.</p></div>
+        <ul><li>Confirm camera view, landmark placement and analysis confidence.</li><li>Identify the largest measured deviation and the phase where it occurs.</li><li>Describe what is visible before assigning a cause.</li></ul>
+        <p class="process-decision"><strong>Decision:</strong> Is the pattern clear and repeatable enough to investigate?</p>
+      </article>
+      <article class="process-step">
+        <div class="process-number">2</div><div><h4>Corroborate with ball flight</h4><p class="process-summary" id="corroborateSummary">Use strike and Garmin outcome data to test the video hypothesis.</p></div>
+        <ul><li>Face and start line establish the initial directional evidence.</li><li>Face-to-path, spin axis and offline finish describe curvature and outcome.</li><li>Check contact quality and multiple shots before blaming one body position.</li></ul>
+        <p class="process-decision"><strong>Decision:</strong> Does the measured outcome support the movement finding?</p>
+      </article>
+      <article class="process-step">
+        <div class="process-number">3</div><div><h4>Prescribe one priority</h4><p class="process-summary" id="prescribeSummary">Choose the smallest useful intervention—not a complete swing rebuild.</p></div>
+        <ul><li>Select one movement priority tied to the intended ball-flight change.</li><li>Use one clear cue and one constraint-led drill.</li><li>Define a measurable success target before the player starts.</li></ul>
+        <p class="process-decision"><strong>Decision:</strong> What single change offers the highest value with the least disruption?</p>
+      </article>
+      <article class="process-step">
+        <div class="process-number">4</div><div><h4>Retest under matching conditions</h4><p class="process-summary" id="retestSummary">Repeat the same club, target and camera view for a fair comparison.</p></div>
+        <ul><li>Record a five-shot group after rehearsal—not only the best swing.</li><li>Compare median start, curve, carry, strike efficiency and dispersion.</li><li>Keep the change only if outcome improves without a meaningful speed or contact penalty.</li></ul>
+        <p class="process-decision"><strong>Decision:</strong> Keep, refine or discard the intervention based on measured results.</p>
+      </article>
+    </div>
+    <div class="retest-scorecard"><strong>Recommended retest scorecard</strong><span>5 shots</span><span>Same club</span><span>Same target</span><span>Same camera</span><span>Compare medians + dispersion</span></div>
+    <p class="bio-disclaimer">Single-camera measurements are screen-plane estimates—not laboratory 3D kinetics or medical assessment. Movement-to-ball-flight relationships are coaching hypotheses until supported by repeated outcomes.</p>
+  </section>
+</section>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="/static/js/biomechanics.js?v=2.3.32"></script>
+{% endblock %}

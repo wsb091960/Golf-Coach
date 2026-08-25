@@ -1,0 +1,1018 @@
+{% extends "base.html" %}
+
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', path='css/importer.css') }}"
+>
+{% endblock %}
+
+
+{% block topbar_actions %}
+<div class="topbar-action-group">
+
+    {% if session %}
+    <a
+        class="button button--secondary"
+        href="/sessions/{{ session.id }}"
+    >
+        Back to Session
+    </a>
+    {% else %}
+    <a
+        class="button button--secondary"
+        href="/sessions"
+    >
+        View Sessions
+    </a>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-header importer-page-header">
+
+    <div>
+
+        <p class="section-eyebrow">
+            Launch Monitor Import
+        </p>
+
+        <h2 class="section-title">
+            Garmin R10 CSV Importer
+        </h2>
+
+        <p class="section-description">
+            Upload a Garmin Approach R10 CSV export, review the detected
+            shot data, and import valid measurements into a coaching session.
+        </p>
+
+    </div>
+
+</section>
+
+
+{% if error %}
+<div
+    class="alert alert--error"
+    role="alert"
+>
+    {{ error }}
+</div>
+{% endif %}
+
+
+{% if session %}
+
+<section class="import-session-banner">
+
+    <div>
+
+        <span class="import-session-banner__label">
+            Selected Session
+        </span>
+
+        <strong>
+            {{ session.session_type or "Coaching Session" }}
+        </strong>
+
+        {% if session.session_date %}
+        <small>
+            {{ session.session_date.strftime("%B %d, %Y") }}
+        </small>
+        {% endif %}
+
+    </div>
+
+
+    {% if session.student %}
+    <div>
+
+        <span class="import-session-banner__label">
+            Student
+        </span>
+
+        <a href="/students/{{ session.student.id }}">
+            {{ session.student.full_name }}
+        </a>
+
+    </div>
+    {% endif %}
+
+
+    {% if session.primary_club %}
+    <div>
+
+        <span class="import-session-banner__label">
+            Primary Club
+        </span>
+
+        <span class="club-badge">
+            {{ session.primary_club }}
+        </span>
+
+    </div>
+    {% endif %}
+
+
+    <div>
+
+        <span class="import-session-banner__label">
+            Session ID
+        </span>
+
+        <strong>
+            #{{ session.id }}
+        </strong>
+
+    </div>
+
+</section>
+
+{% endif %}
+
+
+<div class="import-layout">
+
+    <main class="import-main">
+
+        <section class="panel import-upload-panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Step 1
+                    </p>
+
+                    <h3 class="panel__title">
+                        Select Garmin CSV File
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <form
+                    id="garmin-upload-form"
+                    class="import-form"
+                    method="post"
+                    action="/importer/upload"
+                    enctype="multipart/form-data"
+                >
+
+                    <div class="import-form-section">
+
+                        <div class="field">
+
+                            <label for="session_id">
+                                Coaching Session
+                                <span aria-hidden="true">*</span>
+                            </label>
+
+                            {% if session %}
+
+                            <input
+                                type="hidden"
+                                id="session_id"
+                                name="session_id"
+                                value="{{ session.id }}"
+                            >
+
+                            <div class="selected-session-card">
+
+                                <div>
+
+                                    <strong>
+                                        {{ session.session_type or "Coaching Session" }}
+                                    </strong>
+
+                                    {% if session.student %}
+                                    <span>
+                                        {{ session.student.full_name }}
+                                    </span>
+                                    {% endif %}
+
+                                    {% if session.session_date %}
+                                    <small>
+                                        {{ session.session_date.strftime("%B %d, %Y") }}
+                                    </small>
+                                    {% endif %}
+
+                                </div>
+
+                                <a
+                                    href="/sessions"
+                                    class="button button--secondary button--small"
+                                >
+                                    Change
+                                </a>
+
+                            </div>
+
+                            {% else %}
+
+                            <input
+                                type="number"
+                                id="session_id"
+                                name="session_id"
+                                value="{{ session_id or '' }}"
+                                min="1"
+                                step="1"
+                                required
+                                placeholder="Enter the coaching session ID"
+                            >
+
+                            <span class="field-help">
+                                Open a session first and use its numeric ID.
+                            </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="import-form-section">
+
+                        <div class="field">
+
+                            <label for="csv_file">
+                                Garmin R10 CSV File
+                                <span aria-hidden="true">*</span>
+                            </label>
+
+                            <div
+                                id="file-drop-zone"
+                                class="file-drop-zone"
+                            >
+
+                                <input
+                                    type="file"
+                                    id="csv_file"
+                                    name="csv_file"
+                                    accept=".csv,.txt,text/csv,text/plain"
+                                    required
+                                >
+
+                                <div class="file-drop-zone__content">
+
+                                    <div
+                                        class="file-drop-zone__icon"
+                                        aria-hidden="true"
+                                    >
+                                        ↑
+                                    </div>
+
+                                    <strong>
+                                        Choose a Garmin CSV file
+                                    </strong>
+
+                                    <span>
+                                        or drag and drop it here
+                                    </span>
+
+                                    <small>
+                                        Maximum file size:
+                                        {{ max_upload_mb }} MB
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <div
+                                id="selected-file"
+                                class="selected-file"
+                                hidden
+                            >
+
+                                <div>
+
+                                    <span class="selected-file__label">
+                                        Selected File
+                                    </span>
+
+                                    <strong id="selected-file-name">
+                                        —
+                                    </strong>
+
+                                    <small id="selected-file-size">
+                                        —
+                                    </small>
+
+                                </div>
+
+                                <button
+                                    id="remove-selected-file"
+                                    type="button"
+                                    class="button button--secondary button--small"
+                                >
+                                    Remove
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="import-form-section">
+
+                        <div class="field-row field-row--two">
+
+                            <div class="field">
+
+                                <label for="default_club">
+                                    Default Club
+                                </label>
+
+                                <select
+                                    id="default_club"
+                                    name="default_club"
+                                >
+
+                                    <option value="">
+                                        Detect from CSV
+                                    </option>
+
+                                    <option value="Driver">
+                                        Driver
+                                    </option>
+
+                                    <option value="3 Wood">
+                                        3 Wood
+                                    </option>
+
+                                    <option value="5 Wood">
+                                        5 Wood
+                                    </option>
+
+                                    <option value="7 Wood">
+                                        7 Wood
+                                    </option>
+
+                                    <option value="2 Hybrid">
+                                        2 Hybrid
+                                    </option>
+
+                                    <option value="3 Hybrid">
+                                        3 Hybrid
+                                    </option>
+
+                                    <option value="4 Hybrid">
+                                        4 Hybrid
+                                    </option>
+
+                                    <option value="5 Hybrid">
+                                        5 Hybrid
+                                    </option>
+
+                                    <option value="3 Iron">
+                                        3 Iron
+                                    </option>
+
+                                    <option value="4 Iron">
+                                        4 Iron
+                                    </option>
+
+                                    <option value="5 Iron">
+                                        5 Iron
+                                    </option>
+
+                                    <option value="6 Iron">
+                                        6 Iron
+                                    </option>
+
+                                    <option value="7 Iron">
+                                        7 Iron
+                                    </option>
+
+                                    <option value="8 Iron">
+                                        8 Iron
+                                    </option>
+
+                                    <option value="9 Iron">
+                                        9 Iron
+                                    </option>
+
+                                    <option value="Pitching Wedge">
+                                        Pitching Wedge
+                                    </option>
+
+                                    <option value="Gap Wedge">
+                                        Gap Wedge
+                                    </option>
+
+                                    <option value="Approach Wedge">
+                                        Approach Wedge
+                                    </option>
+
+                                    <option value="Sand Wedge">
+                                        Sand Wedge
+                                    </option>
+
+                                    <option value="Lob Wedge">
+                                        Lob Wedge
+                                    </option>
+
+                                </select>
+
+                                <span class="field-help">
+                                    Used only when the CSV does not include
+                                    a club value.
+                                </span>
+
+                            </div>
+
+
+                            <div class="field">
+
+                                <label>
+                                    Duplicate Handling
+                                </label>
+
+                                <label class="check-option">
+
+                                    <input
+                                        type="checkbox"
+                                        id="skip_duplicates"
+                                        name="skip_duplicates"
+                                        value="true"
+                                        checked
+                                    >
+
+                                    <span>
+
+                                        <strong>
+                                            Skip duplicate shots
+                                        </strong>
+
+                                        <small>
+                                            Compare key shot measurements
+                                            with shots already in the session.
+                                        </small>
+
+                                    </span>
+
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="import-form__actions">
+
+                        {% if session %}
+                        <a
+                            class="button button--secondary"
+                            href="/sessions/{{ session.id }}"
+                        >
+                            Cancel
+                        </a>
+                        {% else %}
+                        <a
+                            class="button button--secondary"
+                            href="/sessions"
+                        >
+                            Cancel
+                        </a>
+                        {% endif %}
+
+                        <button
+                            id="upload-submit-button"
+                            type="submit"
+                            class="button button--primary"
+                        >
+                            Upload and Preview
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <aside class="import-sidebar">
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Import Process
+                    </p>
+
+                    <h3 class="panel__title">
+                        What Happens Next
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <ol class="import-step-list">
+
+                    <li class="import-step-list__item">
+
+                        <span class="import-step-list__number">
+                            1
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Upload
+                            </strong>
+
+                            <p>
+                                Select the Garmin R10 CSV export for
+                                this coaching session.
+                            </p>
+
+                        </div>
+
+                    </li>
+
+
+                    <li class="import-step-list__item">
+
+                        <span class="import-step-list__number">
+                            2
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Review
+                            </strong>
+
+                            <p>
+                                Confirm detected columns, measurements,
+                                validation warnings, and duplicate shots.
+                            </p>
+
+                        </div>
+
+                    </li>
+
+
+                    <li class="import-step-list__item">
+
+                        <span class="import-step-list__number">
+                            3
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Import
+                            </strong>
+
+                            <p>
+                                Add valid shots to the selected session
+                                after approving the preview.
+                            </p>
+
+                        </div>
+
+                    </li>
+
+                </ol>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Supported Data
+                    </p>
+
+                    <h3 class="panel__title">
+                        Garmin Metrics
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <ul class="supported-metric-list">
+
+                    <li>
+                        Carry and total distance
+                    </li>
+
+                    <li>
+                        Ball speed and club speed
+                    </li>
+
+                    <li>
+                        Smash factor
+                    </li>
+
+                    <li>
+                        Launch angle and direction
+                    </li>
+
+                    <li>
+                        Spin rate and spin axis
+                    </li>
+
+                    <li>
+                        Club path and club face
+                    </li>
+
+                    <li>
+                        Face-to-path
+                    </li>
+
+                    <li>
+                        Attack angle
+                    </li>
+
+                    <li>
+                        Apex and lateral dispersion
+                    </li>
+
+                </ul>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel import-help-panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        File Requirements
+                    </p>
+
+                    <h3 class="panel__title">
+                        Before Uploading
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <dl class="import-requirements">
+
+                    <div>
+
+                        <dt>
+                            File type
+                        </dt>
+
+                        <dd>
+                            {% for extension in supported_extensions %}
+                                {{ extension }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </dd>
+
+                    </div>
+
+
+                    <div>
+
+                        <dt>
+                            Maximum size
+                        </dt>
+
+                        <dd>
+                            {{ max_upload_mb }} MB
+                        </dd>
+
+                    </div>
+
+
+                    <div>
+
+                        <dt>
+                            Maximum rows
+                        </dt>
+
+                        <dd>
+                            5,000 shots
+                        </dd>
+
+                    </div>
+
+
+                    <div>
+
+                        <dt>
+                            Header row
+                        </dt>
+
+                        <dd>
+                            Required
+                        </dd>
+
+                    </div>
+
+                </dl>
+
+            </div>
+
+        </section>
+
+    </aside>
+
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById(
+        "garmin-upload-form"
+    );
+
+    const fileInput = document.getElementById(
+        "csv_file"
+    );
+
+    const dropZone = document.getElementById(
+        "file-drop-zone"
+    );
+
+    const selectedFile = document.getElementById(
+        "selected-file"
+    );
+
+    const selectedFileName = document.getElementById(
+        "selected-file-name"
+    );
+
+    const selectedFileSize = document.getElementById(
+        "selected-file-size"
+    );
+
+    const removeButton = document.getElementById(
+        "remove-selected-file"
+    );
+
+    const submitButton = document.getElementById(
+        "upload-submit-button"
+    );
+
+
+    function formatFileSize(bytes) {
+
+        if (!Number.isFinite(bytes) || bytes <= 0) {
+            return "0 KB";
+        }
+
+        const units = [
+            "bytes",
+            "KB",
+            "MB",
+            "GB"
+        ];
+
+        const unitIndex = Math.min(
+            Math.floor(
+                Math.log(bytes) / Math.log(1024)
+            ),
+            units.length - 1
+        );
+
+        const value = bytes / Math.pow(
+            1024,
+            unitIndex
+        );
+
+        return (
+            value.toFixed(
+                unitIndex === 0 ? 0 : 1
+            ) +
+            " " +
+            units[unitIndex]
+        );
+
+    }
+
+
+    function showSelectedFile(file) {
+
+        if (!file) {
+            clearSelectedFile();
+            return;
+        }
+
+        selectedFileName.textContent =
+            file.name || "Selected file";
+
+        selectedFileSize.textContent =
+            formatFileSize(file.size);
+
+        selectedFile.hidden = false;
+        dropZone.classList.add(
+            "file-drop-zone--selected"
+        );
+
+    }
+
+
+    function clearSelectedFile() {
+
+        if (fileInput) {
+            fileInput.value = "";
+        }
+
+        selectedFile.hidden = true;
+
+        selectedFileName.textContent = "—";
+        selectedFileSize.textContent = "—";
+
+        dropZone.classList.remove(
+            "file-drop-zone--selected"
+        );
+
+    }
+
+
+    function assignDroppedFile(file) {
+
+        if (!file || !fileInput) {
+            return;
+        }
+
+        const transfer = new DataTransfer();
+
+        transfer.items.add(file);
+
+        fileInput.files = transfer.files;
+
+        showSelectedFile(file);
+
+    }
+
+
+    if (fileInput) {
+
+        fileInput.addEventListener(
+            "change",
+            function () {
+
+                const file =
+                    fileInput.files &&
+                    fileInput.files.length
+                        ? fileInput.files[0]
+                        : null;
+
+                showSelectedFile(file);
+
+            }
+        );
+
+    }
+
+
+    if (removeButton) {
+
+        removeButton.addEventListener(
+            "click",
+            clearSelectedFile
+        );
+
+    }
+
+
+    if (dropZone) {
+
+        [
+            "dragenter",
+            "dragover"
+        ].forEach(function (eventName) {
+
+            dropZone.addEventListener(
+                eventName,
+                function (event) {
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    dropZone.classList.add(
+                        "file-drop-zone--active"
+                    );
+
+                }
+            );
+
+        });
+
+
+        [
+            "dragleave",
+            "drop"
+        ].forEach(function (eventName) {
+
+            dropZone.addEventListener(
+                eventName,
+                function (event) {
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    dropZone.classList.remove(
+                        "file-drop-zone--active"
+                    );
+
+                }
+            );
+
+        });
+
+
+        dropZone.addEventListener(
+            "drop",
+            function (event) {
+
+                const files =
+                    event.dataTransfer &&
+                    event.dataTransfer.files;
+
+                if (!files || !files.length) {
+                    return;
+                }
+
+                assignDroppedFile(
+                    files[0]
+                );
+
+            }
+        );
+
+    }
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            function () {
+
+                if (!form.checkValidity()) {
+                    return;
+                }
+
+                if (submitButton) {
+
+                    submitButton.disabled = true;
+
+                    submitButton.textContent =
+                        "Processing CSV...";
+
+                }
+
+            }
+        );
+
+    }
+
+});
+</script>
+
+{% endblock %}

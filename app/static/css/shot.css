@@ -1,0 +1,1471 @@
+/*
+==========================================================
+WSBCO Golf Coach
+Shot Management Styles
+
+File: app/static/css/shots.css
+Version: 1.0.0
+==========================================================
+*/
+
+
+/* ========================================================
+   SHARED SHOT MODULE VARIABLES
+======================================================== */
+
+:root {
+    --shot-surface: #ffffff;
+    --shot-surface-soft: #f7f9f8;
+    --shot-surface-muted: #eef3f0;
+    --shot-border: #d9e2dd;
+    --shot-border-strong: #c4d0ca;
+
+    --shot-text: #1d2923;
+    --shot-text-muted: #647269;
+    --shot-text-soft: #849189;
+
+    --shot-primary: #176b43;
+    --shot-primary-dark: #0f5232;
+    --shot-primary-soft: #e7f4ed;
+
+    --shot-success: #16814d;
+    --shot-success-soft: #e5f7ed;
+
+    --shot-warning: #a15d0a;
+    --shot-warning-soft: #fff2dc;
+
+    --shot-danger: #b42318;
+    --shot-danger-dark: #8f1b13;
+    --shot-danger-soft: #fff0ee;
+
+    --shot-info: #2866a6;
+    --shot-info-soft: #eaf3ff;
+
+    --shot-shadow:
+        0 12px 30px rgba(25, 47, 35, 0.08);
+
+    --shot-shadow-small:
+        0 4px 14px rgba(25, 47, 35, 0.07);
+
+    --shot-radius-small: 8px;
+    --shot-radius: 14px;
+    --shot-radius-large: 20px;
+
+    --shot-transition:
+        160ms ease;
+}
+
+
+/* ========================================================
+   ACCESSIBILITY
+======================================================== */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+
+/* ========================================================
+   PAGE HEADER
+======================================================== */
+
+.shot-list-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.page-header__actions,
+.topbar-action-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+
+/* ========================================================
+   BUTTON SUPPORT
+======================================================== */
+
+.button--small {
+    min-height: 34px;
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    border-radius: 8px;
+}
+
+.button--full {
+    width: 100%;
+    justify-content: center;
+}
+
+.button--danger {
+    color: #ffffff;
+    background: var(--shot-danger);
+    border-color: var(--shot-danger);
+}
+
+.button--danger:hover,
+.button--danger:focus-visible {
+    color: #ffffff;
+    background: var(--shot-danger-dark);
+    border-color: var(--shot-danger-dark);
+}
+
+
+/* ========================================================
+   ALERTS
+======================================================== */
+
+.alert {
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: var(--shot-radius-small);
+    font-weight: 700;
+}
+
+.alert--success {
+    color: #0c5b34;
+    background: var(--shot-success-soft);
+    border-color: #a9ddbf;
+}
+
+.alert--error {
+    color: #8f1b13;
+    background: var(--shot-danger-soft);
+    border-color: #f0b8b2;
+}
+
+
+/* ========================================================
+   SESSION BANNER
+======================================================== */
+
+.shot-session-banner {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    background: var(--shot-border);
+    border: 1px solid var(--shot-border);
+    border-radius: var(--shot-radius);
+    box-shadow: var(--shot-shadow-small);
+}
+
+.shot-session-banner > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 86px;
+    padding: 16px 18px;
+    background: var(--shot-surface);
+}
+
+.shot-session-banner__label {
+    margin-bottom: 5px;
+    color: var(--shot-text-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.shot-session-banner strong,
+.shot-session-banner a {
+    color: var(--shot-text);
+    font-size: 0.98rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.shot-session-banner a:hover {
+    color: var(--shot-primary);
+}
+
+.shot-session-banner small {
+    margin-top: 4px;
+    color: var(--shot-text-muted);
+    font-size: 0.78rem;
+}
+
+
+/* ========================================================
+   CLUB BADGE
+======================================================== */
+
+.club-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 27px;
+    padding: 4px 10px;
+    color: var(--shot-primary-dark);
+    background: var(--shot-primary-soft);
+    border: 1px solid #badcc9;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+
+/* ========================================================
+   SUMMARY CARDS
+======================================================== */
+
+.shot-summary-grid,
+.shot-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.shot-summary-card,
+.shot-metric-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 132px;
+    padding: 18px;
+    overflow: hidden;
+    background:
+        linear-gradient(
+            145deg,
+            var(--shot-surface) 0%,
+            var(--shot-surface-soft) 100%
+        );
+    border: 1px solid var(--shot-border);
+    border-radius: var(--shot-radius);
+    box-shadow: var(--shot-shadow-small);
+}
+
+.shot-summary-card::before,
+.shot-metric-card::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    content: "";
+    background: var(--shot-primary);
+}
+
+.shot-summary-card__label,
+.shot-metric-card__label {
+    color: var(--shot-text-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.shot-summary-card__value,
+.shot-metric-card__value {
+    margin-top: auto;
+    color: var(--shot-text);
+    font-size: clamp(1.6rem, 3vw, 2.15rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.035em;
+}
+
+.shot-summary-card__unit,
+.shot-metric-card__unit {
+    margin-top: 7px;
+    color: var(--shot-text-soft);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+
+/* ========================================================
+   SHOT LIST PANEL
+======================================================== */
+
+.shot-table-panel {
+    overflow: hidden;
+}
+
+.shot-table-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.shot-table-count {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    color: var(--shot-text-muted);
+}
+
+.shot-table-count strong {
+    color: var(--shot-text);
+    font-size: 1.3rem;
+    font-weight: 900;
+}
+
+.shot-table-count span {
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+
+/* ========================================================
+   SHOT TOOLBAR
+======================================================== */
+
+.shot-toolbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+    background: var(--shot-surface-soft);
+    border-top: 1px solid var(--shot-border);
+    border-bottom: 1px solid var(--shot-border);
+}
+
+.shot-toolbar__search {
+    flex: 1 1 340px;
+    max-width: 540px;
+}
+
+.shot-toolbar__search input {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 13px;
+    color: var(--shot-text);
+    background: var(--shot-surface);
+    border: 1px solid var(--shot-border-strong);
+    border-radius: 9px;
+    font: inherit;
+}
+
+.shot-toolbar__filters {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.shot-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.shot-filter label {
+    color: var(--shot-text-muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.shot-filter select {
+    min-width: 135px;
+    min-height: 38px;
+    padding: 7px 34px 7px 10px;
+    color: var(--shot-text);
+    background-color: var(--shot-surface);
+    border: 1px solid var(--shot-border-strong);
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.84rem;
+}
+
+.shot-toolbar input:focus,
+.shot-toolbar select:focus {
+    outline: 3px solid rgba(23, 107, 67, 0.14);
+    border-color: var(--shot-primary);
+}
+
+
+/* ========================================================
+   SHOT TABLE
+======================================================== */
+
+.table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.shot-table {
+    width: 100%;
+    min-width: 1320px;
+    border-collapse: collapse;
+}
+
+.shot-table thead {
+    background: #f2f6f4;
+}
+
+.shot-table th {
+    padding: 11px 12px;
+    color: var(--shot-text-muted);
+    border-bottom: 1px solid var(--shot-border);
+    font-size: 0.67rem;
+    font-weight: 900;
+    letter-spacing: 0.055em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.shot-table td {
+    padding: 12px;
+    color: var(--shot-text);
+    border-bottom: 1px solid #e7ece9;
+    font-size: 0.84rem;
+    vertical-align: middle;
+}
+
+.shot-table tbody tr {
+    transition:
+        background var(--shot-transition),
+        box-shadow var(--shot-transition);
+}
+
+.shot-table tbody tr:hover {
+    background: #f8fbf9;
+}
+
+.shot-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.shot-table a {
+    color: var(--shot-primary-dark);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.shot-table a:hover {
+    color: var(--shot-primary);
+    text-decoration: underline;
+}
+
+.shot-table__shot-number a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    min-height: 28px;
+    padding: 4px 8px;
+    color: var(--shot-primary-dark);
+    background: var(--shot-primary-soft);
+    border-radius: 7px;
+}
+
+.shot-table__student-link,
+.shot-table__session-link {
+    display: block;
+    width: fit-content;
+}
+
+.shot-table__secondary {
+    display: block;
+    margin-top: 3px;
+    color: var(--shot-text-soft);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.shot-table__metric {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.shot-table__metric small {
+    color: var(--shot-text-soft);
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+.shot-table__actions-heading {
+    text-align: right !important;
+}
+
+.shot-table__actions {
+    min-width: 220px;
+}
+
+.shot-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.shot-row-actions form {
+    margin: 0;
+}
+
+
+/* ========================================================
+   SHOT SHAPE BADGES
+======================================================== */
+
+.shot-shape-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 4px 9px;
+    color: #536158;
+    background: #edf1ef;
+    border: 1px solid #d6ded9;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.shot-shape-badge--straight {
+    color: #0f5f39;
+    background: #e5f6ec;
+    border-color: #afe0c3;
+}
+
+.shot-shape-badge--draw,
+.shot-shape-badge--push-draw {
+    color: #0e537f;
+    background: #e6f5ff;
+    border-color: #aed7ef;
+}
+
+.shot-shape-badge--fade,
+.shot-shape-badge--push-fade {
+    color: #5b3c96;
+    background: #f1ebff;
+    border-color: #d2c2ef;
+}
+
+.shot-shape-badge--hook,
+.shot-shape-badge--pull-draw {
+    color: #894909;
+    background: #fff0d9;
+    border-color: #eac58e;
+}
+
+.shot-shape-badge--slice,
+.shot-shape-badge--pull-fade {
+    color: #9b2c24;
+    background: #ffebe8;
+    border-color: #edb9b4;
+}
+
+.shot-shape-badge--push,
+.shot-shape-badge--block {
+    color: #0f5f70;
+    background: #e5f6f8;
+    border-color: #add9df;
+}
+
+.shot-shape-badge--pull {
+    color: #7c3a23;
+    background: #fceee8;
+    border-color: #e6bdae;
+}
+
+
+/* ========================================================
+   EMPTY STATES
+======================================================== */
+
+.shot-empty-state {
+    min-height: 380px;
+}
+
+.empty-state__icon {
+    margin-bottom: 10px;
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.empty-state__actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+
+/* ========================================================
+   SHOT FORM
+======================================================== */
+
+.shot-form {
+    width: 100%;
+}
+
+.shot-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.shot-form-card {
+    overflow: hidden;
+    background: var(--shot-surface);
+    border: 1px solid var(--shot-border);
+    border-radius: var(--shot-radius);
+    box-shadow: var(--shot-shadow-small);
+}
+
+.shot-form-card--full {
+    grid-column: 1 / -1;
+}
+
+.shot-form-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 78px;
+    padding: 17px 20px;
+    background:
+        linear-gradient(
+            135deg,
+            var(--shot-surface) 0%,
+            var(--shot-surface-soft) 100%
+        );
+    border-bottom: 1px solid var(--shot-border);
+}
+
+.shot-form-card__header .panel__eyebrow,
+.shot-form-card__header .panel__title {
+    margin: 0;
+}
+
+.shot-form-card__header .panel__eyebrow {
+    margin-bottom: 4px;
+}
+
+.shot-form-card__body {
+    padding: 20px;
+}
+
+.field-row {
+    display: grid;
+    gap: 15px;
+}
+
+.field-row + .field-row,
+.field-row + .field,
+.field + .field {
+    margin-top: 16px;
+}
+
+.field-row--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-row--four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.shot-form .field {
+    min-width: 0;
+}
+
+.shot-form .field label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--shot-text);
+    font-size: 0.79rem;
+    font-weight: 800;
+}
+
+.shot-form input,
+.shot-form select,
+.shot-form textarea {
+    width: 100%;
+    color: var(--shot-text);
+    background: var(--shot-surface);
+    border: 1px solid var(--shot-border-strong);
+    border-radius: 9px;
+    font: inherit;
+    transition:
+        border-color var(--shot-transition),
+        box-shadow var(--shot-transition),
+        background var(--shot-transition);
+}
+
+.shot-form input,
+.shot-form select {
+    min-height: 44px;
+    padding: 9px 11px;
+}
+
+.shot-form textarea {
+    min-height: 120px;
+    padding: 11px 12px;
+    line-height: 1.55;
+    resize: vertical;
+}
+
+.shot-form input:hover,
+.shot-form select:hover,
+.shot-form textarea:hover {
+    border-color: #aebdb5;
+}
+
+.shot-form input:focus,
+.shot-form select:focus,
+.shot-form textarea:focus {
+    outline: none;
+    border-color: var(--shot-primary);
+    box-shadow: 0 0 0 3px rgba(23, 107, 67, 0.13);
+}
+
+.shot-form input::placeholder,
+.shot-form textarea::placeholder {
+    color: #9aa59f;
+}
+
+.input-with-unit {
+    position: relative;
+}
+
+.input-with-unit input {
+    padding-right: 52px;
+}
+
+.input-unit {
+    position: absolute;
+    top: 50%;
+    right: 11px;
+    color: var(--shot-text-soft);
+    font-size: 0.7rem;
+    font-weight: 800;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.field-help {
+    display: block;
+    margin-top: 6px;
+    color: var(--shot-text-soft);
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+.field-error {
+    margin-top: 6px;
+    color: var(--shot-danger);
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.form-level-error {
+    padding: 13px 16px;
+    margin-top: 18px;
+    color: var(--shot-danger-dark);
+    background: var(--shot-danger-soft);
+    border: 1px solid #efb8b2;
+    border-radius: var(--shot-radius-small);
+    font-weight: 800;
+}
+
+.form-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 22px;
+}
+
+
+/* ========================================================
+   SHOT DETAIL HEADER
+======================================================== */
+
+.shot-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 23px;
+    margin-bottom: 20px;
+    background:
+        linear-gradient(
+            140deg,
+            #ffffff 0%,
+            #f4f8f6 100%
+        );
+    border: 1px solid var(--shot-border);
+    border-radius: var(--shot-radius-large);
+    box-shadow: var(--shot-shadow);
+}
+
+.shot-detail-header__main {
+    min-width: 0;
+}
+
+.shot-detail-header__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px 14px;
+    margin-top: 12px;
+    color: var(--shot-text-muted);
+    font-size: 0.84rem;
+}
+
+.shot-detail-header__meta > span:not(.club-badge) {
+    position: relative;
+}
+
+.shot-detail-header__meta > span:not(.club-badge)::before {
+    margin-right: 10px;
+    color: #bcc6c0;
+    content: "•";
+}
+
+.shot-detail-header__student {
+    color: var(--shot-primary-dark);
+    font-weight: 850;
+    text-decoration: none;
+}
+
+.shot-detail-header__student:hover {
+    color: var(--shot-primary);
+    text-decoration: underline;
+}
+
+.shot-flight-badge {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    min-width: 180px;
+    padding: 15px 18px;
+    background: var(--shot-primary-soft);
+    border: 1px solid #bddfcb;
+    border-radius: var(--shot-radius);
+}
+
+.shot-flight-badge__label {
+    margin-bottom: 6px;
+    color: var(--shot-primary-dark);
+    font-size: 0.66rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.shot-flight-badge strong {
+    color: var(--shot-text);
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+
+/* ========================================================
+   SHOT DETAIL LAYOUT
+======================================================== */
+
+.shot-detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 310px;
+    align-items: start;
+    gap: 20px;
+}
+
+.shot-detail-main,
+.shot-detail-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.shot-detail-sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+
+/* ========================================================
+   SHOT DATA GRIDS
+======================================================== */
+
+.shot-data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0;
+    overflow: hidden;
+    background: var(--shot-border);
+    border: 1px solid var(--shot-border);
+    border-radius: var(--shot-radius-small);
+}
+
+.shot-data-item {
+    min-width: 0;
+    padding: 14px 15px;
+    background: var(--shot-surface);
+}
+
+.shot-data-item dt {
+    margin-bottom: 6px;
+    color: var(--shot-text-muted);
+    font-size: 0.68rem;
+    font-weight: 850;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+}
+
+.shot-data-item dd {
+    margin: 0;
+    color: var(--shot-text);
+    font-size: 1rem;
+    font-weight: 850;
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ========================================================
+   DIRECTION GUIDE
+======================================================== */
+
+.shot-direction-guide {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.shot-direction-guide > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 13px;
+    background: var(--shot-surface-soft);
+    border: 1px solid var(--shot-border);
+    border-radius: var(--shot-radius-small);
+}
+
+.shot-direction-guide strong {
+    color: var(--shot-text);
+    font-size: 0.76rem;
+}
+
+.shot-direction-guide span {
+    color: var(--shot-text-muted);
+    font-size: 0.68rem;
+    line-height: 1.35;
+}
+
+
+/* ========================================================
+   SHOT NOTES
+======================================================== */
+
+.shot-notes {
+    color: var(--shot-text);
+    font-size: 0.92rem;
+    line-height: 1.75;
+    white-space: normal;
+}
+
+
+/* ========================================================
+   SIDEBAR CONTENT
+======================================================== */
+
+.shot-sidebar-list {
+    margin: 0;
+}
+
+.shot-sidebar-list > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--shot-border);
+}
+
+.shot-sidebar-list > div:first-child {
+    padding-top: 0;
+}
+
+.shot-sidebar-list > div:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.shot-sidebar-list dt {
+    color: var(--shot-text-muted);
+    font-size: 0.75rem;
+    font-weight: 750;
+}
+
+.shot-sidebar-list dd {
+    margin: 0;
+    color: var(--shot-text);
+    font-size: 0.78rem;
+    font-weight: 850;
+    text-align: right;
+}
+
+.shot-sidebar-list a {
+    color: var(--shot-primary-dark);
+    text-decoration: none;
+}
+
+.shot-sidebar-list a:hover {
+    color: var(--shot-primary);
+    text-decoration: underline;
+}
+
+.shot-action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+
+/* ========================================================
+   DANGER PANEL
+======================================================== */
+
+.panel--danger {
+    border-color: #efb8b2;
+}
+
+.panel--danger .panel__header {
+    background: var(--shot-danger-soft);
+    border-color: #efb8b2;
+}
+
+.panel--danger .panel__eyebrow,
+.panel--danger .panel__title {
+    color: var(--shot-danger-dark);
+}
+
+.danger-copy {
+    margin: 0 0 15px;
+    color: #7e3932;
+    font-size: 0.8rem;
+    line-height: 1.55;
+}
+
+
+/* ========================================================
+   PANEL FALLBACK SUPPORT
+======================================================== */
+
+.shot-detail-layout .panel,
+.shot-table-panel {
+    background: var(--shot-surface);
+    border: 1px solid var(--shot-border);
+    border-radius: var(--shot-radius);
+    box-shadow: var(--shot-shadow-small);
+}
+
+.shot-detail-layout .panel {
+    overflow: hidden;
+}
+
+.shot-detail-layout .panel__header,
+.shot-table-panel .panel__header {
+    padding: 16px 18px;
+    background: var(--shot-surface-soft);
+    border-bottom: 1px solid var(--shot-border);
+}
+
+.shot-detail-layout .panel__body {
+    padding: 18px;
+}
+
+.panel__eyebrow {
+    margin: 0 0 4px;
+    color: var(--shot-primary);
+    font-size: 0.66rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.panel__title {
+    margin: 0;
+    color: var(--shot-text);
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+
+/* ========================================================
+   HIDDEN TABLE ROWS
+======================================================== */
+
+.shot-row[hidden] {
+    display: none;
+}
+
+
+/* ========================================================
+   DARK MODE
+======================================================== */
+
+@media (prefers-color-scheme: dark) {
+
+    :root {
+        --shot-surface: #18201c;
+        --shot-surface-soft: #1e2823;
+        --shot-surface-muted: #25302a;
+        --shot-border: #34423a;
+        --shot-border-strong: #47574e;
+
+        --shot-text: #eef4f0;
+        --shot-text-muted: #adbab2;
+        --shot-text-soft: #8e9c94;
+
+        --shot-primary: #5ac58a;
+        --shot-primary-dark: #7bd9a4;
+        --shot-primary-soft: #193d2a;
+
+        --shot-success-soft: #173b27;
+        --shot-warning-soft: #422e16;
+        --shot-danger-soft: #40201e;
+        --shot-info-soft: #172f49;
+
+        --shot-shadow:
+            0 14px 34px rgba(0, 0, 0, 0.28);
+
+        --shot-shadow-small:
+            0 5px 16px rgba(0, 0, 0, 0.22);
+    }
+
+    .shot-summary-card,
+    .shot-metric-card,
+    .shot-detail-header,
+    .shot-form-card__header {
+        background:
+            linear-gradient(
+                145deg,
+                var(--shot-surface) 0%,
+                var(--shot-surface-soft) 100%
+            );
+    }
+
+    .shot-table thead,
+    .shot-toolbar {
+        background: #202b25;
+    }
+
+    .shot-table tbody tr:hover {
+        background: #202a25;
+    }
+
+    .shot-form input,
+    .shot-form select,
+    .shot-form textarea,
+    .shot-toolbar__search input,
+    .shot-filter select {
+        color: var(--shot-text);
+        background: #151d19;
+    }
+
+    .shot-form input::placeholder,
+    .shot-form textarea::placeholder {
+        color: #77857d;
+    }
+
+    .club-badge {
+        color: #9ce6bb;
+        background: #1b3a29;
+        border-color: #346448;
+    }
+
+    .shot-shape-badge {
+        color: #c5d0ca;
+        background: #26312b;
+        border-color: #3c4b43;
+    }
+
+    .shot-shape-badge--straight {
+        color: #8fe0b2;
+        background: #173a27;
+        border-color: #316146;
+    }
+
+    .shot-shape-badge--draw,
+    .shot-shape-badge--push-draw {
+        color: #91caee;
+        background: #193346;
+        border-color: #315b73;
+    }
+
+    .shot-shape-badge--fade,
+    .shot-shape-badge--push-fade {
+        color: #c1a7f4;
+        background: #30254a;
+        border-color: #554377;
+    }
+
+    .shot-shape-badge--hook,
+    .shot-shape-badge--pull-draw {
+        color: #edbf76;
+        background: #413019;
+        border-color: #6b512b;
+    }
+
+    .shot-shape-badge--slice,
+    .shot-shape-badge--pull-fade {
+        color: #efaaa3;
+        background: #442420;
+        border-color: #71413b;
+    }
+
+    .shot-shape-badge--push,
+    .shot-shape-badge--block {
+        color: #91d8df;
+        background: #17363b;
+        border-color: #315f66;
+    }
+
+    .shot-shape-badge--pull {
+        color: #e7b49f;
+        background: #402a22;
+        border-color: #68463a;
+    }
+
+}
+
+
+/* ========================================================
+   RESPONSIVE — LARGE TABLET
+======================================================== */
+
+@media (max-width: 1180px) {
+
+    .shot-summary-grid,
+    .shot-metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .field-row--four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .shot-detail-layout {
+        grid-template-columns: minmax(0, 1fr) 280px;
+    }
+
+    .shot-session-banner {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+/* ========================================================
+   RESPONSIVE — TABLET
+======================================================== */
+
+@media (max-width: 900px) {
+
+    .shot-list-header,
+    .shot-detail-header {
+        flex-direction: column;
+    }
+
+    .shot-flight-badge {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .shot-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .shot-detail-sidebar {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .shot-detail-sidebar .panel--danger {
+        grid-column: 1 / -1;
+    }
+
+    .shot-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .shot-form-card--full {
+        grid-column: auto;
+    }
+
+    .shot-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .shot-toolbar__search {
+        width: 100%;
+        max-width: none;
+    }
+
+    .shot-toolbar__filters {
+        width: 100%;
+    }
+
+    .shot-filter {
+        flex: 1 1 145px;
+    }
+
+    .shot-filter select {
+        width: 100%;
+        min-width: 0;
+    }
+
+}
+
+
+/* ========================================================
+   RESPONSIVE — MOBILE
+======================================================== */
+
+@media (max-width: 640px) {
+
+    .shot-summary-grid,
+    .shot-metric-grid,
+    .shot-session-banner,
+    .shot-data-grid,
+    .shot-detail-sidebar,
+    .shot-direction-guide,
+    .field-row--two,
+    .field-row--four {
+        grid-template-columns: 1fr;
+    }
+
+    .shot-summary-card,
+    .shot-metric-card {
+        min-height: 110px;
+    }
+
+    .shot-session-banner > div {
+        min-height: 72px;
+    }
+
+    .shot-detail-header,
+    .shot-form-card__body,
+    .shot-form-card__header {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .shot-detail-header__meta {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .shot-detail-header__meta > span:not(.club-badge)::before {
+        display: none;
+    }
+
+    .shot-toolbar__filters {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .shot-filter {
+        width: 100%;
+    }
+
+    .shot-filter select,
+    #clear-shot-filters {
+        width: 100%;
+    }
+
+    .form-buttons {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .form-buttons .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .page-header__actions,
+    .topbar-action-group,
+    .empty-state__actions {
+        align-items: stretch;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .page-header__actions .button,
+    .topbar-action-group .button,
+    .empty-state__actions .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+}
+
+
+/* ========================================================
+   PRINT
+======================================================== */
+
+@media print {
+
+    .topbar-action-group,
+    .page-header__actions,
+    .shot-toolbar,
+    .shot-row-actions,
+    .shot-action-list,
+    .panel--danger,
+    .form-buttons {
+        display: none !important;
+    }
+
+    .shot-detail-layout {
+        display: block;
+    }
+
+    .shot-detail-sidebar {
+        position: static;
+        margin-top: 18px;
+    }
+
+    .shot-summary-card,
+    .shot-metric-card,
+    .shot-detail-header,
+    .shot-detail-layout .panel,
+    .shot-table-panel {
+        box-shadow: none;
+        break-inside: avoid;
+    }
+
+    .table-scroll {
+        overflow: visible;
+    }
+
+    .shot-table {
+        min-width: 0;
+        font-size: 8pt;
+    }
+
+}

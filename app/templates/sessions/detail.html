@@ -1,0 +1,1425 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', path='css/sessions.css') }}"
+>
+{% endblock %}
+
+{% block topbar_actions %}
+<div class="topbar-action-group">
+
+    <a
+        class="button button--secondary"
+        href="/sessions/{{ session.id }}/edit"
+    >
+        Edit Session
+    </a>
+
+    <a
+        class="button button--primary"
+        href="/garmin/import?session_id={{ session.id }}"
+    >
+        Import Garmin Data
+    </a>
+
+</div>
+{% endblock %}
+
+{% block content %}
+
+{% if created %}
+<div
+    class="alert alert--success"
+    role="status"
+>
+    Coaching session created successfully.
+</div>
+{% endif %}
+
+{% if updated %}
+<div
+    class="alert alert--success"
+    role="status"
+>
+    Coaching session updated successfully.
+</div>
+{% endif %}
+
+{% if imported %}
+<div
+    class="alert alert--success"
+    role="status"
+>
+    Launch-monitor data imported successfully.
+</div>
+{% endif %}
+
+
+<section class="session-detail-header">
+
+    <div>
+
+        <p class="section-eyebrow">
+            Coaching Session
+        </p>
+
+        <h2 class="section-title">
+            {{ session.session_type or "Coaching Session" }}
+        </h2>
+
+        <div class="session-detail-meta">
+
+            {% if session.session_date %}
+            <span>
+                {{ session.session_date.strftime("%B %d, %Y") }}
+            </span>
+            {% endif %}
+
+            {% if student %}
+            <a href="/students/{{ student.id }}">
+                {{ student.full_name }}
+            </a>
+            {% endif %}
+
+            {% if session.location %}
+            <span>
+                {{ session.location }}
+            </span>
+            {% endif %}
+
+            {% if session.duration_minutes %}
+            <span>
+                {{ session.duration_minutes }} minutes
+            </span>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <div class="session-detail-header__actions">
+
+        <a
+            class="button button--secondary"
+            href="/sessions"
+        >
+            Back to Sessions
+        </a>
+
+        {% if student %}
+        <a
+            class="button button--secondary"
+            href="/students/{{ student.id }}"
+        >
+            Student Profile
+        </a>
+        {% endif %}
+
+        <a
+            class="button button--secondary"
+            href="/sessions/{{ session.id }}/edit"
+        >
+            Edit Session
+        </a>
+
+        <a
+            class="button button--primary"
+            href="/garmin/import?session_id={{ session.id }}"
+        >
+            Import Garmin Data
+        </a>
+
+    </div>
+
+</section>
+
+
+<section
+    class="session-metric-grid"
+    aria-label="Session launch monitor summary"
+>
+
+    <article class="session-metric-card">
+
+        <span class="session-metric-card__label">
+            Total Shots
+        </span>
+
+        <strong class="session-metric-card__value">
+            {{ shot_summary.shot_count }}
+        </strong>
+
+        <span class="session-metric-card__note">
+            Recorded in this session
+        </span>
+
+    </article>
+
+
+    <article class="session-metric-card">
+
+        <span class="session-metric-card__label">
+            Average Carry
+        </span>
+
+        <strong class="session-metric-card__value">
+
+            {% if shot_summary.average_carry is not none %}
+                {{ "%.1f"|format(shot_summary.average_carry) }}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+        <span class="session-metric-card__note">
+            Yards
+        </span>
+
+    </article>
+
+
+    <article class="session-metric-card">
+
+        <span class="session-metric-card__label">
+            Average Ball Speed
+        </span>
+
+        <strong class="session-metric-card__value">
+
+            {% if shot_summary.average_ball_speed is not none %}
+                {{ "%.1f"|format(shot_summary.average_ball_speed) }}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+        <span class="session-metric-card__note">
+            Miles per hour
+        </span>
+
+    </article>
+
+
+    <article class="session-metric-card">
+
+        <span class="session-metric-card__label">
+            Average Club Speed
+        </span>
+
+        <strong class="session-metric-card__value">
+
+            {% if shot_summary.average_club_speed is not none %}
+                {{ "%.1f"|format(shot_summary.average_club_speed) }}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+        <span class="session-metric-card__note">
+            Miles per hour
+        </span>
+
+    </article>
+
+
+    <article class="session-metric-card">
+
+        <span class="session-metric-card__label">
+            Average Smash
+        </span>
+
+        <strong class="session-metric-card__value">
+
+            {% if shot_summary.average_smash is not none %}
+                {{ "%.2f"|format(shot_summary.average_smash) }}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+        <span class="session-metric-card__note">
+            Strike efficiency
+        </span>
+
+    </article>
+
+
+    <article class="session-metric-card">
+
+        <span class="session-metric-card__label">
+            Average Launch
+        </span>
+
+        <strong class="session-metric-card__value">
+
+            {% if shot_summary.average_launch is not none %}
+                {{ "%.1f°"|format(shot_summary.average_launch) }}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+        <span class="session-metric-card__note">
+            Launch angle
+        </span>
+
+    </article>
+
+
+    <article class="session-metric-card">
+
+        <span class="session-metric-card__label">
+            Average Spin
+        </span>
+
+        <strong class="session-metric-card__value">
+
+            {% if shot_summary.average_spin is not none %}
+                {{ "%.0f"|format(shot_summary.average_spin) }}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+        <span class="session-metric-card__note">
+            Revolutions per minute
+        </span>
+
+    </article>
+
+
+    <article class="session-metric-card">
+
+        <span class="session-metric-card__label">
+            Face / Path
+        </span>
+
+        <strong class="session-metric-card__value session-metric-card__value--compact">
+
+            {% if shot_summary.average_face is not none %}
+                {{ "%+.1f°"|format(shot_summary.average_face) }}
+            {% else %}
+                —
+            {% endif %}
+
+            <span aria-hidden="true">/</span>
+
+            {% if shot_summary.average_path is not none %}
+                {{ "%+.1f°"|format(shot_summary.average_path) }}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+        <span class="session-metric-card__note">
+            Face angle / club path
+        </span>
+
+    </article>
+
+</section>
+
+
+<section class="session-detail-grid">
+
+    <div class="session-detail-grid__main">
+
+        <article class="session-panel">
+
+            <div class="session-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Launch Monitor
+                    </p>
+
+                    <h3 class="panel__title">
+                        Shot Data
+                    </h3>
+
+                </div>
+
+                <div class="session-panel__header-actions">
+
+                    {% if shots %}
+                    <span class="record-count">
+                        {{ shots | length }} shots
+                    </span>
+                    {% endif %}
+
+                    <a
+                        class="text-link"
+                        href="/garmin/import?session_id={{ session.id }}"
+                    >
+                        Import Data
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            {% if shots %}
+
+            <div class="shot-table-toolbar">
+
+                <div class="search-field">
+
+                    <label
+                        class="visually-hidden"
+                        for="shot-search"
+                    >
+                        Search shot data
+                    </label>
+
+                    <span
+                        class="search-field__icon"
+                        aria-hidden="true"
+                    >
+                        ⌕
+                    </span>
+
+                    <input
+                        id="shot-search"
+                        class="search-field__input"
+                        type="search"
+                        placeholder="Search club or shot shape"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+                <div class="filter-field">
+
+                    <label
+                        class="visually-hidden"
+                        for="club-filter"
+                    >
+                        Filter by club
+                    </label>
+
+                    <select
+                        id="club-filter"
+                        class="select-control"
+                    >
+                        <option value="all">
+                            All Clubs
+                        </option>
+
+                        {% set club_names = [] %}
+
+                        {% for shot in shots %}
+                            {% if shot.club and shot.club not in club_names %}
+                                {% set _ = club_names.append(shot.club) %}
+                            {% endif %}
+                        {% endfor %}
+
+                        {% for club_name in club_names | sort %}
+                        <option value="{{ club_name | lower }}">
+                            {{ club_name }}
+                        </option>
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table
+                    class="shot-table"
+                    id="shot-table"
+                >
+
+                    <thead>
+
+                        <tr>
+
+                            <th scope="col">
+                                Shot
+                            </th>
+
+                            <th scope="col">
+                                Club
+                            </th>
+
+                            <th scope="col">
+                                Carry
+                            </th>
+
+                            <th scope="col">
+                                Total
+                            </th>
+
+                            <th scope="col">
+                                Ball Speed
+                            </th>
+
+                            <th scope="col">
+                                Club Speed
+                            </th>
+
+                            <th scope="col">
+                                Smash
+                            </th>
+
+                            <th scope="col">
+                                Launch
+                            </th>
+
+                            <th scope="col">
+                                Spin
+                            </th>
+
+                            <th scope="col">
+                                Path
+                            </th>
+
+                            <th scope="col">
+                                Face
+                            </th>
+
+                            <th scope="col">
+                                Shape
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for shot in shots %}
+
+                        <tr
+                            class="shot-row"
+                            data-club="{{
+                                shot.club
+                                | default('', true)
+                                | lower
+                            }}"
+                            data-shape="{{
+                                shot.shot_shape
+                                | default('', true)
+                                | lower
+                            }}"
+                        >
+
+                            <td>
+                                <strong>
+                                    {{ shot.shot_number or loop.index }}
+                                </strong>
+                            </td>
+
+
+                            <td>
+
+                                {% if shot.club %}
+                                <span class="club-badge">
+                                    {{ shot.club }}
+                                </span>
+                                {% else %}
+                                <span class="table-muted">
+                                    —
+                                </span>
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+                                {% if shot.carry_distance is not none %}
+                                    {{ "%.1f"|format(shot.carry_distance) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+                                {% if shot.total_distance is not none %}
+                                    {{ "%.1f"|format(shot.total_distance) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+                                {% if shot.ball_speed is not none %}
+                                    {{ "%.1f"|format(shot.ball_speed) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+                                {% if shot.club_speed is not none %}
+                                    {{ "%.1f"|format(shot.club_speed) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+                                {% if shot.smash_factor is not none %}
+                                    {{ "%.2f"|format(shot.smash_factor) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+                                {% if shot.launch_angle is not none %}
+                                    {{ "%.1f°"|format(shot.launch_angle) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+                                {% if shot.spin_rate is not none %}
+                                    {{ "%.0f"|format(shot.spin_rate) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+                                {% if shot.club_path is not none %}
+                                    {{ "%+.1f°"|format(shot.club_path) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+                                {% if shot.club_face is not none %}
+                                    {{ "%+.1f°"|format(shot.club_face) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+
+                                {% if shot.shot_shape %}
+                                <span class="shot-shape-badge">
+                                    {{ shot.shot_shape }}
+                                </span>
+                                {% else %}
+                                <span class="table-muted">
+                                    —
+                                </span>
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <div
+                class="table-empty-filter"
+                id="shot-filter-empty"
+                hidden
+            >
+
+                <span
+                    class="empty-state__icon"
+                    aria-hidden="true"
+                >
+                    ⌕
+                </span>
+
+                <h4>
+                    No matching shots
+                </h4>
+
+                <p>
+                    Try another club or search term.
+                </p>
+
+                <button
+                    class="button button--secondary"
+                    id="clear-shot-filters"
+                    type="button"
+                >
+                    Clear Filters
+                </button>
+
+            </div>
+
+            {% else %}
+
+            <div class="empty-state">
+
+                <span
+                    class="empty-state__icon"
+                    aria-hidden="true"
+                >
+                    ⇧
+                </span>
+
+                <h4>
+                    No launch-monitor data
+                </h4>
+
+                <p>
+                    Import a Garmin R10 CSV file to add shot data,
+                    club averages, and performance metrics to this
+                    coaching session.
+                </p>
+
+                <a
+                    class="button button--primary"
+                    href="/garmin/import?session_id={{ session.id }}"
+                >
+                    Import Garmin Data
+                </a>
+
+            </div>
+
+            {% endif %}
+
+        </article>
+
+
+        <article class="session-panel">
+
+            <div class="session-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Club Performance
+                    </p>
+
+                    <h3 class="panel__title">
+                        Club Summary
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            {% if club_summary %}
+
+            <div class="table-wrapper">
+
+                <table class="club-summary-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th scope="col">
+                                Club
+                            </th>
+
+                            <th scope="col">
+                                Shots
+                            </th>
+
+                            <th scope="col">
+                                Avg. Carry
+                            </th>
+
+                            <th scope="col">
+                                Avg. Total
+                            </th>
+
+                            <th scope="col">
+                                Ball Speed
+                            </th>
+
+                            <th scope="col">
+                                Club Speed
+                            </th>
+
+                            <th scope="col">
+                                Launch
+                            </th>
+
+                            <th scope="col">
+                                Spin
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for club in club_summary %}
+
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    {{ club.club }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ club.shot_count }}
+                            </td>
+
+                            <td>
+                                {% if club.average_carry is not none %}
+                                    {{ "%.1f"|format(club.average_carry) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if club.average_total is not none %}
+                                    {{ "%.1f"|format(club.average_total) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if club.average_ball_speed is not none %}
+                                    {{ "%.1f"|format(club.average_ball_speed) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if club.average_club_speed is not none %}
+                                    {{ "%.1f"|format(club.average_club_speed) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if club.average_launch is not none %}
+                                    {{ "%.1f°"|format(club.average_launch) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if club.average_spin is not none %}
+                                    {{ "%.0f"|format(club.average_spin) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <div class="inline-empty-state inline-empty-state--panel">
+
+                <p>
+                    Club averages will appear after shot data is imported.
+                </p>
+
+            </div>
+
+            {% endif %}
+
+        </article>
+
+
+        <article class="session-panel">
+
+            <div class="session-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Lesson Review
+                    </p>
+
+                    <h3 class="panel__title">
+                        Coaching Notes
+                    </h3>
+
+                </div>
+
+                <a
+                    class="text-link"
+                    href="/sessions/{{ session.id }}/edit"
+                >
+                    Edit Notes
+                </a>
+
+            </div>
+
+            <div class="session-notes-grid">
+
+                <section class="session-note-block">
+
+                    <h4>
+                        Session Summary
+                    </h4>
+
+                    {% if session.summary %}
+                    <div class="long-form-content">
+                        {{ session.summary | replace("\n", "<br>") | safe }}
+                    </div>
+                    {% else %}
+                    <p class="table-muted">
+                        No session summary recorded.
+                    </p>
+                    {% endif %}
+
+                </section>
+
+
+                <section class="session-note-block">
+
+                    <h4>
+                        Coach Notes
+                    </h4>
+
+                    {% if session.coach_notes %}
+                    <div class="long-form-content">
+                        {{ session.coach_notes | replace("\n", "<br>") | safe }}
+                    </div>
+                    {% else %}
+                    <p class="table-muted">
+                        No coach notes recorded.
+                    </p>
+                    {% endif %}
+
+                </section>
+
+
+                <section class="session-note-block">
+
+                    <h4>
+                        Student Feedback
+                    </h4>
+
+                    {% if session.student_feedback %}
+                    <div class="long-form-content">
+                        {{
+                            session.student_feedback
+                            | replace("\n", "<br>")
+                            | safe
+                        }}
+                    </div>
+                    {% else %}
+                    <p class="table-muted">
+                        No student feedback recorded.
+                    </p>
+                    {% endif %}
+
+                </section>
+
+
+                <section class="session-note-block session-note-block--accent">
+
+                    <h4>
+                        Next Practice Plan
+                    </h4>
+
+                    {% if session.next_steps %}
+                    <div class="long-form-content">
+                        {{ session.next_steps | replace("\n", "<br>") | safe }}
+                    </div>
+                    {% else %}
+                    <p class="table-muted">
+                        No next-step practice plan recorded.
+                    </p>
+                    {% endif %}
+
+                </section>
+
+            </div>
+
+        </article>
+
+    </div>
+
+
+    <aside class="session-detail-grid__sidebar">
+
+        <article class="session-panel">
+
+            <div class="session-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Session Information
+                    </p>
+
+                    <h3 class="panel__title">
+                        Details
+                    </h3>
+
+                </div>
+
+            </div>
+
+            <div class="session-information-list">
+
+                <div class="session-information-item">
+
+                    <span class="session-information-item__label">
+                        Student
+                    </span>
+
+                    {% if student %}
+                    <a href="/students/{{ student.id }}">
+                        {{ student.full_name }}
+                    </a>
+                    {% else %}
+                    <strong>
+                        Student unavailable
+                    </strong>
+                    {% endif %}
+
+                </div>
+
+
+                <div class="session-information-item">
+
+                    <span class="session-information-item__label">
+                        Date
+                    </span>
+
+                    <strong>
+                        {% if session.session_date %}
+                            {{ session.session_date.strftime("%B %d, %Y") }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </strong>
+
+                </div>
+
+
+                <div class="session-information-item">
+
+                    <span class="session-information-item__label">
+                        Session Type
+                    </span>
+
+                    <strong>
+                        {{ session.session_type or "Not specified" }}
+                    </strong>
+
+                </div>
+
+
+                <div class="session-information-item">
+
+                    <span class="session-information-item__label">
+                        Focus Area
+                    </span>
+
+                    <strong>
+                        {{ session.focus_area or "Not specified" }}
+                    </strong>
+
+                </div>
+
+
+                <div class="session-information-item">
+
+                    <span class="session-information-item__label">
+                        Primary Club
+                    </span>
+
+                    {% if session.primary_club %}
+                    <span class="club-badge">
+                        {{ session.primary_club }}
+                    </span>
+                    {% else %}
+                    <strong>
+                        Not specified
+                    </strong>
+                    {% endif %}
+
+                </div>
+
+
+                <div class="session-information-item">
+
+                    <span class="session-information-item__label">
+                        Location
+                    </span>
+
+                    <strong>
+                        {{ session.location or "Not specified" }}
+                    </strong>
+
+                </div>
+
+
+                <div class="session-information-item">
+
+                    <span class="session-information-item__label">
+                        Duration
+                    </span>
+
+                    <strong>
+                        {% if session.duration_minutes %}
+                            {{ session.duration_minutes }} minutes
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </strong>
+
+                </div>
+
+
+                <div class="session-information-item">
+
+                    <span class="session-information-item__label">
+                        Weather
+                    </span>
+
+                    <strong>
+                        {{ session.weather or "Not specified" }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+        <article class="session-panel">
+
+            <div class="session-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Workflow
+                    </p>
+
+                    <h3 class="panel__title">
+                        Quick Actions
+                    </h3>
+
+                </div>
+
+            </div>
+
+            <div class="session-quick-actions">
+
+                <a
+                    class="session-quick-action"
+                    href="/garmin/import?session_id={{ session.id }}"
+                >
+
+                    <span
+                        class="session-quick-action__icon"
+                        aria-hidden="true"
+                    >
+                        ⇧
+                    </span>
+
+                    <span>
+
+                        <strong>
+                            Import R10 Data
+                        </strong>
+
+                        <small>
+                            Upload Garmin shot data
+                        </small>
+
+                    </span>
+
+                </a>
+
+
+                <a
+                    class="session-quick-action"
+                    href="/shots/new?session_id={{ session.id }}"
+                >
+
+                    <span
+                        class="session-quick-action__icon"
+                        aria-hidden="true"
+                    >
+                        ＋
+                    </span>
+
+                    <span>
+
+                        <strong>
+                            Add Shot Manually
+                        </strong>
+
+                        <small>
+                            Enter a launch-monitor result
+                        </small>
+
+                    </span>
+
+                </a>
+
+
+                <a
+                    class="session-quick-action"
+                    href="/analysis/session/{{ session.id }}"
+                >
+
+                    <span
+                        class="session-quick-action__icon"
+                        aria-hidden="true"
+                    >
+                        ⌁
+                    </span>
+
+                    <span>
+
+                        <strong>
+                            Analyze Session
+                        </strong>
+
+                        <small>
+                            Review performance trends
+                        </small>
+
+                    </span>
+
+                </a>
+
+
+                <a
+                    class="session-quick-action"
+                    href="/reports/session/{{ session.id }}"
+                >
+
+                    <span
+                        class="session-quick-action__icon"
+                        aria-hidden="true"
+                    >
+                        ▤
+                    </span>
+
+                    <span>
+
+                        <strong>
+                            Coaching Report
+                        </strong>
+
+                        <small>
+                            Build a session report
+                        </small>
+
+                    </span>
+
+                </a>
+
+            </div>
+
+        </article>
+
+
+        <article class="session-panel session-panel--danger">
+
+            <div class="session-panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow panel__eyebrow--danger">
+                        Record Management
+                    </p>
+
+                    <h3 class="panel__title">
+                        Delete Session
+                    </h3>
+
+                </div>
+
+            </div>
+
+            <div class="session-panel__body">
+
+                <p class="danger-description">
+                    Deleting this session may also remove its imported
+                    shot data and related analysis records.
+                </p>
+
+                <form
+                    method="post"
+                    action="/sessions/{{ session.id }}/delete"
+                    onsubmit="return confirmDelete(
+                        'Delete this coaching session and all related shot data?'
+                    );"
+                >
+
+                    <button
+                        class="button button--danger"
+                        type="submit"
+                    >
+                        Delete Session
+                    </button>
+
+                </form>
+
+            </div>
+
+        </article>
+
+    </aside>
+
+</section>
+
+{% endblock %}
+
+
+{% block page_scripts %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput =
+        document.getElementById("shot-search");
+
+    const clubFilter =
+        document.getElementById("club-filter");
+
+    const shotRows =
+        Array.from(
+            document.querySelectorAll(".shot-row")
+        );
+
+    const emptyMessage =
+        document.getElementById("shot-filter-empty");
+
+    const clearButton =
+        document.getElementById("clear-shot-filters");
+
+
+    function filterShots() {
+
+        const searchValue =
+            searchInput
+                ? searchInput.value.trim().toLowerCase()
+                : "";
+
+        const clubValue =
+            clubFilter
+                ? clubFilter.value
+                : "all";
+
+        let visibleCount = 0;
+
+
+        shotRows.forEach(function (row) {
+
+            const searchableText = [
+                row.dataset.club || "",
+                row.dataset.shape || ""
+            ].join(" ");
+
+            const matchesSearch =
+                !searchValue ||
+                searchableText.includes(searchValue);
+
+            const matchesClub =
+                clubValue === "all" ||
+                row.dataset.club === clubValue;
+
+            const isVisible =
+                matchesSearch && matchesClub;
+
+            row.hidden = !isVisible;
+
+            if (isVisible) {
+                visibleCount += 1;
+            }
+
+        });
+
+
+        if (emptyMessage) {
+            emptyMessage.hidden = visibleCount !== 0;
+        }
+
+    }
+
+
+    searchInput?.addEventListener(
+        "input",
+        filterShots
+    );
+
+
+    clubFilter?.addEventListener(
+        "change",
+        filterShots
+    );
+
+
+    clearButton?.addEventListener(
+        "click",
+        function () {
+
+            if (searchInput) {
+                searchInput.value = "";
+            }
+
+            if (clubFilter) {
+                clubFilter.value = "all";
+            }
+
+            filterShots();
+
+            searchInput?.focus();
+
+        }
+    );
+
+});
+
+</script>
+
+{% endblock %}

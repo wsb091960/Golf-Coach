@@ -1,0 +1,164 @@
+/* ==========================================================
+   WSBCO Golf Coach
+   Top-Down Ball Flight
+   Phase 4.1.4
+   ========================================================== */
+
+.topdown-flight-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.topdown-flight-card .card-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.topdown-flight-card .section-kicker {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #7f8ea3;
+}
+
+.topdown-flight-card h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #172033;
+}
+
+.topdown-flight-card canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 360px;
+    border: 1px solid #dce3eb;
+    border-radius: 12px;
+    background: linear-gradient(
+        180deg,
+        rgba(247, 250, 252, 0.98),
+        rgba(240, 245, 248, 0.98)
+    );
+    box-sizing: border-box;
+}
+
+#topdown-flight-canvas {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 1000 / 430;
+    cursor: default;
+}
+
+.topdown-flight-card .simulation-note,
+.simulation-note {
+    margin-top: 10px;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #6f7d90;
+}
+
+.selected-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.selected-metrics > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 72px;
+    padding: 10px 12px;
+    border: 1px solid #e1e6ed;
+    border-radius: 10px;
+    background: #f8fafc;
+    box-sizing: border-box;
+}
+
+.selected-metrics span {
+    margin-bottom: 5px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7b8797;
+}
+
+.selected-metrics strong {
+    font-size: 1.12rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: #182335;
+    font-variant-numeric: tabular-nums;
+}
+
+#flight-canvas,
+#dispersion-canvas,
+#face-path-canvas {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+
+.performance-page .performance-card {
+    box-sizing: border-box;
+}
+
+.performance-page canvas {
+    image-rendering: auto;
+}
+
+@media (max-width: 1000px) {
+    .topdown-flight-card canvas {
+        min-height: 320px;
+    }
+
+    .selected-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .topdown-flight-card {
+        overflow-x: hidden;
+    }
+
+    .topdown-flight-card canvas {
+        min-height: 280px;
+        border-radius: 8px;
+    }
+
+    #topdown-flight-canvas {
+        aspect-ratio: 4 / 3;
+    }
+
+    .selected-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .selected-metrics > div {
+        min-height: 66px;
+        padding: 9px 10px;
+    }
+
+    .selected-metrics strong {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .topdown-flight-card canvas {
+        min-height: 240px;
+    }
+}

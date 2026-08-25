@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<link rel="stylesheet"
+      href="{{ url_for('static', path='css/students.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+
+        <p class="section-eyebrow">
+            Player Management
+        </p>
+
+        <h2 class="section-title">
+            {{ page_heading }}
+        </h2>
+
+    </div>
+
+</div>
+
+
+<form
+    method="post"
+    action="{{ form_action }}"
+    class="student-form"
+>
+
+<div class="form-grid">
+
+<!-- ===================================================== -->
+<!-- PERSONAL INFORMATION -->
+<!-- ===================================================== -->
+
+<section class="card">
+
+<h3>Personal Information</h3>
+
+<div class="field">
+
+<label>First Name *</label>
+
+<input
+    type="text"
+    name="first_name"
+    required
+    value="{{ form_values.first_name }}"
+>
+
+{% if errors.first_name %}
+<div class="field-error">
+{{ errors.first_name }}
+</div>
+{% endif %}
+
+</div>
+
+
+<div class="field">
+
+<label>Last Name *</label>
+
+<input
+    type="text"
+    name="last_name"
+    required
+    value="{{ form_values.last_name }}"
+>
+
+{% if errors.last_name %}
+<div class="field-error">
+{{ errors.last_name }}
+</div>
+{% endif %}
+
+</div>
+
+
+<div class="field">
+
+<label>Email</label>
+
+<input
+    type="email"
+    name="email"
+    value="{{ form_values.email }}"
+>
+
+{% if errors.email %}
+<div class="field-error">
+{{ errors.email }}
+</div>
+{% endif %}
+
+</div>
+
+
+<div class="field">
+
+<label>Phone</label>
+
+<input
+    type="text"
+    name="phone"
+    value="{{ form_values.phone }}"
+>
+
+</div>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- GOLF -->
+<!-- ===================================================== -->
+
+<section class="card">
+
+<h3>Golf Information</h3>
+
+<div class="field">
+
+<label>Handicap Index</label>
+
+<input
+    type="number"
+    step=".1"
+    name="handicap_index"
+    value="{{ form_values.handicap_index }}"
+>
+
+{% if errors.handicap_index %}
+<div class="field-error">
+{{ errors.handicap_index }}
+</div>
+{% endif %}
+
+</div>
+
+
+<div class="field">
+
+<label>Skill Level</label>
+
+<select name="skill_level">
+
+<option value="">Select</option>
+
+<option
+{% if form_values.skill_level=="Beginner" %}selected{% endif %}
+>
+Beginner
+</option>
+
+<option
+{% if form_values.skill_level=="Intermediate" %}selected{% endif %}
+>
+Intermediate
+</option>
+
+<option
+{% if form_values.skill_level=="Advanced" %}selected{% endif %}
+>
+Advanced
+</option>
+
+<option
+{% if form_values.skill_level=="Elite" %}selected{% endif %}
+>
+Elite
+</option>
+
+</select>
+
+</div>
+
+
+<div class="field">
+
+<label>Dominant Hand</label>
+
+<select name="dominant_hand">
+
+<option value="">Select</option>
+
+<option
+{% if form_values.dominant_hand=="Right" %}selected{% endif %}
+>
+Right
+</option>
+
+<option
+{% if form_values.dominant_hand=="Left" %}selected{% endif %}
+>
+Left
+</option>
+
+</select>
+
+</div>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- COACHING -->
+<!-- ===================================================== -->
+
+<section class="card">
+
+<h3>Coaching</h3>
+
+<div class="field">
+
+<label>Goals</label>
+
+<textarea
+name="goals"
+rows="4"
+>{{ form_values.goals }}</textarea>
+
+</div>
+
+
+<div class="field">
+
+<label>Coach Notes</label>
+
+<textarea
+name="notes"
+rows="8"
+>{{ form_values.notes }}</textarea>
+
+</div>
+
+
+<div class="checkbox-row">
+
+<label>
+
+<input
+type="checkbox"
+name="is_active"
+
+{% if form_values.is_active %}
+checked
+{% endif %}
+
+>
+
+Active Student
+
+</label>
+
+</div>
+
+</section>
+
+</div>
+
+
+<div class="form-buttons">
+
+<a
+class="button button--secondary"
+href="/students"
+>
+
+Cancel
+
+</a>
+
+
+<button
+type="submit"
+class="button button--primary"
+>
+
+{{ submit_label }}
+
+</button>
+
+</div>
+
+</form>
+
+{% endblock %}

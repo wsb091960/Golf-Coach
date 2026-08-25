@@ -1,206 +1,534 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title or "Dashboard" }} | WSBCO Golf Coach</title>
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-  >
-
-  <meta
-    name="description"
-    content="WSBCO Golf Coach professional coaching dashboard"
-  >
-
-  <title>{{ page_title }} | {{ app_name }}</title>
-
-  <link
-    rel="stylesheet"
-    href="{{ url_for('static', path='/css/dashboard.css') }}"
-  >
+    <link
+        rel="stylesheet"
+        href="/static/css/dashboard.css"
+    >
 </head>
 
 <body>
-  <div class="app-shell">
+<div class="app-shell">
 
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark" aria-hidden="true">
-          GC
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-mark">GC</div>
+
+            <div class="brand-copy">
+                <div class="brand-name">WSBCO</div>
+                <div class="brand-subtitle">Golf Coach</div>
+            </div>
         </div>
 
-        <div>
-          <p class="brand-eyebrow">
-            Professional Coaching Platform
-          </p>
+        <nav class="sidebar-nav">
 
-          <h1>{{ app_name }}</h1>
+            <a
+                class="nav-item active"
+                href="/"
+            >
+                <span class="nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a
+                class="nav-item"
+                href="/students"
+            >
+                <span class="nav-icon">♙</span>
+                <span>Students</span>
+            </a>
+
+            <a
+                class="nav-item"
+                href="/sessions"
+            >
+                <span class="nav-icon">▣</span>
+                <span>Sessions</span>
+            </a>
+
+            <a
+                class="nav-item"
+                href="/imports/garmin"
+            >
+                <span class="nav-icon">⇧</span>
+                <span>Garmin Import</span>
+            </a>
+
+            <a
+                class="nav-item"
+                href="/analysis"
+            >
+                <span class="nav-icon">⌁</span>
+                <span>Coaching Analysis</span>
+            </a>
+
+            <a
+                class="nav-item"
+                href="/biomechanics"
+            >
+                <span class="nav-icon">◇</span>
+                <span>Biomechanics</span>
+            </a>
+
+            <a
+                class="nav-item"
+                href="/gapping"
+            >
+                <span class="nav-icon">↕</span>
+                <span>Gapping</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="system-label">Professional Coaching Platform</div>
+            <div class="system-status">
+                <span class="status-dot"></span>
+                System Ready
+            </div>
         </div>
-      </div>
 
-      <div class="topbar-actions">
-        <span class="version">
-          Version {{ version }}
-        </span>
+    </aside>
 
-        <button
-          class="profile-button"
-          type="button"
-          aria-label="Coach profile"
-        >
-          WB
-        </button>
-      </div>
-    </header>
 
     <main class="main-content">
 
-      <section class="welcome-panel">
-        <div class="welcome-copy">
-          <p class="section-eyebrow">
-            Coach Dashboard
-          </p>
+        <header class="topbar">
 
-          <h2>
-            Build better players with connected coaching data.
-          </h2>
+            <div>
+                <div class="eyebrow">
+                    {{ page_eyebrow or "WSBCO Golf Coach" }}
+                </div>
 
-          <p>
-            Manage students, organize lesson sessions, import Garmin R10
-            launch data, and turn performance metrics into clear coaching
-            priorities.
-          </p>
-        </div>
+                <h1>
+                    {{ page_heading or "Dashboard" }}
+                </h1>
 
-        <div class="welcome-actions">
-          <a class="button button-primary" href="/students">
-            Add Student
-          </a>
-
-          <a class="button button-secondary" href="/sessions">
-            New Session
-          </a>
-        </div>
-      </section>
-
-      <section aria-labelledby="summary-heading">
-        <div class="section-heading">
-          <div>
-            <p class="section-eyebrow">
-              Overview
-            </p>
-
-            <h2 id="summary-heading">
-              Coaching activity
-            </h2>
-          </div>
-
-          <span class="system-status">
-            <span class="status-dot"></span>
-            System online
-          </span>
-        </div>
-
-        <div class="summary-grid">
-          {% for card in summary_cards %}
-          <article class="summary-card">
-            <p class="summary-label">
-              {{ card.label }}
-            </p>
-
-            <p class="summary-value">
-              {{ card.value }}
-            </p>
-
-            <p class="summary-detail">
-              {{ card.detail }}
-            </p>
-          </article>
-          {% endfor %}
-        </div>
-      </section>
-
-      <section aria-labelledby="navigation-heading">
-        <div class="section-heading">
-          <div>
-            <p class="section-eyebrow">
-              Coaching Tools
-            </p>
-
-            <h2 id="navigation-heading">
-              Choose a workspace
-            </h2>
-          </div>
-        </div>
-
-        <div class="navigation-grid">
-          {% for card in navigation_cards %}
-          <a class="navigation-card" href="{{ card.href }}">
-            <div class="navigation-card-top">
-              <div class="module-icon module-icon-{{ card.icon }}">
-                {% if card.icon == "students" %}
-                  <span aria-hidden="true">ST</span>
-                {% elif card.icon == "sessions" %}
-                  <span aria-hidden="true">SE</span>
-                {% elif card.icon == "import" %}
-                  <span aria-hidden="true">R10</span>
-                {% else %}
-                  <span aria-hidden="true">CA</span>
-                {% endif %}
-              </div>
-
-              <span class="module-status">
-                {{ card.status }}
-              </span>
+                <p class="page-subtitle">
+                    Player development, launch monitor performance,
+                    session history, and coaching intelligence.
+                </p>
             </div>
 
-            <h3>{{ card.title }}</h3>
+            <div class="topbar-actions">
+                <a
+                    href="/imports/garmin"
+                    class="button button-secondary"
+                >
+                    Import R10 Data
+                </a>
 
-            <p>{{ card.description }}</p>
+                <a
+                    href="/sessions"
+                    class="button button-primary"
+                >
+                    New Session
+                </a>
+            </div>
 
-            <span class="card-link">
-              Open workspace
-              <span aria-hidden="true">→</span>
-            </span>
-          </a>
-          {% endfor %}
-        </div>
-      </section>
+        </header>
 
-      <section class="next-step-panel">
-        <div>
-          <p class="section-eyebrow">
-            Development Roadmap
-          </p>
 
-          <h2>
-            Next: build Student Management
-          </h2>
+        <section class="metric-grid">
 
-          <p>
-            The next module will add student profiles, player goals,
-            contact details, preferred clubs, and lesson history.
-          </p>
-        </div>
+            <article class="metric-card">
+                <div class="metric-header">
+                    <span>Active Students</span>
+                    <span class="metric-badge">Players</span>
+                </div>
 
-        <a class="button button-light" href="/students">
-          Start Students Module
-        </a>
-      </section>
+                <div class="metric-value">
+                    {{ summary.active_students or 0 }}
+                </div>
+
+                <div class="metric-detail">
+                    Current coaching roster
+                </div>
+            </article>
+
+
+            <article class="metric-card">
+                <div class="metric-header">
+                    <span>Sessions</span>
+                    <span class="metric-badge">Lessons</span>
+                </div>
+
+                <div class="metric-value">
+                    {{ summary.total_sessions or 0 }}
+                </div>
+
+                <div class="metric-detail">
+                    Recorded coaching sessions
+                </div>
+            </article>
+
+
+            <article class="metric-card">
+                <div class="metric-header">
+                    <span>R10 Shots</span>
+                    <span class="metric-badge">Garmin</span>
+                </div>
+
+                <div class="metric-value">
+                    {{ summary.total_shots or 0 }}
+                </div>
+
+                <div class="metric-detail">
+                    Launch monitor shots recorded
+                </div>
+            </article>
+
+
+            <article class="metric-card metric-card-accent">
+                <div class="metric-header">
+                    <span>Average Carry</span>
+                    <span class="metric-badge">Distance</span>
+                </div>
+
+                <div class="metric-value">
+                    {% if summary.average_carry is not none %}
+                        {{ "%.1f"|format(summary.average_carry) }}
+                        <span class="metric-unit">yd</span>
+                    {% else %}
+                        —
+                    {% endif %}
+                </div>
+
+                <div class="metric-detail">
+                    Across imported shots
+                </div>
+            </article>
+
+        </section>
+
+
+        <section class="dashboard-grid">
+
+            <article class="panel panel-large">
+
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">
+                            Performance
+                        </div>
+                        <h2>Club Performance</h2>
+                    </div>
+
+                    <a
+                        href="/analysis"
+                        class="text-link"
+                    >
+                        View analysis →
+                    </a>
+                </div>
+
+                {% if club_summary %}
+
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                            <tr>
+                                <th>Club</th>
+                                <th>Shots</th>
+                                <th>Avg Carry</th>
+                                <th>Ball Speed</th>
+                                <th>Club Face</th>
+                            </tr>
+                            </thead>
+
+                            <tbody>
+
+                            {% for row in club_summary %}
+                            <tr>
+                                <td class="club-name">
+                                    {{ row.club }}
+                                </td>
+
+                                <td>
+                                    {{ row.shot_count }}
+                                </td>
+
+                                <td>
+                                    {% if row.average_carry is not none %}
+                                        {{ "%.1f"|format(row.average_carry) }}
+                                        <span class="unit">yd</span>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if row.average_ball_speed is not none %}
+                                        {{ "%.1f"|format(row.average_ball_speed) }}
+                                        <span class="unit">mph</span>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if row.average_club_face is not none %}
+                                        {{ "%.1f"|format(row.average_club_face) }}°
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state">
+                        <div class="empty-icon">R10</div>
+
+                        <h3>No shot data yet</h3>
+
+                        <p>
+                            Import a Garmin R10 CSV to begin building
+                            club averages and performance trends.
+                        </p>
+
+                        <a
+                            href="/imports/garmin"
+                            class="button button-primary"
+                        >
+                            Import Garmin Data
+                        </a>
+                    </div>
+
+                {% endif %}
+
+            </article>
+
+
+            <article class="panel">
+
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">
+                            Coaching
+                        </div>
+                        <h2>Recent Students</h2>
+                    </div>
+
+                    <a
+                        href="/students"
+                        class="text-link"
+                    >
+                        All students →
+                    </a>
+                </div>
+
+                {% if recent_students %}
+
+                    <div class="student-list">
+
+                        {% for student in recent_students %}
+
+                        <a
+                            class="student-row"
+                            href="/students/{{ student.id }}"
+                        >
+                            <div class="avatar">
+                                {{
+                                    (
+                                        student.first_name[:1]
+                                        ~ student.last_name[:1]
+                                    )|upper
+                                }}
+                            </div>
+
+                            <div class="student-info">
+                                <div class="student-name">
+                                    {{ student.full_name }}
+                                </div>
+
+                                <div class="student-meta">
+                                    {% if student.handicap_index is not none %}
+                                        HCP {{ student.handicap_index }}
+                                    {% elif student.skill_level %}
+                                        {{ student.skill_level }}
+                                    {% else %}
+                                        Player profile
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row-arrow">›</div>
+                        </a>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="compact-empty">
+                        <strong>No students yet</strong>
+                        <span>Add a player to begin coaching.</span>
+                    </div>
+
+                {% endif %}
+
+            </article>
+
+
+            <article class="panel panel-large">
+
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">
+                            Activity
+                        </div>
+                        <h2>Recent Sessions</h2>
+                    </div>
+
+                    <a
+                        href="/sessions"
+                        class="text-link"
+                    >
+                        All sessions →
+                    </a>
+                </div>
+
+                {% if recent_sessions %}
+
+                    <div class="session-list">
+
+                        {% for session in recent_sessions %}
+
+                        <a
+                            class="session-row"
+                            href="/sessions/{{ session.id }}"
+                        >
+
+                            <div class="session-date">
+                                <span class="session-month">
+                                    {{ session.session_date.strftime("%b") }}
+                                </span>
+
+                                <span class="session-day">
+                                    {{ session.session_date.strftime("%d") }}
+                                </span>
+                            </div>
+
+                            <div class="session-main">
+
+                                <div class="session-title">
+                                    {{ session.student.full_name }}
+                                </div>
+
+                                <div class="session-meta">
+                                    {{ session.session_type }}
+
+                                    {% if session.primary_club %}
+                                        · {{ session.primary_club }}
+                                    {% endif %}
+                                </div>
+
+                            </div>
+
+                            <div class="session-shot-count">
+                                <strong>
+                                    {{ session.shot_count }}
+                                </strong>
+                                <span>shots</span>
+                            </div>
+
+                            <div class="row-arrow">›</div>
+
+                        </a>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="compact-empty">
+                        <strong>No sessions recorded</strong>
+                        <span>Create a coaching session to begin.</span>
+                    </div>
+
+                {% endif %}
+
+            </article>
+
+
+            <article class="panel quick-panel">
+
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">
+                            Workflow
+                        </div>
+                        <h2>Quick Actions</h2>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+
+                    <a
+                        href="/students"
+                        class="quick-action"
+                    >
+                        <div class="quick-icon">01</div>
+                        <div>
+                            <strong>Student Profiles</strong>
+                            <span>Manage players and goals</span>
+                        </div>
+                    </a>
+
+                    <a
+                        href="/sessions"
+                        class="quick-action"
+                    >
+                        <div class="quick-icon">02</div>
+                        <div>
+                            <strong>Coaching Sessions</strong>
+                            <span>Create and review lessons</span>
+                        </div>
+                    </a>
+
+                    <a
+                        href="/imports/garmin"
+                        class="quick-action"
+                    >
+                        <div class="quick-icon">03</div>
+                        <div>
+                            <strong>Garmin R10</strong>
+                            <span>Import launch monitor data</span>
+                        </div>
+                    </a>
+
+                    <a
+                        href="/analysis"
+                        class="quick-action"
+                    >
+                        <div class="quick-icon">04</div>
+                        <div>
+                            <strong>Coaching Analysis</strong>
+                            <span>Review performance patterns</span>
+                        </div>
+                    </a>
+
+                </div>
+
+            </article>
+
+        </section>
 
     </main>
 
-    <footer>
-      <p>
-        {{ app_name }} · Professional Player Development
-      </p>
-
-      <p>
-        FastAPI application version {{ version }}
-      </p>
-    </footer>
-
-  </div>
+</div>
 </body>
 </html>

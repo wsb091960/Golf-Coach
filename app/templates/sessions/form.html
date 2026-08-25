@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', path='css/sessions.css') }}"
+>
+{% endblock %}
+
+{% block topbar_actions %}
+<a
+    class="button button--secondary"
+    href="/sessions"
+>
+    Back to Sessions
+</a>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+
+        <p class="section-eyebrow">
+            Session Management
+        </p>
+
+        <h2 class="section-title">
+            {{ page_heading }}
+        </h2>
+
+        <p class="section-description">
+            Record a coaching session, lesson, fitting,
+            practice session, or launch monitor evaluation.
+        </p>
+
+    </div>
+
+</section>
+
+
+<form
+    method="post"
+    action="{{ form_action }}"
+    class="session-form"
+>
+
+<div class="form-grid">
+
+<!-- ========================================================= -->
+<!-- STUDENT / SESSION -->
+<!-- ========================================================= -->
+
+<section class="card">
+
+<h3>Session Information</h3>
+
+<div class="field">
+
+<label>
+Student *
+</label>
+
+<select
+    name="student_id"
+    required
+>
+
+<option value="">
+Select Student
+</option>
+
+{% for student in students %}
+
+<option
+value="{{ student.id }}"
+
+{% if form_values.student_id|string == student.id|string %}
+selected
+{% endif %}
+
+>
+
+{{ student.full_name }}
+
+</option>
+
+{% endfor %}
+
+</select>
+
+{% if errors.student_id %}
+<div class="field-error">
+{{ errors.student_id }}
+</div>
+{% endif %}
+
+</div>
+
+
+
+<div class="field">
+
+<label>
+Session Date *
+</label>
+
+<input
+type="date"
+name="session_date"
+required
+value="{{ form_values.session_date }}"
+>
+
+{% if errors.session_date %}
+<div class="field-error">
+{{ errors.session_date }}
+</div>
+{% endif %}
+
+</div>
+
+
+
+<div class="field">
+
+<label>
+Session Type *
+</label>
+
+<select
+name="session_type"
+required
+>
+
+{% for type in session_types %}
+
+<option
+
+{% if form_values.session_type==type %}
+selected
+{% endif %}
+
+>
+
+{{ type }}
+
+</option>
+
+{% endfor %}
+
+</select>
+
+{% if errors.session_type %}
+<div class="field-error">
+{{ errors.session_type }}
+</div>
+{% endif %}
+
+</div>
+
+
+
+<div class="field">
+
+<label>
+Duration (minutes)
+</label>
+
+<input
+type="number"
+name="duration_minutes"
+min="1"
+max="600"
+value="{{ form_values.duration_minutes }}"
+>
+
+{% if errors.duration_minutes %}
+<div class="field-error">
+{{ errors.duration_minutes }}
+</div>
+{% endif %}
+
+</div>
+
+
+
+<div class="field">
+
+<label>
+Location
+</label>
+
+<input
+type="text"
+name="location"
+placeholder="Practice Range, Course, Indoor Studio..."
+value="{{ form_values.location }}"
+>
+
+</div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- SWING / LESSON -->
+<!-- ========================================================= -->
+
+<section class="card">
+
+<h3>Lesson Focus</h3>
+
+<div class="field">
+
+<label>
+Primary Club
+</label>
+
+<select
+name="primary_club"
+>
+
+<option value="">
+Select Club
+</option>
+
+{% for club in club_options %}
+
+<option
+
+{% if form_values.primary_club==club %}
+selected
+{% endif %}
+
+>
+
+{{ club }}
+
+</option>
+
+{% endfor %}
+
+</select>
+
+</div>
+
+
+
+<div class="field">
+
+<label>
+Practice Focus
+</label>
+
+<input
+type="text"
+name="focus_area"
+placeholder="Path, Face Control, Driver, Wedges..."
+value="{{ form_values.focus_area }}"
+>
+
+</div>
+
+
+
+<div class="field">
+
+<label>
+Weather
+</label>
+
+<input
+type="text"
+name="weather"
+placeholder="Sunny, Indoor, Windy..."
+value="{{ form_values.weather }}"
+>
+
+</div>
+
+
+
+<div class="field">
+
+<label>
+Session Summary
+</label>
+
+<textarea
+name="summary"
+rows="5"
+placeholder="Brief overview of today's lesson..."
+>{{ form_values.summary }}</textarea>
+
+</div>
+
+</section>
+
+
+
+<!-- ========================================================= -->
+<!-- COACH NOTES -->
+<!-- ========================================================= -->
+
+<section class="card card-full">
+
+<h3>Coaching Notes</h3>
+
+<div class="field">
+
+<label>
+Coach Notes
+</label>
+
+<textarea
+name="coach_notes"
+rows="10"
+placeholder="Swing observations, drills assigned, video notes..."
+>{{ form_values.coach_notes }}</textarea>
+
+</div>
+
+
+
+<div class="field">
+
+<label>
+Student Feedback
+</label>
+
+<textarea
+name="student_feedback"
+rows="5"
+placeholder="How did the student feel? Ball flight? Confidence?"
+>{{ form_values.student_feedback }}</textarea>
+
+</div>
+
+
+
+<div class="field">
+
+<label>
+Next Practice Plan
+</label>
+
+<textarea
+name="next_steps"
+rows="6"
+placeholder="Homework, drills, practice priorities..."
+>{{ form_values.next_steps }}</textarea>
+
+</div>
+
+</section>
+
+</div>
+
+
+
+<div class="form-buttons">
+
+<a
+class="button button--secondary"
+href="/sessions"
+>
+
+Cancel
+
+</a>
+
+
+<button
+type="submit"
+class="button button--primary"
+>
+
+{{ submit_label }}
+
+</button>
+
+</div>
+
+</form>
+
+{% endblock %}

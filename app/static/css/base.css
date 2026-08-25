@@ -1,0 +1,230 @@
+/* ==========================================================
+   WSBCO Golf Coach - Base Styles
+   File: app/static/css/base.css
+   Version: 1.0.0
+========================================================== */
+
+:root{
+  --primary:#0b3d91;
+  --primary-dark:#082d6b;
+  --accent:#1976d2;
+  --bg:#f4f7fb;
+  --surface:#ffffff;
+  --border:#d9e1ec;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --success:#198754;
+  --warning:#f59e0b;
+  --danger:#dc2626;
+  --radius:14px;
+  --shadow:0 8px 24px rgba(0,0,0,.08);
+  --sidebar-width:270px;
+}
+
+*,
+*::before,
+*::after{box-sizing:border-box}
+
+html,body{margin:0;padding:0;height:100%}
+
+body{
+  font-family:Inter,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+}
+
+a{text-decoration:none;color:inherit}
+img{max-width:100%;display:block}
+button,input,select,textarea{font:inherit}
+
+.skip-link{
+  position:absolute;
+  left:-9999px;
+}
+.skip-link:focus{
+  left:1rem;
+  top:1rem;
+  background:#fff;
+  padding:.75rem 1rem;
+  border-radius:8px;
+  z-index:9999;
+}
+
+.app-layout{
+  display:grid;
+  grid-template-columns:var(--sidebar-width) 1fr;
+  min-height:100vh;
+}
+
+.sidebar{
+  background:var(--primary);
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+}
+
+.sidebar__brand{
+  padding:1.5rem;
+  border-bottom:1px solid rgba(255,255,255,.15);
+}
+
+.brand{display:flex;gap:1rem;align-items:center}
+
+.brand__mark{
+  width:52px;height:52px;
+  border-radius:50%;
+  background:#fff;
+  color:var(--primary);
+  display:grid;
+  place-items:center;
+  font-weight:700;
+}
+
+.brand__name{display:block;font-size:1rem}
+.brand__tagline{font-size:.8rem;opacity:.8}
+
+.sidebar-nav{padding:1rem;flex:1}
+.sidebar-nav__section{margin-bottom:1.75rem}
+.sidebar-nav__label{
+  display:block;
+  margin-bottom:.5rem;
+  font-size:.75rem;
+  text-transform:uppercase;
+  opacity:.65;
+}
+
+.sidebar-nav__link{
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+  padding:.85rem 1rem;
+  border-radius:10px;
+  margin-bottom:.25rem;
+  transition:.2s;
+}
+
+.sidebar-nav__link:hover{
+  background:rgba(255,255,255,.12);
+}
+
+.sidebar-nav__link.is-active{
+  background:#fff;
+  color:var(--primary);
+  font-weight:600;
+}
+
+.sidebar__footer{
+  padding:1rem;
+  border-top:1px solid rgba(255,255,255,.15);
+  font-size:.85rem;
+}
+
+.status-dot{
+  width:10px;
+  height:10px;
+  background:#22c55e;
+  border-radius:50%;
+  display:inline-block;
+  margin-right:.5rem;
+}
+
+.app-main{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+
+.topbar{
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  padding:1rem 1.5rem;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.topbar__left,
+.topbar__actions{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+}
+
+.topbar__eyebrow{
+  margin:0;
+  color:var(--muted);
+  font-size:.8rem;
+}
+
+.topbar__title{
+  margin:.15rem 0 0;
+  font-size:1.6rem;
+}
+
+.icon-button{
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:10px;
+  width:42px;
+  height:42px;
+  cursor:pointer;
+}
+
+.page-content{
+  padding:2rem;
+  flex:1;
+}
+
+.app-footer{
+  padding:1rem 2rem;
+  border-top:1px solid var(--border);
+  background:#fff;
+  display:flex;
+  justify-content:space-between;
+  color:var(--muted);
+  font-size:.85rem;
+}
+
+.alert{
+  padding:1rem;
+  border-radius:10px;
+  margin-bottom:1rem;
+}
+.alert--success{background:#e8f7ee;color:var(--success)}
+.alert--error{background:#fdecec;color:var(--danger)}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:1.5rem;
+}
+
+.grid{
+  display:grid;
+  gap:1.5rem;
+}
+
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+
+@media (max-width:1024px){
+  .app-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+}
+
+@media (max-width:640px){
+  .topbar{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .page-content{padding:1rem}
+  .app-footer{
+    flex-direction:column;
+    gap:.5rem;
+  }
+}

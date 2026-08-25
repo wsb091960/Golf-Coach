@@ -1,0 +1,633 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', path='css/students.css') }}"
+>
+{% endblock %}
+
+{% block topbar_actions %}
+<a
+    class="button button--primary"
+    href="/students/new"
+>
+    <span aria-hidden="true">＋</span>
+    Add Student
+</a>
+{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+
+    <div>
+        <p class="section-eyebrow">
+            Player Management
+        </p>
+
+        <h2 class="section-title">
+            Student Roster
+        </h2>
+
+        <p class="section-description">
+            Manage player profiles, review coaching activity,
+            and open individual student records.
+        </p>
+    </div>
+
+    <div class="page-header__actions">
+
+        <a
+            class="button button--secondary"
+            href="/sessions/new"
+        >
+            New Session
+        </a>
+
+        <a
+            class="button button--primary"
+            href="/students/new"
+        >
+            Add Student
+        </a>
+
+    </div>
+
+</section>
+
+
+{% if request.query_params.get("deleted") == "1" %}
+
+<div
+    class="alert alert--success"
+    role="status"
+>
+    Student record deleted successfully.
+</div>
+
+{% endif %}
+
+
+<section class="student-summary-grid">
+
+    <article class="summary-card">
+
+        <span class="summary-card__label">
+            Total Students
+        </span>
+
+        <strong class="summary-card__value">
+            {{ students | length }}
+        </strong>
+
+        <span class="summary-card__note">
+            Profiles in the roster
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="summary-card__label">
+            Active Students
+        </span>
+
+        <strong class="summary-card__value">
+            {{
+                students
+                | selectattr("is_active", "equalto", true)
+                | list
+                | length
+            }}
+        </strong>
+
+        <span class="summary-card__note">
+            Currently receiving coaching
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="summary-card__label">
+            Inactive Students
+        </span>
+
+        <strong class="summary-card__value">
+            {{
+                students
+                | selectattr("is_active", "equalto", false)
+                | list
+                | length
+            }}
+        </strong>
+
+        <span class="summary-card__note">
+            Archived or paused players
+        </span>
+
+    </article>
+
+</section>
+
+
+<section class="roster-panel">
+
+    <div class="roster-panel__header">
+
+        <div>
+
+            <p class="panel__eyebrow">
+                Student Directory
+            </p>
+
+            <h3 class="panel__title">
+                All Students
+            </h3>
+
+        </div>
+
+        <div class="roster-toolbar">
+
+            <div class="search-field">
+
+                <label
+                    class="visually-hidden"
+                    for="student-search"
+                >
+                    Search students
+                </label>
+
+                <span
+                    class="search-field__icon"
+                    aria-hidden="true"
+                >
+                    ⌕
+                </span>
+
+                <input
+                    id="student-search"
+                    class="search-field__input"
+                    type="search"
+                    placeholder="Search by name, email, or phone"
+                    autocomplete="off"
+                >
+
+            </div>
+
+            <div class="filter-field">
+
+                <label
+                    class="visually-hidden"
+                    for="status-filter"
+                >
+                    Filter by status
+                </label>
+
+                <select
+                    id="status-filter"
+                    class="select-control"
+                >
+                    <option value="all">
+                        All Students
+                    </option>
+
+                    <option value="active">
+                        Active
+                    </option>
+
+                    <option value="inactive">
+                        Inactive
+                    </option>
+                </select>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {% if students %}
+
+    <div class="table-wrapper">
+
+        <table
+            class="student-table"
+            id="student-table"
+        >
+
+            <thead>
+
+                <tr>
+
+                    <th scope="col">
+                        Student
+                    </th>
+
+                    <th scope="col">
+                        Contact
+                    </th>
+
+                    <th scope="col">
+                        Handicap
+                    </th>
+
+                    <th scope="col">
+                        Skill Level
+                    </th>
+
+                    <th scope="col">
+                        Status
+                    </th>
+
+                    <th scope="col">
+                        Sessions
+                    </th>
+
+                    <th scope="col">
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for student in students %}
+
+                <tr
+                    class="student-row"
+                    data-name="{{ student.full_name | default('', true) | lower }}"
+                    data-email="{{ student.email | default('', true) | lower }}"
+                    data-phone="{{ student.phone | default('', true) | lower }}"
+                    data-status="{% if student.is_active %}active{% else %}inactive{% endif %}"
+                >
+
+                    <td>
+
+                        <a
+                            class="student-identity"
+                            href="/students/{{ student.id }}"
+                        >
+
+                            <span
+                                class="student-avatar"
+                                aria-hidden="true"
+                            >
+                                {{ student.first_name[:1] | upper }}
+                                {{ student.last_name[:1] | upper }}
+                            </span>
+
+                            <span class="student-identity__text">
+
+                                <strong>
+                                    {{ student.full_name }}
+                                </strong>
+
+                                <small>
+                                    Student ID #{{ student.id }}
+                                </small>
+
+                            </span>
+
+                        </a>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="contact-cell">
+
+                            {% if student.email %}
+
+                            <a
+                                href="mailto:{{ student.email }}"
+                            >
+                                {{ student.email }}
+                            </a>
+
+                            {% endif %}
+
+                            {% if student.phone %}
+
+                            <a
+                                href="tel:{{ student.phone }}"
+                            >
+                                {{ student.phone }}
+                            </a>
+
+                            {% endif %}
+
+                            {% if not student.email and not student.phone %}
+
+                            <span class="table-muted">
+                                No contact information
+                            </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        {% if student.handicap_index is not none %}
+
+                            <span class="handicap-value">
+                                {{ student.handicap_index }}
+                            </span>
+
+                        {% else %}
+
+                            <span class="table-muted">
+                                —
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        {% if student.skill_level %}
+
+                            {{ student.skill_level }}
+
+                        {% else %}
+
+                            <span class="table-muted">
+                                Not specified
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        {% if student.is_active %}
+
+                            <span class="status-badge status-badge--active">
+                                Active
+                            </span>
+
+                        {% else %}
+
+                            <span class="status-badge status-badge--inactive">
+                                Inactive
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="session-count">
+
+                            {{
+                                student.sessions
+                                | default([], true)
+                                | length
+                            }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="row-actions">
+
+                            <a
+                                class="row-action"
+                                href="/students/{{ student.id }}"
+                                title="View student"
+                                aria-label="View {{ student.full_name }}"
+                            >
+                                View
+                            </a>
+
+                            <a
+                                class="row-action"
+                                href="/students/{{ student.id }}/edit"
+                                title="Edit student"
+                                aria-label="Edit {{ student.full_name }}"
+                            >
+                                Edit
+                            </a>
+
+                            <a
+                                class="row-action row-action--primary"
+                                href="/sessions/new?student_id={{ student.id }}"
+                                title="Create session"
+                                aria-label="Create session for {{ student.full_name }}"
+                            >
+                                Session
+                            </a>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <div
+        class="table-empty-filter"
+        id="student-filter-empty"
+        hidden
+    >
+
+        <span
+            class="empty-state__icon"
+            aria-hidden="true"
+        >
+            ⌕
+        </span>
+
+        <h4>
+            No matching students
+        </h4>
+
+        <p>
+            Try a different search term or status filter.
+        </p>
+
+        <button
+            class="button button--secondary"
+            id="clear-student-filters"
+            type="button"
+        >
+            Clear Filters
+        </button>
+
+    </div>
+
+
+    {% else %}
+
+    <div class="empty-state">
+
+        <span
+            class="empty-state__icon"
+            aria-hidden="true"
+        >
+            ◉
+        </span>
+
+        <h3>
+            No students in the roster
+        </h3>
+
+        <p>
+            Create your first player profile to begin recording
+            sessions, launch-monitor data, and coaching notes.
+        </p>
+
+        <a
+            class="button button--primary"
+            href="/students/new"
+        >
+            Add First Student
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}
+
+
+{% block page_scripts %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput =
+        document.getElementById("student-search");
+
+    const statusFilter =
+        document.getElementById("status-filter");
+
+    const studentRows =
+        Array.from(
+            document.querySelectorAll(".student-row")
+        );
+
+    const emptyMessage =
+        document.getElementById("student-filter-empty");
+
+    const clearButton =
+        document.getElementById("clear-student-filters");
+
+
+    function filterStudents() {
+
+        const searchValue =
+            searchInput
+                ? searchInput.value.trim().toLowerCase()
+                : "";
+
+        const statusValue =
+            statusFilter
+                ? statusFilter.value
+                : "all";
+
+        let visibleCount = 0;
+
+
+        studentRows.forEach(function (row) {
+
+            const searchableText = [
+                row.dataset.name || "",
+                row.dataset.email || "",
+                row.dataset.phone || ""
+            ].join(" ");
+
+            const matchesSearch =
+                !searchValue ||
+                searchableText.includes(searchValue);
+
+            const matchesStatus =
+                statusValue === "all" ||
+                row.dataset.status === statusValue;
+
+            const isVisible =
+                matchesSearch && matchesStatus;
+
+            row.hidden = !isVisible;
+
+            if (isVisible) {
+                visibleCount += 1;
+            }
+
+        });
+
+
+        if (emptyMessage) {
+            emptyMessage.hidden = visibleCount !== 0;
+        }
+
+    }
+
+
+    searchInput?.addEventListener(
+        "input",
+        filterStudents
+    );
+
+
+    statusFilter?.addEventListener(
+        "change",
+        filterStudents
+    );
+
+
+    clearButton?.addEventListener(
+        "click",
+        function () {
+
+            if (searchInput) {
+                searchInput.value = "";
+            }
+
+            if (statusFilter) {
+                statusFilter.value = "all";
+            }
+
+            filterStudents();
+
+            searchInput?.focus();
+
+        }
+    );
+
+});
+
+</script>
+
+{% endblock %}

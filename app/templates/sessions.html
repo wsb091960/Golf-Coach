@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sessions | WSBCO Golf Coach</title>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<style>.content-card{background:#fff;border:1px solid #dfe7e3;border-radius:18px;padding:22px;margin-bottom:18px}.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.form-grid input,.form-grid select{padding:11px;border:1px solid #dfe7e3;border-radius:10px}@media(max-width:800px){.form-grid{grid-template-columns:1fr}}</style>
+</head>
+<body><div class="app-shell"><aside class="sidebar"><div class="brand"><div class="brand-mark">GC</div><div><div class="brand-name">WSBCO</div><div class="brand-subtitle">Golf Coach</div></div></div><nav class="sidebar-nav"><a class="nav-item" href="/">Dashboard</a><a class="nav-item" href="/students">Students</a><a class="nav-item active" href="/sessions">Sessions</a><a class="nav-item" href="/imports/garmin">Garmin Import</a><a class="nav-item" href="/analysis">Coaching Analysis</a><a class="nav-item" href="/biomechanics">Biomechanics</a><a class="nav-item" href="/gapping">Gapping</a></nav></aside><main class="main-content">
+<header class="topbar"><div><div class="eyebrow">Lesson Management</div><h1>Sessions</h1><p class="page-subtitle">Create lessons and connect Garmin R10 shot data.</p></div></header>
+<section class="content-card"><div class="panel-header"><div><div class="panel-eyebrow">New Lesson</div><h2>Create Session</h2></div></div>
+<form method="post" action="/sessions"><div class="form-grid">
+<select name="student_id" required><option value="">Select student</option>{% for student in students %}<option value="{{ student.id }}" {% if selected_student_id == student.id %}selected{% endif %}>{{ student.name or (student.first_name ~ " " ~ student.last_name) }}</option>{% endfor %}</select>
+<input name="session_date" type="date" value="{{ today }}" required>
+<select name="session_type"><option>Coaching Session</option><option>Practice</option><option>Playing Lesson</option><option>Club Evaluation</option></select>
+<input name="primary_club" placeholder="Primary club">
+<input name="name" placeholder="Session name">
+<input name="notes" placeholder="Notes">
+</div><div style="margin-top:14px"><button class="button button-primary">Create Session</button></div></form>
+</section>
+<section class="content-card"><div class="panel-header"><div><div class="panel-eyebrow">History</div><h2>Recent Sessions</h2></div></div>
+{% for session in sessions %}
+<a class="session-row" href="/sessions/{{ session.id }}"><div class="session-date"><span class="session-month">SES</span><span class="session-day">{{ loop.index }}</span></div><div class="session-main"><div class="session-title">{{ session.session_date }} · {{ session.session_type }}</div><div class="session-meta">{{ session.primary_club or "No primary club" }} · {{ session.shot_count or 0 }} shots</div></div><div class="row-arrow">›</div></a>
+{% else %}<div class="compact-empty"><strong>No sessions yet</strong><span>Create a session above.</span></div>{% endfor %}
+</section>
+</main></div></body></html>

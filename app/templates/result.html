@@ -1,0 +1,738 @@
+{% extends "base.html" %}
+
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', path='css/importer.css') }}"
+>
+{% endblock %}
+
+
+{% block topbar_actions %}
+<div class="topbar-action-group">
+
+    <a
+        class="button button--secondary"
+        href="/sessions/{{ session.id }}"
+    >
+        Back to Session
+    </a>
+
+</div>
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-header importer-page-header">
+
+    <div>
+
+        <p class="section-eyebrow">
+            Launch Monitor Import
+        </p>
+
+        <h2 class="section-title">
+            Garmin R10 Import Complete
+        </h2>
+
+        <p class="section-description">
+            The CSV file has been processed and the valid Garmin R10
+            shots have been added to the selected coaching session.
+        </p>
+
+    </div>
+
+</section>
+
+
+{% if error %}
+<div
+    class="alert alert--error"
+    role="alert"
+>
+    {{ error }}
+</div>
+{% endif %}
+
+
+{% if success_message %}
+<div
+    class="alert alert--success"
+    role="status"
+>
+    {{ success_message }}
+</div>
+{% endif %}
+
+
+<section class="import-session-banner">
+
+    <div>
+
+        <span class="import-session-banner__label">
+            Session
+        </span>
+
+        <strong>
+            {{ session.session_type or "Coaching Session" }}
+        </strong>
+
+        {% if session.session_date %}
+        <small>
+            {{ session.session_date.strftime("%B %d, %Y") }}
+        </small>
+        {% endif %}
+
+    </div>
+
+
+    {% if session.student %}
+    <div>
+
+        <span class="import-session-banner__label">
+            Student
+        </span>
+
+        <a href="/students/{{ session.student.id }}">
+            {{ session.student.full_name }}
+        </a>
+
+    </div>
+    {% endif %}
+
+
+    <div>
+
+        <span class="import-session-banner__label">
+            Imported File
+        </span>
+
+        <strong title="{{ filename or 'Garmin R10 CSV' }}">
+            {{ filename or "Garmin R10 CSV" }}
+        </strong>
+
+    </div>
+
+
+    <div>
+
+        <span class="import-session-banner__label">
+            Session ID
+        </span>
+
+        <strong>
+            #{{ session.id }}
+        </strong>
+
+    </div>
+
+</section>
+
+
+<section class="import-summary-grid">
+
+    <article class="import-summary-card import-summary-card--success">
+
+        <span class="import-summary-card__label">
+            Imported
+        </span>
+
+        <strong class="import-summary-card__value">
+            {{ imported_count }}
+        </strong>
+
+        <span class="import-summary-card__detail">
+            Shot{% if imported_count != 1 %}s{% endif %} added
+        </span>
+
+    </article>
+
+
+    <article class="import-summary-card import-summary-card--warning">
+
+        <span class="import-summary-card__label">
+            Duplicates
+        </span>
+
+        <strong class="import-summary-card__value">
+            {{ duplicate_count }}
+        </strong>
+
+        <span class="import-summary-card__detail">
+            Duplicate row{% if duplicate_count != 1 %}s{% endif %} skipped
+        </span>
+
+    </article>
+
+
+    <article class="import-summary-card import-summary-card--danger">
+
+        <span class="import-summary-card__label">
+            Invalid
+        </span>
+
+        <strong class="import-summary-card__value">
+            {{ invalid_count }}
+        </strong>
+
+        <span class="import-summary-card__detail">
+            Invalid row{% if invalid_count != 1 %}s{% endif %} skipped
+        </span>
+
+    </article>
+
+
+    <article class="import-summary-card">
+
+        <span class="import-summary-card__label">
+            Errors
+        </span>
+
+        <strong class="import-summary-card__value">
+            {{ error_count }}
+        </strong>
+
+        <span class="import-summary-card__detail">
+            Database or processing error{% if error_count != 1 %}s{% endif %}
+        </span>
+
+    </article>
+
+</section>
+
+
+<div class="import-result-layout">
+
+    <main class="import-result-main">
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Import Summary
+                    </p>
+
+                    <h3 class="panel__title">
+                        Processing Results
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <dl class="import-result-list">
+
+                    <div>
+
+                        <dt>
+                            CSV rows processed
+                        </dt>
+
+                        <dd>
+                            {{ total_count }}
+                        </dd>
+
+                    </div>
+
+
+                    <div>
+
+                        <dt>
+                            Shots imported
+                        </dt>
+
+                        <dd>
+                            {{ imported_count }}
+                        </dd>
+
+                    </div>
+
+
+                    <div>
+
+                        <dt>
+                            Duplicates skipped
+                        </dt>
+
+                        <dd>
+                            {{ duplicate_count }}
+                        </dd>
+
+                    </div>
+
+
+                    <div>
+
+                        <dt>
+                            Invalid rows skipped
+                        </dt>
+
+                        <dd>
+                            {{ invalid_count }}
+                        </dd>
+
+                    </div>
+
+
+                    <div>
+
+                        <dt>
+                            Import errors
+                        </dt>
+
+                        <dd>
+                            {{ error_count }}
+                        </dd>
+
+                    </div>
+
+
+                    {% if first_shot_number is not none %}
+                    <div>
+
+                        <dt>
+                            First imported shot
+                        </dt>
+
+                        <dd>
+                            #{{ first_shot_number }}
+                        </dd>
+
+                    </div>
+                    {% endif %}
+
+
+                    {% if last_shot_number is not none %}
+                    <div>
+
+                        <dt>
+                            Last imported shot
+                        </dt>
+
+                        <dd>
+                            #{{ last_shot_number }}
+                        </dd>
+
+                    </div>
+                    {% endif %}
+
+                </dl>
+
+            </div>
+
+        </section>
+
+
+        {% if imported_count > 0 %}
+
+        <section class="panel import-metric-panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Imported Data
+                    </p>
+
+                    <h3 class="panel__title">
+                        Shot Averages
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <div class="import-metric-grid">
+
+                    <article class="import-metric-card">
+
+                        <span>
+                            Carry
+                        </span>
+
+                        <strong>
+                            {% if summary.average_carry is not none %}
+                                {{ "%.1f"|format(summary.average_carry) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+
+                        <small>
+                            yards
+                        </small>
+
+                    </article>
+
+
+                    <article class="import-metric-card">
+
+                        <span>
+                            Total
+                        </span>
+
+                        <strong>
+                            {% if summary.average_total is not none %}
+                                {{ "%.1f"|format(summary.average_total) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+
+                        <small>
+                            yards
+                        </small>
+
+                    </article>
+
+
+                    <article class="import-metric-card">
+
+                        <span>
+                            Ball Speed
+                        </span>
+
+                        <strong>
+                            {% if summary.average_ball_speed is not none %}
+                                {{ "%.1f"|format(summary.average_ball_speed) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+
+                        <small>
+                            mph
+                        </small>
+
+                    </article>
+
+
+                    <article class="import-metric-card">
+
+                        <span>
+                            Club Speed
+                        </span>
+
+                        <strong>
+                            {% if summary.average_club_speed is not none %}
+                                {{ "%.1f"|format(summary.average_club_speed) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+
+                        <small>
+                            mph
+                        </small>
+
+                    </article>
+
+
+                    <article class="import-metric-card">
+
+                        <span>
+                            Smash
+                        </span>
+
+                        <strong>
+                            {% if summary.average_smash is not none %}
+                                {{ "%.2f"|format(summary.average_smash) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+
+                        <small>
+                            factor
+                        </small>
+
+                    </article>
+
+
+                    <article class="import-metric-card">
+
+                        <span>
+                            Launch
+                        </span>
+
+                        <strong>
+                            {% if summary.average_launch is not none %}
+                                {{ "%.1f"|format(summary.average_launch) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+
+                        <small>
+                            degrees
+                        </small>
+
+                    </article>
+
+
+                    <article class="import-metric-card">
+
+                        <span>
+                            Spin
+                        </span>
+
+                        <strong>
+                            {% if summary.average_spin is not none %}
+                                {{ "%.0f"|format(summary.average_spin) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+
+                        <small>
+                            rpm
+                        </small>
+
+                    </article>
+
+
+                    <article class="import-metric-card">
+
+                        <span>
+                            Club Path
+                        </span>
+
+                        <strong>
+                            {% if summary.average_path is not none %}
+                                {{ "%+.1f"|format(summary.average_path) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+
+                        <small>
+                            degrees
+                        </small>
+
+                    </article>
+
+
+                    <article class="import-metric-card">
+
+                        <span>
+                            Club Face
+                        </span>
+
+                        <strong>
+                            {% if summary.average_face is not none %}
+                                {{ "%+.1f"|format(summary.average_face) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+
+                        <small>
+                            degrees
+                        </small>
+
+                    </article>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
+
+        {% if import_errors %}
+
+        <section class="panel panel--danger">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Import Errors
+                    </p>
+
+                    <h3 class="panel__title">
+                        Rows Not Saved
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <ul class="import-error-list">
+
+                    {% for import_error in import_errors %}
+                    <li>
+                        {{ import_error }}
+                    </li>
+                    {% endfor %}
+
+                </ul>
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
+    </main>
+
+
+    <aside class="import-result-sidebar">
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Next Step
+                    </p>
+
+                    <h3 class="panel__title">
+                        Review Session Shots
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <p class="import-result-copy">
+                    Open the session to review the imported shots,
+                    averages, ball-flight patterns, and coaching notes.
+                </p>
+
+                <div class="import-result-actions">
+
+                    <a
+                        class="button button--primary button--full"
+                        href="/sessions/{{ session.id }}"
+                    >
+                        Open Session
+                    </a>
+
+                    <a
+                        class="button button--secondary button--full"
+                        href="/shots?session_id={{ session.id }}"
+                    >
+                        View Session Shots
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Additional Data
+                    </p>
+
+                    <h3 class="panel__title">
+                        Import Another File
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <p class="import-result-copy">
+                    Upload another Garmin CSV file into this same
+                    coaching session.
+                </p>
+
+                <a
+                    class="button button--secondary button--full"
+                    href="/importer?session_id={{ session.id }}"
+                >
+                    Import Another CSV
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Student Record
+                    </p>
+
+                    <h3 class="panel__title">
+                        Coaching Profile
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                {% if session.student %}
+
+                <p class="import-result-copy">
+                    Return to the student profile to review prior
+                    sessions and long-term performance trends.
+                </p>
+
+                <a
+                    class="button button--secondary button--full"
+                    href="/students/{{ session.student.id }}"
+                >
+                    Open Student Profile
+                </a>
+
+                {% else %}
+
+                <p class="import-result-copy">
+                    This session is not currently linked to a student.
+                </p>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </aside>
+
+</div>
+
+{% endblock %}

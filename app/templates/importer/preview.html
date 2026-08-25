@@ -1,0 +1,1437 @@
+{% extends "base.html" %}
+
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', path='css/importer.css') }}"
+>
+{% endblock %}
+
+
+{% block topbar_actions %}
+<div class="topbar-action-group">
+
+    <a
+        class="button button--secondary"
+        href="/sessions/{{ session.id }}"
+    >
+        Back to Session
+    </a>
+
+</div>
+{% endblock %}
+
+
+{% block content %}
+
+<section class="page-header importer-page-header">
+
+    <div>
+
+        <p class="section-eyebrow">
+            Launch Monitor Import
+        </p>
+
+        <h2 class="section-title">
+            Review Garmin R10 Import
+        </h2>
+
+        <p class="section-description">
+            Review detected measurements, validation messages, duplicate
+            warnings, and summary averages before adding shots to the session.
+        </p>
+
+    </div>
+
+</section>
+
+
+{% if error %}
+<div
+    class="alert alert--error"
+    role="alert"
+>
+    {{ error }}
+</div>
+{% endif %}
+
+
+<section class="import-session-banner">
+
+    <div>
+
+        <span class="import-session-banner__label">
+            Selected Session
+        </span>
+
+        <strong>
+            {{ session.session_type or "Coaching Session" }}
+        </strong>
+
+        {% if session.session_date %}
+        <small>
+            {{ session.session_date.strftime("%B %d, %Y") }}
+        </small>
+        {% endif %}
+
+    </div>
+
+
+    {% if session.student %}
+    <div>
+
+        <span class="import-session-banner__label">
+            Student
+        </span>
+
+        <a href="/students/{{ session.student.id }}">
+            {{ session.student.full_name }}
+        </a>
+
+    </div>
+    {% endif %}
+
+
+    <div>
+
+        <span class="import-session-banner__label">
+            Uploaded File
+        </span>
+
+        <strong title="{{ filename or 'Garmin R10 CSV' }}">
+            {{ filename or "Garmin R10 CSV" }}
+        </strong>
+
+    </div>
+
+
+    <div>
+
+        <span class="import-session-banner__label">
+            Detected Clubs
+        </span>
+
+        <strong>
+            {{ detected_club_count }}
+        </strong>
+
+    </div>
+
+</section>
+
+
+<section class="import-summary-grid">
+
+    <article class="import-summary-card">
+
+        <span class="import-summary-card__label">
+            CSV Rows
+        </span>
+
+        <strong class="import-summary-card__value">
+            {{ total_count }}
+        </strong>
+
+        <span class="import-summary-card__detail">
+            Shot rows detected
+        </span>
+
+    </article>
+
+
+    <article class="import-summary-card import-summary-card--success">
+
+        <span class="import-summary-card__label">
+            Ready
+        </span>
+
+        <strong class="import-summary-card__value">
+            {{ valid_count }}
+        </strong>
+
+        <span class="import-summary-card__detail">
+            Valid shots available
+        </span>
+
+    </article>
+
+
+    <article class="import-summary-card import-summary-card--warning">
+
+        <span class="import-summary-card__label">
+            Duplicates
+        </span>
+
+        <strong class="import-summary-card__value">
+            {{ duplicate_count }}
+        </strong>
+
+        <span class="import-summary-card__detail">
+            Existing session matches
+        </span>
+
+    </article>
+
+
+    <article class="import-summary-card import-summary-card--danger">
+
+        <span class="import-summary-card__label">
+            Invalid
+        </span>
+
+        <strong class="import-summary-card__value">
+            {{ invalid_count }}
+        </strong>
+
+        <span class="import-summary-card__detail">
+            Rows requiring correction
+        </span>
+
+    </article>
+
+</section>
+
+
+<section class="panel import-metric-panel">
+
+    <div class="panel__header">
+
+        <div>
+
+            <p class="panel__eyebrow">
+                File Summary
+            </p>
+
+            <h3 class="panel__title">
+                Average Shot Measurements
+            </h3>
+
+        </div>
+
+    </div>
+
+
+    <div class="panel__body">
+
+        <div class="import-metric-grid">
+
+            <article class="import-metric-card">
+
+                <span>
+                    Carry
+                </span>
+
+                <strong>
+                    {% if summary.average_carry is not none %}
+                        {{ "%.1f"|format(summary.average_carry) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+
+                <small>
+                    yards
+                </small>
+
+            </article>
+
+
+            <article class="import-metric-card">
+
+                <span>
+                    Total
+                </span>
+
+                <strong>
+                    {% if summary.average_total is not none %}
+                        {{ "%.1f"|format(summary.average_total) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+
+                <small>
+                    yards
+                </small>
+
+            </article>
+
+
+            <article class="import-metric-card">
+
+                <span>
+                    Ball Speed
+                </span>
+
+                <strong>
+                    {% if summary.average_ball_speed is not none %}
+                        {{ "%.1f"|format(summary.average_ball_speed) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+
+                <small>
+                    mph
+                </small>
+
+            </article>
+
+
+            <article class="import-metric-card">
+
+                <span>
+                    Club Speed
+                </span>
+
+                <strong>
+                    {% if summary.average_club_speed is not none %}
+                        {{ "%.1f"|format(summary.average_club_speed) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+
+                <small>
+                    mph
+                </small>
+
+            </article>
+
+
+            <article class="import-metric-card">
+
+                <span>
+                    Smash
+                </span>
+
+                <strong>
+                    {% if summary.average_smash is not none %}
+                        {{ "%.2f"|format(summary.average_smash) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+
+                <small>
+                    factor
+                </small>
+
+            </article>
+
+
+            <article class="import-metric-card">
+
+                <span>
+                    Launch
+                </span>
+
+                <strong>
+                    {% if summary.average_launch is not none %}
+                        {{ "%.1f"|format(summary.average_launch) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+
+                <small>
+                    degrees
+                </small>
+
+            </article>
+
+
+            <article class="import-metric-card">
+
+                <span>
+                    Spin
+                </span>
+
+                <strong>
+                    {% if summary.average_spin is not none %}
+                        {{ "%.0f"|format(summary.average_spin) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+
+                <small>
+                    rpm
+                </small>
+
+            </article>
+
+
+            <article class="import-metric-card">
+
+                <span>
+                    Club Path
+                </span>
+
+                <strong>
+                    {% if summary.average_path is not none %}
+                        {{ "%+.1f"|format(summary.average_path) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+
+                <small>
+                    degrees
+                </small>
+
+            </article>
+
+
+            <article class="import-metric-card">
+
+                <span>
+                    Club Face
+                </span>
+
+                <strong>
+                    {% if summary.average_face is not none %}
+                        {{ "%+.1f"|format(summary.average_face) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+
+                <small>
+                    degrees
+                </small>
+
+            </article>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+{% if import_errors %}
+<section class="panel panel--danger">
+
+    <div class="panel__header">
+
+        <div>
+
+            <p class="panel__eyebrow">
+                Import Errors
+            </p>
+
+            <h3 class="panel__title">
+                Rows That Could Not Be Saved
+            </h3>
+
+        </div>
+
+    </div>
+
+
+    <div class="panel__body">
+
+        <ul class="import-error-list">
+
+            {% for import_error in import_errors %}
+            <li>
+                {{ import_error }}
+            </li>
+            {% endfor %}
+
+        </ul>
+
+    </div>
+
+</section>
+{% endif %}
+
+
+<section class="panel import-column-panel">
+
+    <div class="panel__header import-column-panel__header">
+
+        <div>
+
+            <p class="panel__eyebrow">
+                Column Detection
+            </p>
+
+            <h3 class="panel__title">
+                Garmin Field Mapping
+            </h3>
+
+        </div>
+
+        <button
+            id="toggle-column-map"
+            class="button button--secondary button--small"
+            type="button"
+            aria-expanded="false"
+            aria-controls="column-map-content"
+        >
+            Show Mapping
+        </button>
+
+    </div>
+
+
+    <div
+        id="column-map-content"
+        class="import-column-map"
+        hidden
+    >
+
+        {% if column_map %}
+
+        {% for target_field, source_header in column_map.items() %}
+        <div class="import-column-map__item">
+
+            <span>
+                {{ source_header }}
+            </span>
+
+            <span
+                class="import-column-map__arrow"
+                aria-hidden="true"
+            >
+                →
+            </span>
+
+            <strong>
+                {{ target_field.replace("_", " ").title() }}
+            </strong>
+
+        </div>
+        {% endfor %}
+
+        {% else %}
+
+        <p class="import-column-map__empty">
+            No recognizable Garmin columns were mapped.
+        </p>
+
+        {% endif %}
+
+    </div>
+
+</section>
+
+
+<section class="panel import-preview-panel">
+
+    <div class="panel__header import-preview-panel__header">
+
+        <div>
+
+            <p class="panel__eyebrow">
+                Step 2
+            </p>
+
+            <h3 class="panel__title">
+                Shot Preview
+            </h3>
+
+        </div>
+
+
+        <div class="import-preview-count">
+
+            <strong id="visible-import-count">
+                {{ total_count }}
+            </strong>
+
+            <span>
+                visible rows
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="import-preview-toolbar">
+
+        <div class="import-preview-toolbar__search">
+
+            <label
+                class="sr-only"
+                for="import-search"
+            >
+                Search import rows
+            </label>
+
+            <input
+                id="import-search"
+                type="search"
+                placeholder="Search club, shape, status, or row number"
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <div class="import-preview-toolbar__filters">
+
+            <div class="import-filter">
+
+                <label for="import-status-filter">
+                    Status
+                </label>
+
+                <select id="import-status-filter">
+
+                    <option value="">
+                        All rows
+                    </option>
+
+                    <option value="ready">
+                        Ready
+                    </option>
+
+                    <option value="duplicate">
+                        Duplicate
+                    </option>
+
+                    <option value="invalid">
+                        Invalid
+                    </option>
+
+                    <option value="warning">
+                        Warnings
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="import-filter">
+
+                <label for="import-club-filter">
+                    Club
+                </label>
+
+                <select id="import-club-filter">
+
+                    <option value="">
+                        All clubs
+                    </option>
+
+                    {% set club_values = [] %}
+
+                    {% for row in rows %}
+                        {% if row.club and row.club not in club_values %}
+                            {% set _ = club_values.append(row.club) %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for club in club_values|sort %}
+                    <option value="{{ club|lower }}">
+                        {{ club }}
+                    </option>
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <button
+                id="clear-import-filters"
+                class="button button--secondary button--small"
+                type="button"
+            >
+                Clear
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="table-scroll">
+
+        <table class="import-preview-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        CSV Row
+                    </th>
+
+                    <th>
+                        Shot
+                    </th>
+
+                    <th>
+                        Club
+                    </th>
+
+                    <th>
+                        Shape
+                    </th>
+
+                    <th>
+                        Carry
+                    </th>
+
+                    <th>
+                        Total
+                    </th>
+
+                    <th>
+                        Ball Speed
+                    </th>
+
+                    <th>
+                        Club Speed
+                    </th>
+
+                    <th>
+                        Smash
+                    </th>
+
+                    <th>
+                        Launch
+                    </th>
+
+                    <th>
+                        Direction
+                    </th>
+
+                    <th>
+                        Spin
+                    </th>
+
+                    <th>
+                        Spin Axis
+                    </th>
+
+                    <th>
+                        Path
+                    </th>
+
+                    <th>
+                        Face
+                    </th>
+
+                    <th>
+                        Face-to-Path
+                    </th>
+
+                    <th>
+                        Attack
+                    </th>
+
+                    <th>
+                        Messages
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="import-preview-body">
+
+                {% for row in rows %}
+
+                {% set row_status = "ready" %}
+
+                {% if not row.is_valid %}
+                    {% set row_status = "invalid" %}
+                {% elif row.is_duplicate %}
+                    {% set row_status = "duplicate" %}
+                {% elif row.warnings %}
+                    {% set row_status = "warning" %}
+                {% endif %}
+
+                <tr
+                    class="
+                        import-preview-row
+                        import-preview-row--{{ row_status }}
+                    "
+                    data-import-row
+                    data-status="{{ row_status }}"
+                    data-club="{{ row.club|lower }}"
+                    data-search="
+                        {{ row.source_row_number }}
+                        {{ row.shot_number or '' }}
+                        {{ row.club }}
+                        {{ row.shot_shape }}
+                        {{ row_status }}
+                        {{ row.errors|join(' ') }}
+                        {{ row.warnings|join(' ') }}
+                    "
+                >
+
+                    <td>
+
+                        {% if row_status == "ready" %}
+
+                        <span class="import-status import-status--ready">
+                            Ready
+                        </span>
+
+                        {% elif row_status == "duplicate" %}
+
+                        <span class="import-status import-status--duplicate">
+                            Duplicate
+                        </span>
+
+                        {% elif row_status == "invalid" %}
+
+                        <span class="import-status import-status--invalid">
+                            Invalid
+                        </span>
+
+                        {% else %}
+
+                        <span class="import-status import-status--warning">
+                            Warning
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td class="import-preview-table__number">
+                        {{ row.source_row_number }}
+                    </td>
+
+
+                    <td class="import-preview-table__number">
+                        {{ row.shot_number or "Auto" }}
+                    </td>
+
+
+                    <td>
+                        <span class="club-badge">
+                            {{ row.club or "Unknown Club" }}
+                        </span>
+                    </td>
+
+
+                    <td>
+                        <span
+                            class="
+                                shot-shape-badge
+                                shot-shape-badge--{{ row.shot_shape|lower|replace(' ', '-') }}
+                            "
+                        >
+                            {{ row.shot_shape or "Unclassified" }}
+                        </span>
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.carry_distance is not none %}
+                            {{ "%.1f"|format(row.carry_distance) }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.total_distance is not none %}
+                            {{ "%.1f"|format(row.total_distance) }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.ball_speed is not none %}
+                            {{ "%.1f"|format(row.ball_speed) }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.club_speed is not none %}
+                            {{ "%.1f"|format(row.club_speed) }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.smash_factor is not none %}
+                            {{ "%.2f"|format(row.smash_factor) }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.launch_angle is not none %}
+                            {{ "%.1f"|format(row.launch_angle) }}°
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.launch_direction is not none %}
+                            {{ "%+.1f"|format(row.launch_direction) }}°
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.spin_rate is not none %}
+                            {{ "%.0f"|format(row.spin_rate) }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.spin_axis is not none %}
+                            {{ "%+.1f"|format(row.spin_axis) }}°
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.club_path is not none %}
+                            {{ "%+.1f"|format(row.club_path) }}°
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.club_face is not none %}
+                            {{ "%+.1f"|format(row.club_face) }}°
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.face_to_path is not none %}
+                            {{ "%+.1f"|format(row.face_to_path) }}°
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__metric">
+                        {% if row.attack_angle is not none %}
+                            {{ "%+.1f"|format(row.attack_angle) }}°
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <td class="import-preview-table__messages">
+
+                        {% if row.errors %}
+
+                        <ul class="import-message-list import-message-list--error">
+
+                            {% for message in row.errors %}
+                            <li>
+                                {{ message }}
+                            </li>
+                            {% endfor %}
+
+                        </ul>
+
+                        {% endif %}
+
+
+                        {% if row.warnings %}
+
+                        <ul class="import-message-list import-message-list--warning">
+
+                            {% for message in row.warnings %}
+                            <li>
+                                {{ message }}
+                            </li>
+                            {% endfor %}
+
+                        </ul>
+
+                        {% endif %}
+
+
+                        {% if not row.errors and not row.warnings %}
+
+                        <span class="import-no-message">
+                            No issues
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <div
+        id="import-no-results"
+        class="import-no-results"
+        hidden
+    >
+
+        <strong>
+            No rows match the current filters.
+        </strong>
+
+        <span>
+            Clear the search and filters to show all imported rows.
+        </span>
+
+    </div>
+
+</section>
+
+
+<section class="import-confirm-layout">
+
+    <main>
+
+        <section class="panel">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Step 3
+                    </p>
+
+                    <h3 class="panel__title">
+                        Confirm Import
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <form
+                    id="confirm-import-form"
+                    method="post"
+                    action="/importer/confirm"
+                >
+
+                    <input
+                        type="hidden"
+                        name="preview_token"
+                        value="{{ preview_token }}"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="session_id"
+                        value="{{ session_id }}"
+                    >
+
+
+                    <label class="check-option">
+
+                        <input
+                            type="checkbox"
+                            id="confirm-skip-duplicates"
+                            name="skip_duplicates"
+                            value="true"
+                            {% if skip_duplicates %}checked{% endif %}
+                        >
+
+                        <span>
+
+                            <strong>
+                                Skip duplicate shots
+                            </strong>
+
+                            <small>
+                                Recommended. Duplicate rows will not be
+                                added to this session.
+                            </small>
+
+                        </span>
+
+                    </label>
+
+
+                    <div class="import-confirm-notice">
+
+                        <strong>
+                            Import result
+                        </strong>
+
+                        <p>
+                            Valid rows will be added to the session.
+                            Invalid rows are always skipped. Shot numbers
+                            missing from the CSV will be assigned automatically.
+                        </p>
+
+                    </div>
+
+
+                    <div class="import-confirm-actions">
+
+                        <button
+                            id="confirm-import-button"
+                            class="button button--primary"
+                            type="submit"
+                            {% if valid_count == 0 %}disabled{% endif %}
+                        >
+                            Import {{ valid_count }} Valid Shot{% if valid_count != 1 %}s{% endif %}
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <aside>
+
+        <section class="panel panel--danger">
+
+            <div class="panel__header">
+
+                <div>
+
+                    <p class="panel__eyebrow">
+                        Cancel
+                    </p>
+
+                    <h3 class="panel__title">
+                        Discard Preview
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel__body">
+
+                <p class="danger-copy">
+                    Canceling removes this preview. No shots will be
+                    added to the coaching session.
+                </p>
+
+                <form
+                    method="post"
+                    action="/importer/cancel"
+                >
+
+                    <input
+                        type="hidden"
+                        name="session_id"
+                        value="{{ session_id }}"
+                    >
+
+                    <button
+                        class="button button--danger button--full"
+                        type="submit"
+                    >
+                        Cancel Import
+                    </button>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </aside>
+
+</section>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const rows = Array.from(
+        document.querySelectorAll(
+            "[data-import-row]"
+        )
+    );
+
+    const searchInput = document.getElementById(
+        "import-search"
+    );
+
+    const statusFilter = document.getElementById(
+        "import-status-filter"
+    );
+
+    const clubFilter = document.getElementById(
+        "import-club-filter"
+    );
+
+    const clearFiltersButton = document.getElementById(
+        "clear-import-filters"
+    );
+
+    const visibleCount = document.getElementById(
+        "visible-import-count"
+    );
+
+    const noResults = document.getElementById(
+        "import-no-results"
+    );
+
+    const toggleColumnMapButton = document.getElementById(
+        "toggle-column-map"
+    );
+
+    const columnMapContent = document.getElementById(
+        "column-map-content"
+    );
+
+    const confirmForm = document.getElementById(
+        "confirm-import-form"
+    );
+
+    const confirmButton = document.getElementById(
+        "confirm-import-button"
+    );
+
+
+    function normalize(value) {
+
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+
+    }
+
+
+    function filterRows() {
+
+        const searchValue = normalize(
+            searchInput ? searchInput.value : ""
+        );
+
+        const statusValue = normalize(
+            statusFilter ? statusFilter.value : ""
+        );
+
+        const clubValue = normalize(
+            clubFilter ? clubFilter.value : ""
+        );
+
+        let count = 0;
+
+        rows.forEach(function (row) {
+
+            const rowSearch = normalize(
+                row.dataset.search
+            );
+
+            const rowStatus = normalize(
+                row.dataset.status
+            );
+
+            const rowClub = normalize(
+                row.dataset.club
+            );
+
+            const matchesSearch =
+                !searchValue ||
+                rowSearch.includes(searchValue);
+
+            const matchesStatus =
+                !statusValue ||
+                rowStatus === statusValue;
+
+            const matchesClub =
+                !clubValue ||
+                rowClub === clubValue;
+
+            const isVisible =
+                matchesSearch &&
+                matchesStatus &&
+                matchesClub;
+
+            row.hidden = !isVisible;
+
+            if (isVisible) {
+                count += 1;
+            }
+
+        });
+
+        if (visibleCount) {
+            visibleCount.textContent = count;
+        }
+
+        if (noResults) {
+            noResults.hidden = count !== 0;
+        }
+
+    }
+
+
+    function clearFilters() {
+
+        if (searchInput) {
+            searchInput.value = "";
+        }
+
+        if (statusFilter) {
+            statusFilter.value = "";
+        }
+
+        if (clubFilter) {
+            clubFilter.value = "";
+        }
+
+        filterRows();
+
+        if (searchInput) {
+            searchInput.focus();
+        }
+
+    }
+
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            "input",
+            filterRows
+        );
+
+    }
+
+
+    if (statusFilter) {
+
+        statusFilter.addEventListener(
+            "change",
+            filterRows
+        );
+
+    }
+
+
+    if (clubFilter) {
+
+        clubFilter.addEventListener(
+            "change",
+            filterRows
+        );
+
+    }
+
+
+    if (clearFiltersButton) {
+
+        clearFiltersButton.addEventListener(
+            "click",
+            clearFilters
+        );
+
+    }
+
+
+    if (
+        toggleColumnMapButton &&
+        columnMapContent
+    ) {
+
+        toggleColumnMapButton.addEventListener(
+            "click",
+            function () {
+
+                const isHidden =
+                    columnMapContent.hidden;
+
+                columnMapContent.hidden =
+                    !isHidden;
+
+                toggleColumnMapButton.setAttribute(
+                    "aria-expanded",
+                    String(isHidden)
+                );
+
+                toggleColumnMapButton.textContent =
+                    isHidden
+                        ? "Hide Mapping"
+                        : "Show Mapping";
+
+            }
+        );
+
+    }
+
+
+    if (confirmForm) {
+
+        confirmForm.addEventListener(
+            "submit",
+            function () {
+
+                if (
+                    confirmButton &&
+                    !confirmButton.disabled
+                ) {
+
+                    confirmButton.disabled = true;
+                    confirmButton.textContent =
+                        "Importing Shots...";
+
+                }
+
+            }
+        );
+
+    }
+
+
+    filterRows();
+
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="WSBCO Golf Coach professional golf instruction, launch monitor analysis, student management, and session reporting."
+    >
+
+    <meta
+        name="application-name"
+        content="{{ app_name | default('WSBCO Golf Coach') }}"
+    >
+
+    <title>
+        {% if page_title %}
+            {{ page_title }} | {{ app_name | default('WSBCO Golf Coach') }}
+        {% else %}
+            {{ app_name | default('WSBCO Golf Coach') }}
+        {% endif %}
+    </title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500;600&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="/static/css/base.css"
+    >
+
+    {% block page_styles %}{% endblock %}
+</head>
+
+<body class="app-shell page-{{ page_name | default('default') }}">
+
+    <a
+        class="skip-link"
+        href="#main-content"
+    >
+        Skip to content
+    </a>
+
+    <div class="app-layout">
+
+        <aside
+            class="sidebar"
+            id="app-sidebar"
+            aria-label="Primary navigation"
+        >
+            <div class="sidebar__brand">
+                <a
+                    class="brand"
+                    href="{{ url_for('dashboard') }}"
+                    aria-label="WSBCO Golf Coach dashboard"
+                >
+                    <span
+                        class="brand__mark"
+                        aria-hidden="true"
+                    >
+                        GC
+                    </span>
+
+                    <span class="brand__text">
+                        <strong class="brand__name">
+                            WSBCO Golf Coach
+                        </strong>
+
+                        <span class="brand__tagline">
+                            PGA Coaching Platform
+                        </span>
+                    </span>
+                </a>
+
+                <button
+                    class="icon-button sidebar__close"
+                    id="sidebar-close-button"
+                    type="button"
+                    aria-label="Close navigation"
+                    aria-controls="app-sidebar"
+                >
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+
+                <div class="sidebar-nav__section">
+                    <span class="sidebar-nav__label">
+                        Overview
+                    </span>
+
+                    <a
+                        class="sidebar-nav__link {% if page_name == 'dashboard' %}is-active{% endif %}"
+                        href="{{ url_for('dashboard') }}"
+                        {% if page_name == 'dashboard' %}
+                            aria-current="page"
+                        {% endif %}
+                    >
+                        <span
+                            class="sidebar-nav__icon"
+                            aria-hidden="true"
+                        >
+                            ◫
+                        </span>
+
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="sidebar-nav__section">
+                    <span class="sidebar-nav__label">
+                        Coaching
+                    </span>
+
+                    <a
+                        class="sidebar-nav__link {% if page_name == 'students' %}is-active{% endif %}"
+                        href="/students"
+                        {% if page_name == 'students' %}
+                            aria-current="page"
+                        {% endif %}
+                    >
+                        <span
+                            class="sidebar-nav__icon"
+                            aria-hidden="true"
+                        >
+                            ◉
+                        </span>
+
+                        <span>Students</span>
+                    </a>
+
+                    <a
+                        class="sidebar-nav__link {% if page_name == 'sessions' %}is-active{% endif %}"
+                        href="/sessions"
+                        {% if page_name == 'sessions' %}
+                            aria-current="page"
+                        {% endif %}
+                    >
+                        <span
+                            class="sidebar-nav__icon"
+                            aria-hidden="true"
+                        >
+                            ◷
+                        </span>
+
+                        <span>Sessions</span>
+                    </a>
+
+                    <a
+                        class="sidebar-nav__link {% if page_name == 'garmin' %}is-active{% endif %}"
+                        href="/garmin"
+                        {% if page_name == 'garmin' %}
+                            aria-current="page"
+                        {% endif %}
+                    >
+                        <span
+                            class="sidebar-nav__icon"
+                            aria-hidden="true"
+                        >
+                            ⇧
+                        </span>
+
+                        <span>Garmin Import</span>
+                    </a>
+
+                    <a
+                        class="sidebar-nav__link {% if page_name == 'analysis' %}is-active{% endif %}"
+                        href="/analysis"
+                        {% if page_name == 'analysis' %}
+                            aria-current="page"
+                        {% endif %}
+                    >
+                        <span
+                            class="sidebar-nav__icon"
+                            aria-hidden="true"
+                        >
+                            ⌁
+                        </span>
+
+                        <span>Coaching Analysis</span>
+                    </a>
+
+                    <a
+                        class="sidebar-nav__link {% if page_name == 'biomechanics' %}is-active{% endif %}"
+                        href="{{ url_for('biomechanics') }}"
+                        {% if page_name == 'biomechanics' %}
+                            aria-current="page"
+                        {% endif %}
+                    >
+                        <span
+                            class="sidebar-nav__icon"
+                            aria-hidden="true"
+                        >
+                            ◇
+                        </span>
+
+                        <span>Biomechanics</span>
+                    </a>
+
+                    <a
+                        class="sidebar-nav__link {% if page_name == 'gapping' %}is-active{% endif %}"
+                        href="{{ url_for('gapping_page') }}"
+                        {% if page_name == 'gapping' %}
+                            aria-current="page"
+                        {% endif %}
+                    >
+                        <span
+                            class="sidebar-nav__icon"
+                            aria-hidden="true"
+                        >
+                            ↕
+                        </span>
+
+                        <span>Gapping</span>
+                    </a>
+
+                </div>
+
+                <div class="sidebar-nav__section">
+                    <span class="sidebar-nav__label">
+                        Output
+                    </span>
+
+                    <a
+                        class="sidebar-nav__link {% if page_name == 'reports' %}is-active{% endif %}"
+                        href="/reports"
+                        {% if page_name == 'reports' %}
+                            aria-current="page"
+                        {% endif %}
+                    >
+                        <span
+                            class="sidebar-nav__icon"
+                            aria-hidden="true"
+                        >
+                            ▤
+                        </span>
+
+                        <span>Reports</span>
+                    </a>
+
+                    <a
+                        class="sidebar-nav__link {% if page_name == 'settings' %}is-active{% endif %}"
+                        href="/settings"
+                        {% if page_name == 'settings' %}
+                            aria-current="page"
+                        {% endif %}
+                    >
+                        <span
+                            class="sidebar-nav__icon"
+                            aria-hidden="true"
+                        >
+                            ⚙
+                        </span>
+
+                        <span>Settings</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar__footer">
+                <div class="sidebar-status">
+                    <span
+                        class="status-dot"
+                        aria-hidden="true"
+                    ></span>
+
+                    <span>
+                        System Online
+                    </span>
+                </div>
+
+                <small class="sidebar-version">
+                    Version {{ app_version | default('1.0.0') }}
+                </small>
+            </div>
+        </aside>
+
+        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+        <div class="app-main">
+
+            <header class="topbar">
+
+                <div class="topbar__left">
+                    <button
+                        class="icon-button topbar__menu-button"
+                        id="sidebar-open-button"
+                        type="button"
+                        aria-label="Open navigation"
+                        aria-controls="app-sidebar"
+                        aria-expanded="false"
+                    >
+                        <span aria-hidden="true">☰</span>
+                    </button>
+
+                    <div>
+                        <p class="topbar__eyebrow">
+                            WSBCO Golf Coach
+                        </p>
+
+                        <h1 class="topbar__title">
+                            {{ page_title | default('Dashboard') }}
+                        </h1>
+                    </div>
+                </div>
+
+                <div class="topbar__actions">
+
+                    {% block topbar_actions %}{% endblock %}
+
+                    <button
+                        class="icon-button"
+                        id="theme-toggle-button"
+                        type="button"
+                        aria-label="Toggle appearance"
+                        title="Toggle appearance"
+                    >
+                        <span
+                            class="theme-toggle__light"
+                            aria-hidden="true"
+                        >
+                            ☀
+                        </span>
+
+                        <span
+                            class="theme-toggle__dark"
+                            aria-hidden="true"
+                        >
+                            ◐
+                        </span>
+                    </button>
+
+                    <div class="coach-profile">
+                        <div
+                            class="coach-profile__avatar"
+                            aria-hidden="true"
+                        >
+                            WB
+                        </div>
+
+                        <div class="coach-profile__text">
+                            <strong>
+                                William Burton
+                            </strong>
+
+                            <span>
+                                PGA Professional
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </header>
+
+            <main
+                class="page-content"
+                id="main-content"
+                tabindex="-1"
+            >
+                {% block breadcrumbs %}{% endblock %}
+
+                {% if request and request.query_params.get('message') %}
+                    <div
+                        class="alert alert--success"
+                        role="status"
+                    >
+                        {{ request.query_params.get('message') }}
+                    </div>
+                {% endif %}
+
+                {% if error_message %}
+                    <div
+                        class="alert alert--error"
+                        role="alert"
+                    >
+                        {{ error_message }}
+                    </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+
+            <footer class="app-footer">
+                <span>
+                    &copy; {{ current_year | default(2026) }}
+                    WSBCO Golf Coach
+                </span>
+
+                <span>
+                    Professional Golf Coaching and Launch Monitor Analysis
+                </span>
+            </footer>
+
+        </div>
+    </div>
+
+    <div
+        class="toast-region"
+        id="toast-region"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
+
+    <script src="/static/js/app.js"></script>
+
+    {% block page_scripts %}{% endblock %}
+</body>
+</html>

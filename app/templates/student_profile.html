@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ page_title }} | WSBCO Golf Coach</title>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<style>
+.content-card{background:#fff;border:1px solid #dfe7e3;border-radius:18px;padding:22px;margin-bottom:18px}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.form-grid input,.form-grid select{padding:11px;border:1px solid #dfe7e3;border-radius:10px}
+</style>
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar">
+<div class="brand"><div class="brand-mark">GC</div><div><div class="brand-name">WSBCO</div><div class="brand-subtitle">Golf Coach</div></div></div>
+<nav class="sidebar-nav">
+<a class="nav-item" href="/">Dashboard</a>
+<a class="nav-item active" href="/students">Students</a>
+<a class="nav-item" href="/sessions">Sessions</a>
+<a class="nav-item" href="/imports/garmin">Garmin Import</a>
+<a class="nav-item" href="/analysis">Coaching Analysis</a>
+<a class="nav-item" href="/biomechanics">Biomechanics</a>
+<a class="nav-item" href="/gapping">Gapping</a>
+</nav>
+</aside>
+
+<main class="main-content">
+
+<header class="topbar">
+<div>
+<div class="eyebrow">Student Profile · {{ student.handedness or "Unknown" }} Handed</div>
+<h1>{{ student.name }}</h1>
+<p class="page-subtitle">{{ student.primary_goal or "No primary goal entered." }}</p>
+</div>
+<div class="topbar-actions">
+<a class="button button-primary" href="/sessions?student_id={{ student.id }}">New Session</a>
+</div>
+</header>
+
+<section class="content-card">
+<div class="panel-header"><div><div class="panel-eyebrow">Profile</div><h2>Edit Student</h2></div></div>
+
+<form method="post" action="/students/{{ student.id }}/update">
+<div class="form-grid">
+<input name="first_name" value="{{ student.first_name or '' }}" required>
+<input name="last_name" value="{{ student.last_name or '' }}" required>
+
+<select name="handedness" required>
+<option value="Unknown" {% if not student.handedness or student.handedness == "Unknown" %}selected{% endif %}>Unknown</option>
+<option value="Right" {% if student.handedness == "Right" %}selected{% endif %}>Right Handed</option>
+<option value="Left" {% if student.handedness == "Left" %}selected{% endif %}>Left Handed</option>
+</select>
+
+<input name="email" value="{{ student.email or '' }}" placeholder="Email">
+<input name="phone" value="{{ student.phone or '' }}" placeholder="Phone">
+<input name="skill_level" value="{{ student.skill_level or '' }}" placeholder="Skill level">
+<input name="handicap_index" value="{{ student.handicap_index if student.handicap_index is not none else '' }}" placeholder="Handicap">
+<input name="primary_goal" value="{{ student.primary_goal or '' }}" placeholder="Primary goal">
+</div>
+
+<div style="margin-top:14px">
+<button class="button button-primary" type="submit">Save Profile</button>
+</div>
+</form>
+</section>
+
+<section class="content-card">
+<div class="panel-header"><div><div class="panel-eyebrow">History</div><h2>Sessions</h2></div></div>
+
+{% for session in student_sessions %}
+<a class="session-row" href="/sessions/{{ session.id }}">
+<div class="session-main">
+<div class="session-title">{{ session.session_date }} · {{ session.session_type }}</div>
+<div class="session-meta">{{ session.primary_club or "Awaiting Garmin club data" }} · {{ session.shot_count or 0 }} shots</div>
+</div>
+<div class="row-arrow">›</div>
+</a>
+{% else %}
+<div class="compact-empty"><strong>No sessions yet</strong><span>Create the first coaching session.</span></div>
+{% endfor %}
+</section>
+
+<section class="content-card" style="border-color:#efc9c5;background:#fffafa">
+<div class="panel-header">
+<div><div class="panel-eyebrow" style="color:#a33b32">Danger Zone</div><h2>Delete Student</h2></div>
+</div>
+<p class="page-subtitle">Permanently deletes this student and all associated sessions and shots.</p>
+<form method="post" action="/students/{{ student.id }}/delete" onsubmit="return confirm('Delete {{ student.name|e }} and all associated sessions and shots? This cannot be undone.')">
+<button class="button" type="submit" style="background:#b33f35;color:#fff;border-color:#b33f35">Delete Student</button>
+</form>
+</section>
+</main>
+</div>
+</body>
+</html>

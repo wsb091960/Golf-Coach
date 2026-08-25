@@ -1,176 +1,50 @@
+from __future__ import annotations
+
 from pathlib import Path
-from uuid import uuid4
 
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
+from app.database import Base, engine
+from app.routers.gapping import router as gapping_router
+from app.routers.analysis import router as analysis_router
+from app.routers.dashboard import router as dashboard_router
+from app.routers.importer import router as importer_router
+from app.routers.sessions import router as sessions_router
+from app.routers.students import router as students_router
+from app.routers.videos import router as videos_router
+from app.routers.biomechanics import router as biomechanics_router
 
-BASE_DIR = Path(__file__).resolve().parent
+APP_DIR = Path(__file__).resolve().parent
+STATIC_DIR = APP_DIR / "static"
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="WSBCO Golf Coach",
-    version="0.3.0",
+    version="2.1.2",
 )
 
 app.mount(
     "/static",
-    StaticFiles(directory=BASE_DIR / "static"),
+    StaticFiles(directory=str(STATIC_DIR)),
     name="static",
 )
 
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
+app.include_router(dashboard_router)
+app.include_router(students_router)
+app.include_router(sessions_router)
+app.include_router(importer_router)
+app.include_router(analysis_router)
+app.include_router(videos_router)
+app.include_router(biomechanics_router)
+app.include_router(gapping_router)
 
-
-# Temporary storage.
-# This will be replaced by Firestore later.
-students: list[dict[str, str]] = []
-
-
-@app.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    navigation_cards = [
-        {
-            "title": "Students",
-            "description": (
-                "Manage player profiles, goals, contact information, "
-                "lesson history, and progress."
-            ),
-            "icon": "students",
-            "href": "/students",
-            "status": "Available",
-        },
-        {
-            "title": "Sessions",
-            "description": (
-                "Create lessons, review previous sessions, and connect "
-                "launch data with coaching notes."
-            ),
-            "icon": "sessions",
-            "href": "/sessions",
-            "status": "Coming soon",
-        },
-        {
-            "title": "Garmin Import",
-            "description": (
-                "Upload Garmin R10 CSV files, validate shot data, "
-                "and assign shots to a coaching session."
-            ),
-            "icon": "import",
-            "href": "/imports/garmin",
-            "status": "Planned",
-        },
-        {
-            "title": "Coaching Analysis",
-            "description": (
-                "Identify performance patterns, coaching priorities, "
-                "recommended drills, and player development trends."
-            ),
-            "icon": "analysis",
-            "href": "/analysis",
-            "status": "Planned",
-        },
-    ]
-
-    summary_cards = [
-        {
-            "label": "Students",
-            "value": str(len(students)),
-            "detail": "Active player profiles",
-        },
-        {
-            "label": "Sessions",
-            "value": "0",
-            "detail": "Recorded coaching sessions",
-        },
-        {
-            "label": "Shots",
-            "value": "0",
-            "detail": "Launch monitor shots",
-        },
-        {
-            "label": "Analyses",
-            "value": "0",
-            "detail": "Completed coaching reviews",
-        },
-    ]
-
-    return templates.TemplateResponse(
-        request=request,
-        name="dashboard.html",
-        context={
-            "app_name": "WSBCO Golf Coach",
-            "page_title": "Coach Dashboard",
-            "version": app.version,
-            "navigation_cards": navigation_cards,
-            "summary_cards": summary_cards,
-        },
-    )
-
-
-@app.get("/students", response_class=HTMLResponse)
-async def student_list(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="students.html",
-        context={
-            "app_name": "WSBCO Golf Coach",
-            "page_title": "Students",
-            "version": app.version,
-            "students": students,
-        },
-    )
-
-
-@app.post("/students")
-async def create_student(
-    first_name: str = Form(...),
-    last_name: str = Form(...),
-    email: str = Form(""),
-    phone: str = Form(""),
-    skill_level: str = Form(""),
-    primary_goal: str = Form(""),
-):
-    student = {
-        "id": str(uuid4()),
-        "first_name": first_name.strip(),
-        "last_name": last_name.strip(),
-        "email": email.strip(),
-        "phone": phone.strip(),
-        "skill_level": skill_level.strip(),
-        "primary_goal": primary_goal.strip(),
-    }
-
-    students.append(student)
-
-    return RedirectResponse(
-        url="/students",
-        status_code=303,
-    )
-
-
-@app.post("/students/{student_id}/delete")
-async def delete_student(student_id: str):
-    global students
-
-    students = [
-        student
-        for student in students
-        if student["id"] != student_id
-    ]
-
-    return RedirectResponse(
-        url="/students",
-        status_code=303,
-    )
-
-
-@app.get("/health")
-async def health():
+@app.get("/health", name="health")
+def health() -> dict[str, str]:
     return {
         "status": "ok",
-        "application": "WSBCO Golf Coach",
+        "app": "WSBCO Golf Coach",
         "version": app.version,
-        "students": len(students),
+        "database": "sqlite",
     }

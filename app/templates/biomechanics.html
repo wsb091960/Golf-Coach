@@ -46,7 +46,7 @@
         <button id="clearFrame" class="bio-button bio-button--quiet" type="button">Clear this frame</button>
       </div>
       <div class="landmark-instruction" id="landmarkInstruction" role="status">Load a video, pause at Address, then capture the position.</div>
-      <p class="bio-help">After capture, click each prompted body landmark directly on the paused video. Green markers are coach-verified points.</p>
+      <p class="bio-help">After capture, click each prompted body landmark directly on the paused video. Mark the player’s anatomical left/right shoulder joints at the outer shoulder—not the neck or shirt collar. Green markers are coach-verified points.</p>
     </section>
 
     <aside class="bio-card priorities-card">
@@ -108,5 +108,6 @@
 {% endblock %}
 
 {% block page_scripts %}
-<script src="/static/js/biomechanics.js?v=2.3.32"></script>
+<script src="/static/js/video_coordinates.js?v=2.3.33"></script>
+<script src="/static/js/biomechanics.js?v=2.3.33"></script>
 {% endblock %}

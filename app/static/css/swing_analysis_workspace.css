@@ -1,0 +1,311 @@
+.swing-analysis-page {
+    padding-bottom: 60px;
+}
+
+.analysis-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.analysis-header h1 {
+    margin: 4px 0 6px;
+}
+
+.analysis-header p {
+    margin: 0;
+    color: #657080;
+}
+
+.analysis-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.analysis-video-grid,
+.analysis-layout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.analysis-card {
+    background: #fff;
+    border: 1px solid #dfe4ea;
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 8px 28px rgba(30, 40, 55, .06);
+}
+
+.analysis-card video {
+    display: block;
+    width: 100%;
+    max-height: 520px;
+    background: #111;
+    border-radius: 12px;
+}
+
+.card-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.card-heading h2,
+.card-heading h3 {
+    margin: 2px 0 0;
+}
+
+.card-heading p {
+    margin: 6px 0 0;
+    color: #6d7684;
+}
+
+.section-kicker,
+.eyebrow {
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #9a7418;
+}
+
+.workspace-empty {
+    min-height: 240px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 30px;
+    border: 1px dashed #cbd2da;
+    border-radius: 12px;
+    color: #707987;
+    background: #fafbfc;
+}
+
+.checkpoint-workspace {
+    margin-bottom: 18px;
+}
+
+.p-position-strip {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(70px, 1fr));
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.p-position-button {
+    min-width: 72px;
+    border: 1px solid #cfd5dd;
+    background: #f7f8fa;
+    border-radius: 10px;
+    padding: 10px 8px;
+    cursor: pointer;
+}
+
+.p-position-button strong,
+.p-position-button span {
+    display: block;
+}
+
+.p-position-button strong {
+    font-size: 1rem;
+}
+
+.p-position-button span {
+    margin-top: 3px;
+    color: #6d7684;
+    font-size: .75rem;
+}
+
+.p-position-button.active {
+    border-color: #9a7418;
+    background: #fff8e7;
+}
+
+.checkpoint-editor {
+    margin-top: 18px;
+    border-top: 1px solid #e5e8ed;
+    padding-top: 18px;
+}
+
+.checkpoint-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.checkpoint-heading h3 {
+    margin: 2px 0 0;
+    font-size: 1.45rem;
+}
+
+.checkpoint-measurements,
+.biomechanics-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.checkpoint-notes-grid,
+.two-column-fields,
+.coaching-output-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.four-column-fields {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin: 14px 0;
+}
+
+.field-block {
+    display: block;
+    margin-bottom: 14px;
+}
+
+.analysis-card label > span,
+.checkpoint-editor label > span,
+.analysis-footer-actions label > span {
+    display: block;
+    font-size: .78rem;
+    font-weight: 800;
+    color: #4f5967;
+    margin-bottom: 5px;
+}
+
+.analysis-card input,
+.analysis-card select,
+.analysis-card textarea,
+.checkpoint-editor input,
+.checkpoint-editor select,
+.checkpoint-editor textarea,
+.analysis-footer-actions select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cfd5dd;
+    border-radius: 9px;
+    padding: 9px 10px;
+    font: inherit;
+    background: #fff;
+}
+
+.analysis-card textarea,
+.checkpoint-editor textarea {
+    min-height: 92px;
+    resize: vertical;
+}
+
+.checkbox-field {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 12px 0;
+}
+
+.checkbox-field input {
+    width: auto;
+    margin-top: 2px;
+}
+
+.garmin-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 9px;
+    margin: 14px 0 18px;
+}
+
+.garmin-metrics div {
+    border: 1px solid #e0e4e9;
+    background: #f8f9fb;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.garmin-metrics span,
+.garmin-metrics strong {
+    display: block;
+}
+
+.garmin-metrics span {
+    color: #6d7684;
+    font-size: .75rem;
+}
+
+.garmin-metrics strong {
+    margin-top: 3px;
+    font-size: 1.03rem;
+}
+
+.coaching-output {
+    margin-top: 18px;
+}
+
+.analysis-footer-actions {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    margin-top: 18px;
+    border-top: 1px solid #e4e8ed;
+    padding-top: 16px;
+}
+
+.analysis-footer-actions label {
+    width: 240px;
+}
+
+.save-message {
+    color: #55715d;
+    padding-bottom: 9px;
+}
+
+@media (max-width: 1150px) {
+    .analysis-video-grid,
+    .analysis-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .checkpoint-measurements,
+    .biomechanics-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .four-column-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .analysis-header,
+    .checkpoint-heading,
+    .analysis-footer-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .checkpoint-measurements,
+    .biomechanics-grid,
+    .checkpoint-notes-grid,
+    .two-column-fields,
+    .coaching-output-grid,
+    .four-column-fields,
+    .garmin-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .analysis-footer-actions label {
+        width: 100%;
+    }
+}

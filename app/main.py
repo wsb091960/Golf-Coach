@@ -48,3 +48,15 @@ def health() -> dict[str, str]:
         "version": app.version,
         "database": "sqlite",
     }
+
+from app.routers import swing_analysis as swing_analysis_router
+app.include_router(swing_analysis_router.router)
+
+from app.routers import swing_analysis_workspace as swing_analysis_workspace_router
+app.include_router(swing_analysis_workspace_router.router)
+
+from app.routers import swing_analysis_launch as swing_analysis_launch_router
+app.include_router(swing_analysis_launch_router.router)
+
+from app.routers import swing_analysis_assist as swing_analysis_assist_router
+app.include_router(swing_analysis_assist_router.router)

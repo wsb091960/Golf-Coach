@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const phaseLabels={p1:'P1 · Address',p2:'P2 · Shaft parallel',p3:'P3 · Lead arm parallel',p4:'P4 · Top',p5:'P5 · Lead arm parallel',p6:'P6 · Shaft parallel',p7:'P7 · Impact',p8:'P8 · Shaft parallel',p9:'P9 · Trail arm parallel',p10:'P10 · Finish'};
   const measuredPhases=new Set(['p1','p4','p7','p10']);
   const servicePhaseMap={p1:'address',p4:'top',p7:'impact',p10:'finish'};
-  const pointLabels={left_shoulder:'left shoulder',right_shoulder:'right shoulder',left_hip:'left hip',right_hip:'right hip',nose:'nose',left_ankle:'left ankle',right_ankle:'right ankle'};
+  const pointLabels={left_shoulder:'player’s left shoulder joint (outer shoulder, not neck)',right_shoulder:'player’s right shoulder joint (outer shoulder, not neck)',left_hip:'player’s left hip',right_hip:'player’s right hip',nose:'nose',left_ankle:'player’s left ankle',right_ankle:'player’s right ankle'};
 
   function requiredPoints(phase){
     if(phase!=='p10')return phaseConfig[phase];
@@ -111,7 +111,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   canvas.addEventListener('click',event=>{
     if(!marking||!frames[activePhase])return;
     const name=nextPoint();if(!name)return;
-    const rect=canvas.getBoundingClientRect();frames[activePhase].points[name]=[(event.clientX-rect.left)/rect.width,(event.clientY-rect.top)/rect.height];drawPoints();
+    const point=window.VideoCoordinates.clientToMediaPoint(event.clientX,event.clientY,canvas.getBoundingClientRect(),video.videoWidth,video.videoHeight);
+    if(!point){message('Click inside the visible video image—not the black side bars.',true);return}
+    frames[activePhase].points[name]=point;drawPoints();
     const next=nextPoint();
     if(next)message(`Click the ${pointLabels[next]}.`);else{marking=false;canvas.classList.remove('is-marking');phaseButton(activePhase).classList.add('complete');message(`${phaseLabels[activePhase]} complete. Select another position or analyze.`)}
   });

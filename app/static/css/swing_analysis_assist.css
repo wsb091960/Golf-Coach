@@ -1,0 +1,57 @@
+.checkpoint-assist-panel {
+    margin: 14px 0 18px;
+    padding: 14px;
+    border: 1px solid #dfe4ea;
+    border-radius: 12px;
+    background: #fafbfc;
+}
+.checkpoint-assist-panel h3 { margin: 2px 0 4px; }
+.checkpoint-assist-panel p { margin: 0; color: #6b7480; }
+.checkpoint-assist-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+.checkpoint-assist-grid label > span {
+    display: block;
+    margin-bottom: 5px;
+    font-size: .78rem;
+    font-weight: 800;
+    color: #4f5967;
+}
+.checkpoint-assist-grid input,
+.checkpoint-assist-grid select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cfd5dd;
+    border-radius: 9px;
+    padding: 9px 10px;
+    font: inherit;
+    background: #fff;
+}
+.checkpoint-assist-actions {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+.checkpoint-assist-check {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+    color: #606a76;
+}
+#assist-status {
+    display: block;
+    margin-top: 10px;
+    color: #55715d;
+}
+#assist-status[data-error="1"] { color: #a13d35; }
+@media (max-width: 900px) {
+    .checkpoint-assist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+    .checkpoint-assist-grid { grid-template-columns: 1fr; }
+}

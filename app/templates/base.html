@@ -47,6 +47,9 @@
         href="/static/css/base.css"
     >
 
+    <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
+    <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
+
     {% block page_styles %}{% endblock %}
 </head>
 
@@ -101,177 +104,26 @@
                 </button>
             </div>
 
-            <nav class="sidebar-nav">
-
+            <nav class="sidebar-nav nav-list app-standard-navigation" aria-label="Primary">
+                {% set current_path = request.url.path if request else '' %}
                 <div class="sidebar-nav__section">
-                    <span class="sidebar-nav__label">
-                        Overview
-                    </span>
-
-                    <a
-                        class="sidebar-nav__link {% if page_name == 'dashboard' %}is-active{% endif %}"
-                        href="{{ url_for('dashboard') }}"
-                        {% if page_name == 'dashboard' %}
-                            aria-current="page"
-                        {% endif %}
-                    >
-                        <span
-                            class="sidebar-nav__icon"
-                            aria-hidden="true"
-                        >
-                            ◫
-                        </span>
-
-                        <span>Dashboard</span>
+                    <a class="sidebar-nav__link nav-item {% if current_path == '/' %}is-active active{% endif %}" href="/" {% if current_path == '/' %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⌂</span><span>Dashboard</span>
                     </a>
-                </div>
-
-                <div class="sidebar-nav__section">
-                    <span class="sidebar-nav__label">
-                        Coaching
-                    </span>
-
-                    <a
-                        class="sidebar-nav__link {% if page_name == 'students' %}is-active{% endif %}"
-                        href="/students"
-                        {% if page_name == 'students' %}
-                            aria-current="page"
-                        {% endif %}
-                    >
-                        <span
-                            class="sidebar-nav__icon"
-                            aria-hidden="true"
-                        >
-                            ◉
-                        </span>
-
-                        <span>Students</span>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/students') %}is-active active{% endif %}" href="/students" {% if current_path.startswith('/students') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◉</span><span>Students</span>
                     </a>
-
-                    <a
-                        class="sidebar-nav__link {% if page_name == 'sessions' %}is-active{% endif %}"
-                        href="/sessions"
-                        {% if page_name == 'sessions' %}
-                            aria-current="page"
-                        {% endif %}
-                    >
-                        <span
-                            class="sidebar-nav__icon"
-                            aria-hidden="true"
-                        >
-                            ◷
-                        </span>
-
-                        <span>Sessions</span>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
                     </a>
-
-                    <a
-                        class="sidebar-nav__link {% if page_name == 'garmin' %}is-active{% endif %}"
-                        href="/garmin"
-                        {% if page_name == 'garmin' %}
-                            aria-current="page"
-                        {% endif %}
-                    >
-                        <span
-                            class="sidebar-nav__icon"
-                            aria-hidden="true"
-                        >
-                            ⇧
-                        </span>
-
-                        <span>Garmin Import</span>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⇧</span><span>Garmin and Onform Import</span>
                     </a>
-
-                    <a
-                        class="sidebar-nav__link {% if page_name == 'analysis' %}is-active{% endif %}"
-                        href="/analysis"
-                        {% if page_name == 'analysis' %}
-                            aria-current="page"
-                        {% endif %}
-                    >
-                        <span
-                            class="sidebar-nav__icon"
-                            aria-hidden="true"
-                        >
-                            ⌁
-                        </span>
-
-                        <span>Coaching Analysis</span>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/coach-assistant') %}is-active active{% endif %}" href="/coach-assistant" {% if current_path.startswith('/coach-assistant') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">✦</span><span>Coaching Assistant</span>
                     </a>
-
-                    <a
-                        class="sidebar-nav__link {% if page_name == 'biomechanics' %}is-active{% endif %}"
-                        href="{{ url_for('biomechanics') }}"
-                        {% if page_name == 'biomechanics' %}
-                            aria-current="page"
-                        {% endif %}
-                    >
-                        <span
-                            class="sidebar-nav__icon"
-                            aria-hidden="true"
-                        >
-                            ◇
-                        </span>
-
-                        <span>Biomechanics</span>
-                    </a>
-
-                    <a
-                        class="sidebar-nav__link {% if page_name == 'gapping' %}is-active{% endif %}"
-                        href="{{ url_for('gapping_page') }}"
-                        {% if page_name == 'gapping' %}
-                            aria-current="page"
-                        {% endif %}
-                    >
-                        <span
-                            class="sidebar-nav__icon"
-                            aria-hidden="true"
-                        >
-                            ↕
-                        </span>
-
-                        <span>Gapping</span>
-                    </a>
-
-                </div>
-
-                <div class="sidebar-nav__section">
-                    <span class="sidebar-nav__label">
-                        Output
-                    </span>
-
-                    <a
-                        class="sidebar-nav__link {% if page_name == 'reports' %}is-active{% endif %}"
-                        href="/reports"
-                        {% if page_name == 'reports' %}
-                            aria-current="page"
-                        {% endif %}
-                    >
-                        <span
-                            class="sidebar-nav__icon"
-                            aria-hidden="true"
-                        >
-                            ▤
-                        </span>
-
-                        <span>Reports</span>
-                    </a>
-
-                    <a
-                        class="sidebar-nav__link {% if page_name == 'settings' %}is-active{% endif %}"
-                        href="/settings"
-                        {% if page_name == 'settings' %}
-                            aria-current="page"
-                        {% endif %}
-                    >
-                        <span
-                            class="sidebar-nav__icon"
-                            aria-hidden="true"
-                        >
-                            ⚙
-                        </span>
-
-                        <span>Settings</span>
+                    <a class="sidebar-nav__link nav-item {% if 'gapping' in current_path %}is-active active{% endif %}" href="/gapping" {% if 'gapping' in current_path %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">↔</span><span>Gapping</span>
                     </a>
                 </div>
             </nav>
@@ -421,6 +273,9 @@
     ></div>
 
     <script src="/static/js/app.js"></script>
+
+    <script src="/static/js/navigation_repair.js?v=5.3D"></script>
+    <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
 
     {% block page_scripts %}{% endblock %}
 </body>

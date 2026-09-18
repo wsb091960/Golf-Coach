@@ -59,7 +59,7 @@
         <header class="analysis-header">
             <div>
                 <div class="eyebrow">
-                    Phase 5.2.5 · Coaching Analysis Workspace
+                    Phase 5.2.6 · Coaching Analysis
                 </div>
 
                 <h1>
@@ -97,421 +97,20 @@
             </div>
         </header>
 
-        <nav class="workspace-tabs" role="tablist" data-workspace-tabs="analysis-workspace" data-default-tab="evidence"><button type="button" role="tab" data-workspace-tab="evidence">Onform Evidence</button><button type="button" role="tab" data-workspace-tab="video">Swing Video</button><button type="button" role="tab" data-workspace-tab="checkpoints">P1–P10</button><button type="button" role="tab" data-workspace-tab="coaching">Coaching Detail</button><button type="button" role="tab" data-workspace-tab="priorities">Priorities</button></nav>
-
-
-        <section class="analysis-card onform-screenshot-import" id="onform-screenshot-import" data-workspace-panel="evidence" data-workspace-group="analysis-workspace">
-            <div class="card-heading">
-                <div>
-                    <span class="section-kicker">Step 1 · Onform Screenshot Import</span>
-                    <h2>Upload & Extract Onform Screenshots First</h2>
-                    <p>Start here. Upload the two Onform metric screenshots for this swing. PNG or JPG/JPEG screenshots are used to extract Garmin + Onform metrics. Review the combined values and coach-verify them before saving. Uncertain or obscured values remain blank.</p>
-                </div>
-            </div>
-
-            <div class="onform-screenshot-pair">
-                <div class="onform-screenshot-slot">
-                    <div class="onform-screenshot-preview-wrap">
-                        <img id="onform-screenshot-preview-1" alt="Onform screenshot 1 preview" hidden>
-                    </div>
-                    <label><span>Onform Metric Screenshot 1 · PNG / JPG</span><input id="onform-screenshot-file-1" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg"></label>
-                </div>
-                <div class="onform-screenshot-slot">
-                    <div class="onform-screenshot-preview-wrap">
-                        <img id="onform-screenshot-preview-2" alt="Onform screenshot 2 preview" hidden>
-                    </div>
-                    <label><span>Onform Metric Screenshot 2 · PNG / JPG</span><input id="onform-screenshot-file-2" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg"></label>
-                </div>
-            </div>
-
-            <div class="onform-import-controls">
-                <label><span>Apply Garmin Metrics To</span><select id="onform-screenshot-shot"><option value="">Do not update a Garmin shot</option>{% for shot in shots %}<option value="{{ shot.id }}" {% if analysis.shot and analysis.shot.id == shot.id %}selected{% endif %}>Shot {{ shot.shot_number }} · {{ shot.club or "Club" }}</option>{% endfor %}</select></label>
-                <label><span>Apply Onform Body Metrics To</span><select id="onform-screenshot-checkpoint">{% for checkpoint in analysis.checkpoints %}<option value="{{ checkpoint.position }}" {% if checkpoint.position == "P7" %}selected{% endif %}>{{ checkpoint.position }}</option>{% endfor %}</select></label>
-                <label class="onform-verified"><input id="onform-screenshot-verified" type="checkbox"><span>Coach verified combined values against both screenshots</span></label>
-            </div>
-
-            <div class="onform-metric-group">
-                <h3>Launch / Garmin Data</h3>
-                <div class="onform-import-metrics">
-                    <label><span>Club</span><input data-onform-metric="club" type="text"></label>
-                    <label><span>Ball Speed</span><input data-onform-metric="ball_speed" type="number" step="0.1"></label>
-                    <label><span>Club Speed</span><input data-onform-metric="club_speed" type="number" step="0.1"></label>
-                    <label><span>Smash</span><input data-onform-metric="smash_factor" type="number" step="0.001"></label>
-                    <label><span>Club Path</span><input data-onform-metric="club_path" type="number" step="0.1"></label>
-                    <label><span>Club Face</span><input data-onform-metric="club_face" type="number" step="0.1"></label>
-                    <label><span>Face to Path</span><input data-onform-metric="face_to_path" type="number" step="0.1"></label>
-                    <label><span>Attack Angle</span><input data-onform-metric="attack_angle" type="number" step="0.1"></label>
-                    <label><span>Launch Direction</span><input data-onform-metric="launch_direction" type="number" step="0.1"></label>
-                    <label><span>Launch Angle</span><input data-onform-metric="launch_angle" type="number" step="0.1"></label>
-                    <label><span>Back Spin (RPM)</span><input data-onform-metric="spin_rate" type="number" step="1"></label>
-                    <label><span>Side Spin (RPM)</span><input data-onform-metric="side_spin_rpm" type="number" step="1"></label>
-                    <label><span>Spin Axis</span><input data-onform-metric="spin_axis" type="number" step="0.1"></label>
-                    <label><span>Carry</span><input data-onform-metric="carry_distance" type="number" step="0.1"></label>
-                    <label><span>Total</span><input data-onform-metric="total_distance" type="number" step="0.1"></label>
-                    <label><span>Apex</span><input data-onform-metric="apex_height" type="number" step="0.1"></label>
-                    <label><span>Offline</span><input data-onform-metric="offline_distance" type="number" step="0.1"></label>
-                </div>
-            </div>
-
-            <div class="onform-metric-group">
-                <h3>Onform Body Data</h3>
-                <div class="onform-import-metrics">
-                    <label><span>Pelvis Turn</span><input data-onform-metric="pelvis_rotation" type="number" step="0.1"></label>
-                    <label><span>Pelvis Turn Direction</span><input data-onform-metric="pelvis_rotation_direction" type="text" readonly></label>
-                    <label><span>Torso Turn</span><input data-onform-metric="torso_rotation" type="number" step="0.1"></label>
-                    <label><span>Torso Turn Direction</span><input data-onform-metric="torso_rotation_direction" type="text" readonly></label>
-                    <label><span>X-Factor</span><input data-onform-metric="x_factor" type="number" step="0.1"></label>
-                    <label><span>Torso Sway (in)</span><input data-onform-metric="torso_sway" type="number" step="0.1"></label>
-                    <label><span>Torso Sway Direction</span><input data-onform-metric="torso_sway_direction" type="text" readonly></label>
-                    <label><span>Pelvis Sway (in)</span><input data-onform-metric="pelvis_sway" type="number" step="0.1"></label>
-                    <label><span>Pelvis Sway Direction</span><input data-onform-metric="pelvis_sway_direction" type="text" readonly></label>
-                    <label><span>Pelvis Lift (in)</span><input data-onform-metric="pelvis_lift" type="number" step="0.1"></label>
-                    <label><span>Pelvis Lift Direction</span><input data-onform-metric="pelvis_lift_direction" type="text" readonly></label>
-                    <label><span>Shoulder Tilt</span><input data-onform-metric="shoulder_tilt" type="number" step="0.1"></label>
-                    <label><span>Hip/Pelvis Tilt</span><input data-onform-metric="hip_tilt" type="number" step="0.1"></label>
-                    <label><span>Spine Tilt</span><input data-onform-metric="spine_tilt" type="number" step="0.1"></label>
-                    <label><span>Shaft Angle</span><input data-onform-metric="shaft_angle" type="number" step="0.1"></label>
-                </div>
-            </div>
-
-            <div id="onform-screenshot-conflicts" class="onform-conflicts" hidden></div>
-
-            <div class="onform-import-actions">
-                <button type="button" class="button button-secondary" id="onform-screenshot-extract">Extract &amp; Combine Metrics</button>
-                <button type="button" class="button button-primary" id="onform-screenshot-save">Save Verified Import</button>
-            </div>
-            <strong id="onform-screenshot-status"></strong>
-        </section>
-
-        
-
-<section class="analysis-card manual-p-video-card" data-workspace-panel="video" data-workspace-group="analysis-workspace" hidden>
-            <div class="card-heading">
-                <div>
-                    <span class="section-kicker">Step 2 · Manual P-Position Analysis</span>
-                    <h2>{{ analysis.original_video.title or "Swing Video" }}</h2>
-                    <p>After the Onform screenshot import, use this swing video only when you want manual P1-P10 timing and coach-verified shoulder/hip landmarks for Golf Coach calculations.</p>
-                </div>
-            </div>
-
-            <div class="manual-p-video-stage" id="manual-p-video-stage">
-                <video
-                    id="original-swing-video"
-                    controls
-                    preload="metadata"
-                    src="/sessions/{{ analysis.session_id }}/videos/{{ analysis.original_video.id }}/stream"
-                ></video>
-                <canvas id="p-position-landmark-canvas" aria-label="P-position landmark overlay"></canvas>
-            </div>
-
-            <div class="landmark-toolbar">
-                <button type="button" class="button button-secondary" id="landmark-start">Measure 4 Landmarks</button>
-                <button type="button" class="button button-secondary" id="landmark-clear">Clear Landmarks</button>
-                <strong id="landmark-status">Select a P-position, then measure left shoulder, right shoulder, left hip, right hip.</strong>
-            </div>
-        </section>
-
-
-        <section class="analysis-card checkpoint-workspace" data-workspace-panel="checkpoints" data-workspace-group="analysis-workspace" hidden>
-
-            <div class="card-heading">
-                <div>
-                    <span class="section-kicker">
-                        P-System
-                    </span>
-
-                    <h2>P1–P10 Checkpoints</h2>
-
-                    <p>
-                        Use P positions as measurement and timing checkpoints,
-                        not mandatory aesthetic positions.
-                    </p>
-                </div>
-            </div>
-
-
-
-            <div class="checkpoint-assist-panel">
-                <span class="section-kicker">Auto Assist</span>
-                <h3>P1–P10 Timing Assistant</h3>
-                <p>
-                    Mark P1 and P10 from the original video, choose the capture
-                    frame rate, then estimate P2–P9. Every estimate remains coach-adjustable.
-                </p>
-
-                <div class="checkpoint-assist-grid">
-                    <label>
-                        <span>P1 Time (sec)</span>
-                        <input id="assist-p1-time" type="number" step="0.001"
-                               value="{{ analysis.checkpoints[0].time_seconds if analysis.checkpoints and analysis.checkpoints[0].time_seconds is not none else '' }}">
-                    </label>
-
-                    <label>
-                        <span>P10 Time (sec)</span>
-                        <input id="assist-p10-time" type="number" step="0.001"
-                               value="{{ analysis.checkpoints[9].time_seconds if analysis.checkpoints|length >= 10 and analysis.checkpoints[9].time_seconds is not none else '' }}">
-                    </label>
-
-                    <label>
-                        <span>Video FPS</span>
-                        <select id="assist-fps">
-                            <option value="30">30 fps</option>
-                            <option value="60">60 fps</option>
-                            <option value="120" selected>120 fps</option>
-                            <option value="240">240 fps</option>
-                        </select>
-                    </label>
-
-                    <label>
-                        <span>Method</span>
-                        <input value="Coach-marked timing estimate" readonly>
-                    </label>
-                </div>
-
-                <label class="checkpoint-assist-check">
-                    <input id="assist-overwrite" type="checkbox">
-                    <span>Overwrite already-set P2–P9 times</span>
-                </label>
-
-                <div class="checkpoint-assist-actions">
-                    <button type="button" class="button button-secondary" id="assist-mark-p1">
-                        Mark Current Time as P1
-                    </button>
-                    <button type="button" class="button button-secondary" id="assist-mark-p10">
-                        Mark Current Time as P10
-                    </button>
-                    <button type="button" class="button button-secondary" id="assist-use-video-range">
-                        Use Full Video Range
-                    </button>
-                    <button type="button" class="button button-primary" id="assist-seed-checkpoints">
-                        Auto-Seed P1–P10
-                    </button>
-                    <button type="button" class="button button-secondary" id="assist-derive-x-factor">
-                        Recalculate X-Factor
-                    </button>
-                </div>
-
-                <strong id="assist-status"></strong>
-            </div>
-
-            <div
-                class="p-position-strip"
-                id="p-position-strip"
-            >
-                {% for checkpoint in analysis.checkpoints %}
-
-                <button
-                    type="button"
-                    class="p-position-button {% if loop.first %}active{% endif %}"
-                    data-position="{{ checkpoint.position }}"
-                    data-order="{{ checkpoint.position_order }}"
-                >
-                    <strong>{{ checkpoint.position }}</strong>
-
-                    <span>
-                        {% if checkpoint.time_seconds is not none %}
-                            {{ "%.3f"|format(checkpoint.time_seconds) }}s
-                        {% else %}
-                            Set
-                        {% endif %}
-                    </span>
-                </button>
-
-                {% endfor %}
-            </div>
-
-
-            <div class="checkpoint-editor">
-
-                <div class="checkpoint-heading">
-                    <div>
-                        <span class="section-kicker">
-                            Selected Checkpoint
-                        </span>
-
-                        <h3 id="checkpoint-title">P1</h3>
-                    </div>
-
-                    <button
-                        type="button"
-                        class="button button-secondary"
-                        id="capture-current-time"
-                    >
-                        Capture Current Video Time
-                    </button>
-                </div>
-
-
-                <div class="checkpoint-measurements">
-
-                    <label>
-                        <span>Video Time (sec)</span>
-                        <input
-                            id="checkpoint-time"
-                            type="number"
-                            step="0.001"
-                        >
-                    </label>
-
-                    <label>
-                        <span>Frame #</span>
-                        <input
-                            id="checkpoint-frame"
-                            type="number"
-                            step="1"
-                        >
-                    </label>
-
-                    <label>
-                        <span>Pelvis Rotation (°)</span>
-                        <input
-                            id="checkpoint-pelvis"
-                            type="number"
-                            step="0.1"
-                        >
-                    </label>
-
-                    <label>
-                        <span>Torso Rotation (°)</span>
-                        <input
-                            id="checkpoint-torso"
-                            type="number"
-                            step="0.1"
-                        >
-                    </label>
-
-                    <label>
-                        <span>X-Factor (°)</span>
-                        <input
-                            id="checkpoint-x-factor"
-                            type="number"
-                            step="0.1"
-                        >
-                    </label>
-
-                    <label>
-                        <span>Shoulder Tilt (°)</span>
-                        <input
-                            id="checkpoint-shoulder-tilt"
-                            type="number"
-                            step="0.1"
-                        >
-                    </label>
-
-                    <label>
-                        <span>Hip Tilt (°)</span>
-                        <input
-                            id="checkpoint-hip-tilt"
-                            type="number"
-                            step="0.1"
-                        >
-                    </label>
-
-                    <label>
-                        <span>Spine Tilt (°)</span>
-                        <input
-                            id="checkpoint-spine-tilt"
-                            type="number"
-                            step="0.1"
-                        >
-                    </label>
-
-                    <label>
-                        <span>Shaft Angle (°)</span>
-                        <input
-                            id="checkpoint-shaft-angle"
-                            type="number"
-                            step="0.1"
-                        >
-                    </label>
-
-                    <label>
-                        <span>Measurement Source</span>
-                        <select id="checkpoint-source">
-                            <option>Manual</option>
-                            <option>Onform</option>
-                            <option>Coach</option>
-                            <option>Auto Vision</option>
-                            <option>Golf Coach 2D</option>
-                        </select>
-                    </label>
-
-                </div>
-
-                <div class="gc-measurement-panel" id="gc-measurement-panel">
-                    <div class="card-heading compact">
-                        <div>
-                            <span class="section-kicker">Golf Coach Measurements</span>
-                            <h3>2D Landmark Calculations + Onform Validation</h3>
-                            <p>Golf Coach independently calculates shoulder tilt, hip/pelvis tilt, and spine tilt from coach-marked landmarks. Torso turn, pelvis turn, and X-Factor remain Onform calibration targets until the 3D rotation model is validated.</p>
-                        </div>
-                    </div>
-                    <div class="gc-measurement-grid">
-                        <div><span>GC Shoulder Tilt</span><strong id="gc-shoulder-tilt">—</strong></div>
-                        <div><span>GC Hip/Pelvis Tilt</span><strong id="gc-hip-tilt">—</strong></div>
-                        <div><span>GC Spine Tilt</span><strong id="gc-spine-tilt">—</strong></div>
-                        <div><span>Landmark Set</span><strong id="gc-landmark-count">0 / 4</strong></div>
-                    </div>
-                    <table class="gc-validation-table">
-                        <thead><tr><th>Measurement</th><th>Golf Coach</th><th>Latest Onform</th><th>Difference</th></tr></thead>
-                        <tbody>
-                            <tr data-compare="shoulder_tilt"><td>Shoulder Tilt</td><td data-gc>—</td><td data-onform>—</td><td data-delta>—</td></tr>
-                            <tr data-compare="hip_tilt"><td>Hip/Pelvis Tilt</td><td data-gc>—</td><td data-onform>—</td><td data-delta>—</td></tr>
-                            <tr data-compare="spine_tilt"><td>Spine Tilt</td><td data-gc>—</td><td data-onform>—</td><td data-delta>—</td></tr>
-                            <tr data-compare="torso_rotation"><td>Torso Turn</td><td data-gc>3D model pending</td><td data-onform>—</td><td data-delta>—</td></tr>
-                            <tr data-compare="pelvis_rotation"><td>Pelvis Turn</td><td data-gc>3D model pending</td><td data-onform>—</td><td data-delta>—</td></tr>
-                            <tr data-compare="x_factor"><td>X-Factor</td><td data-gc>3D model pending</td><td data-onform>—</td><td data-delta>—</td></tr>
-                        </tbody>
-                    </table>
-                    <p class="measurement-caution">2D line slope is not used as a substitute for body turn. That prevents a visually tilted shoulder or pelvis line from being mislabeled as torso or pelvis rotation.</p>
-                </div>
-
-
-                <div class="checkpoint-notes-grid">
-
-                    <label>
-                        <span>TGM Observation</span>
-                        <textarea id="checkpoint-tgm"></textarea>
-                    </label>
-
-                    <label>
-                        <span>TPI Observation</span>
-                        <textarea id="checkpoint-tpi"></textarea>
-                    </label>
-
-                    <label>
-                        <span>Biomechanical Observation</span>
-                        <textarea id="checkpoint-biomechanics"></textarea>
-                    </label>
-
-                    <label>
-                        <span>Coaching Observation</span>
-                        <textarea id="checkpoint-coaching"></textarea>
-                    </label>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="button button-primary"
-                    id="save-checkpoint"
-                >
-                    Save Checkpoint
-                </button>
-
-                <span
-                    class="save-message"
-                    id="checkpoint-save-message"
-                ></span>
-
-            </div>
-        </section>
-
-
-        <section class="analysis-layout" data-workspace-panel="coaching" data-workspace-group="analysis-workspace" hidden>
-
-            <article class="analysis-card">
+        <div class="analysis-workflow-shell">
+            <div class="analysis-workflow-label">Analysis Workflow</div>
+            <nav class="analysis-step-nav" aria-label="Analysis workflow">
+            <a class="analysis-step-link" href="/swing-analysis/{{ analysis.id }}/onform-import">Onform Import</a>
+            <a class="analysis-step-link" href="/swing-analysis/{{ analysis.id }}/p-position">P-Position Analysis</a>
+            <a class="analysis-step-link active" href="/swing-analysis/{{ analysis.id }}/coaching">Coaching Analysis</a>
+        </nav>
+        </div>
+
+<nav class="workspace-tabs" role="tablist" data-workspace-tabs="coaching-analysis" data-default-tab="flight"><button type="button" role="tab" data-workspace-tab="flight">Ball Flight</button><button type="button" role="tab" data-workspace-tab="tgm">TGM</button><button type="button" role="tab" data-workspace-tab="tpi">TPI</button><button type="button" role="tab" data-workspace-tab="measurements">Measurements</button><button type="button" role="tab" data-workspace-tab="priorities">Priorities</button></nav>
+
+<section class="analysis-layout">
+
+            <article class="analysis-card" data-workspace-panel="flight" data-workspace-group="coaching-analysis">
 
                 <div class="card-heading">
                     <div>
@@ -615,7 +214,7 @@
             </article>
 
 
-            <article class="analysis-card">
+            <article class="analysis-card" data-workspace-panel="tgm" data-workspace-group="coaching-analysis" hidden>
 
                 <div class="card-heading">
                     <div>
@@ -719,7 +318,7 @@
             </article>
 
 
-            <article class="analysis-card">
+            <article class="analysis-card" data-workspace-panel="tpi" data-workspace-group="coaching-analysis" hidden>
 
                 <div class="card-heading">
                     <div>
@@ -781,7 +380,7 @@
             </article>
 
 
-            <article class="analysis-card">
+            <article class="analysis-card" data-workspace-panel="measurements" data-workspace-group="coaching-analysis" hidden>
 
                 <div class="card-heading">
                     <div>
@@ -912,7 +511,7 @@
         </section>
 
 
-        <section class="analysis-card coaching-output" data-workspace-panel="priorities" data-workspace-group="analysis-workspace" hidden>
+        <section class="analysis-card coaching-output" data-workspace-panel="priorities" data-workspace-group="coaching-analysis" hidden>
 
             <div class="card-heading">
                 <div>
@@ -1028,12 +627,7 @@
     </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="/static/js/video_coordinates.js?v=5.2.4A"></script>
-<script src="/static/js/swing_landmark_measurements.js?v=5.2.5C"></script>
-<script src="/static/js/onform_screenshot_import.js?v=5.2.5C"></script>
-<script src="/static/js/swing_analysis_workspace.js?v=5.2.5C"></script>
-<script src="/static/js/swing_analysis_assist.js?v=5.2.4"></script>
+<script src="/static/js/swing_analysis_workspace.js?v=5.2.6"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 </body>

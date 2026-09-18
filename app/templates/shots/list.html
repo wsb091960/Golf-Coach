@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block page_styles %}
+<link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
+
+    {% block page_styles %}
 <link
     rel="stylesheet"
     href="{{ url_for('static', path='css/shots.css') }}"
@@ -70,6 +72,8 @@
 
     <div class="page-header__actions">
 
+        <img class="workspace-hero__logo" src="/static/img/golf-coach-dashboard-hero.png" alt="WSBCO golfer motion logo">
+
         {% if session %}
         <a
             class="button button--secondary"
@@ -90,10 +94,15 @@
 
 </section>
 
+<nav class="workspace-tabs" role="tablist" data-workspace-tabs="shot-list" data-default-tab="summary">
+    <button type="button" role="tab" data-workspace-tab="summary">Session Summary</button>
+    <button type="button" role="tab" data-workspace-tab="table">Shot Table</button>
+</nav>
+
 
 {% if session %}
 
-<section class="shot-session-banner">
+<section class="shot-session-banner" data-workspace-panel="summary" data-workspace-group="shot-list">
 
     <div>
 
@@ -161,7 +170,7 @@
 {% endif %}
 
 
-<section class="shot-summary-grid">
+<section class="shot-summary-grid" data-workspace-panel="summary" data-workspace-group="shot-list">
 
     <article class="shot-summary-card">
 
@@ -331,7 +340,7 @@
 
 {% if shots %}
 
-<section class="panel shot-table-panel">
+<section class="panel shot-table-panel" data-workspace-panel="table" data-workspace-group="shot-list" hidden>
 
     <div class="panel__header shot-table-panel__header">
 
@@ -881,7 +890,7 @@
 
 {% else %}
 
-<section class="empty-state shot-empty-state">
+<section class="empty-state shot-empty-state" data-workspace-panel="table" data-workspace-group="shot-list" hidden>
 
     <div class="empty-state__icon" aria-hidden="true">
         ⛳

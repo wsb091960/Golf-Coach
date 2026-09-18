@@ -5,11 +5,15 @@
 {% endblock %}
 
 {% block content %}
-<section class="bio-page">
+<section class="bio-page workspace-shell">
   <header class="bio-hero">
     <div><p class="bio-kicker">2D COACHING LAB</p><h2>Swing &amp; Biomechanics</h2><p>Capture four verified positions and connect movement patterns to ball flight.</p></div>
-    <div class="bio-confidence"><strong id="confidenceValue">—</strong><span>analysis confidence</span></div>
+    <img class="workspace-hero__logo" src="/static/img/golf-coach-dashboard-hero.png" alt="WSBCO golfer motion logo">
   </header>
+
+  <nav class="workspace-tabs" role="tablist" data-workspace-tabs="biomechanics" data-default-tab="video"><button type="button" role="tab" data-workspace-tab="setup">Setup</button><button type="button" role="tab" data-workspace-tab="video">Video &amp; Priorities</button><button type="button" role="tab" data-workspace-tab="measurements">Measurements</button><button type="button" role="tab" data-workspace-tab="process">Coaching Process</button></nav>
+
+  <section data-workspace-panel="setup" data-workspace-group="biomechanics" hidden>
 
   <div class="bio-source-context" id="bioSourceContext" hidden>
     <div><span>SESSION VIDEO</span><strong id="bioSourceStudent">Student</strong></div>
@@ -29,6 +33,9 @@
     <button id="saveCoachingPlan" class="bio-button bio-button--primary" type="button" disabled>Save Plan to Coaching Observations</button>
     <a id="reviewSavedPlan" class="bio-button bio-button--quiet" href="#" hidden>Review Session Notes</a>
   </section>
+  </section>
+
+  <section data-workspace-panel="video" data-workspace-group="biomechanics">
 
   <div class="bio-grid">
     <section class="bio-card video-card">
@@ -56,8 +63,9 @@
     </aside>
   </div>
 
+  </section>
 
-
+  <section data-workspace-panel="measurements" data-workspace-group="biomechanics" hidden>
   <section class="bio-card xfactor-card" id="xFactorPanel">
     <div class="bio-section-title"><div><span>ROTATIONAL SEPARATION</span><h3>2D X-factor estimate</h3></div><span class="estimate-badge">Face-on · P1/P4/P5</span></div>
     <div id="xFactorStatus" class="xfactor-status">Complete P1, P4 and P5 in a face-on video, then run the analysis.</div>
@@ -77,6 +85,9 @@
     <div id="metricGrid" class="metric-grid"><div class="empty-results">No verified measurements yet.</div></div>
   </section>
 
+  </section>
+
+  <section data-workspace-panel="process" data-workspace-group="biomechanics" hidden>
   <section class="bio-card sequence-card">
     <div class="bio-section-title"><div><span>COACHING PROCESS</span><h3>Interpretation and decision sequence</h3></div><span class="process-badge">Video → evidence → intervention → proof</span></div>
     <div class="interpret-grid interpret-grid--expanded">
@@ -103,6 +114,7 @@
     </div>
     <div class="retest-scorecard"><strong>Recommended retest scorecard</strong><span>5 shots</span><span>Same club</span><span>Same target</span><span>Same camera</span><span>Compare medians + dispersion</span></div>
     <p class="bio-disclaimer">Single-camera measurements are screen-plane estimates—not laboratory 3D kinetics or medical assessment. Movement-to-ball-flight relationships are coaching hypotheses until supported by repeated outcomes.</p>
+  </section>
   </section>
 </section>
 {% endblock %}

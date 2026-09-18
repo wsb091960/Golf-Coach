@@ -78,9 +78,9 @@
         const checkpoint =
             checkpointFor(position) || {};
 
-        document.getElementById(
-            "checkpoint-title"
-        ).textContent = position;
+        const checkpointTitle = document.getElementById("checkpoint-title");
+        if (!checkpointTitle) return;
+        checkpointTitle.textContent = position;
 
         setValue(
             "checkpoint-time",
@@ -554,5 +554,7 @@
         renderGarminMetrics(null);
     }
 
-    loadCheckpoint(activePosition);
+    if (document.getElementById("checkpoint-title")) {
+        loadCheckpoint(activePosition);
+    }
 })();

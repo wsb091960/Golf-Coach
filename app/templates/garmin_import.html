@@ -1,73 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Garmin R10 Import | WSBCO Golf Coach</title>
-<link rel="stylesheet" href="/static/css/dashboard.css">
-<style>
-.content-card{max-width:850px;background:#fff;border:1px solid #dfe7e3;border-radius:18px;padding:26px}
-.field{display:grid;gap:6px;margin-bottom:16px}
-.field select,.field input{padding:12px;border:1px solid #dfe7e3;border-radius:10px}
-.success{padding:14px;background:#e5f1ed;color:#155444;border-radius:10px;margin-bottom:16px}
-.warning{padding:14px;background:#fff7dc;color:#725d18;border-radius:10px;margin-bottom:16px}
-</style>
-</head>
-<body>
-<div class="app-shell">
-<aside class="sidebar">
-<div class="brand"><div class="brand-mark">GC</div><div><div class="brand-name">WSBCO</div><div class="brand-subtitle">Golf Coach</div></div></div>
-<nav class="sidebar-nav">
-<a class="nav-item" href="/">Dashboard</a>
-<a class="nav-item" href="/students">Students</a>
-<a class="nav-item" href="/sessions">Sessions</a>
-<a class="nav-item active" href="/imports/garmin">Garmin Import</a>
-<a class="nav-item" href="/analysis">Coaching Analysis</a>
-<a class="nav-item" href="/biomechanics">Biomechanics</a>
-<a class="nav-item" href="/gapping">Gapping</a>
-</nav>
-</aside>
-
-<main class="main-content">
-<header class="topbar">
-<div>
-<div class="eyebrow">Persistent Launch Monitor Import</div>
-<h1>Garmin R10 Import</h1>
-<p class="page-subtitle">Imported shots are now saved permanently in SQLite.</p>
-</div>
-</header>
-
-{% if imported %}
-<div class="success">{{ imported }} Garmin shots imported successfully.</div>
-{% endif %}
-
-{% if duplicates %}
-<div class="warning">{{ duplicates }} duplicate shots were skipped.</div>
-{% endif %}
-
-<section class="content-card">
-<form method="post" action="/imports/garmin" enctype="multipart/form-data">
-<div class="field">
-<label>Coaching Session</label>
-<select name="session_id" required>
-<option value="">Select session</option>
-{% for session in sessions %}
-<option value="{{ session.id }}" {% if selected_session_id == session.id %}selected{% endif %}>
-{{ session.student_name }} · {{ session.session_date }} · {{ session.session_type }}
-</option>
-{% endfor %}
-</select>
-</div>
-
-<div class="field">
-<label>Garmin R10 CSV</label>
-<input name="csv_file" type="file" accept=".csv,text/csv" required>
-</div>
-
-<button class="button button-primary" type="submit">Import R10 CSV</button>
-</form>
-</section>
-</main>
-</div>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}<div class="workspace-shell">
+<header class="workspace-hero"><div class="workspace-hero__copy"><span class="workspace-kicker">Measured evidence</span><h1>Garmin &amp; Onform Import</h1><p>Add launch-monitor and video evidence to the selected coaching session.</p></div><img class="workspace-hero__logo" src="/static/img/golf-coach-dashboard-hero.png" alt="WSBCO golfer motion logo"></header>
+{% if imported %}<div class="alert alert--success">{{ imported }} Garmin shots imported successfully.</div>{% endif %}{% if duplicates %}<div class="alert" style="background:#fff8e8;color:#7a5b14">{{ duplicates }} duplicate shots were skipped.</div>{% endif %}
+<nav class="workspace-tabs" role="tablist" data-workspace-tabs="imports" data-default-tab="garmin"><button type="button" role="tab" data-workspace-tab="garmin">Garmin R10 CSV</button><button type="button" role="tab" data-workspace-tab="onform">Onform Workflow</button></nav>
+<section data-workspace-panel="garmin" data-workspace-group="imports"><div class="workspace-card"><span class="workspace-kicker">Launch monitor</span><h2>Import Garmin R10 shots</h2><form method="post" action="/imports/garmin" enctype="multipart/form-data"><div class="workspace-form-grid"><label>Coaching Session<select name="session_id" required><option value="">Select session</option>{% for session in sessions %}<option value="{{ session.id }}" {% if selected_session_id == session.id %}selected{% endif %}>{{ session.student_name }} · {{ session.session_date }} · {{ session.session_type }}</option>{% endfor %}</select></label><label>Garmin R10 CSV<input name="csv_file" type="file" accept=".csv,text/csv" required></label></div><p><button class="workspace-button" type="submit">Import R10 CSV</button></p></form></div></section>
+<section data-workspace-panel="onform" data-workspace-group="imports" hidden><div class="workspace-card"><span class="workspace-kicker">Video evidence</span><h2>Onform workflow</h2><p class="workspace-intro">Open a session, add the original swing video, then launch the Coaching Analysis workspace to import Onform screenshots, P-position observations, and body-swing measurements.</p><a class="workspace-button" href="/sessions">Choose a Session</a></div></section>
+</div>{% endblock %}

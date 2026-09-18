@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="/static/css/session_performance.css">
     <link rel="stylesheet" href="/static/css/topdown_flight.css">
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
-    <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
 </head>
 
 <body>
@@ -63,7 +62,6 @@
             </div>
 
             <div class="performance-actions">
-                <img class="legacy-workspace-logo" src="/static/img/golf-coach-dashboard-hero.png" alt="WSBCO golfer motion logo">
                 <a
                     class="button button-secondary"
                     href="/imports/garmin?session_id={{ session.id }}"
@@ -82,10 +80,8 @@
             </div>
         </header>
 
-        <nav class="workspace-tabs" role="tablist" data-workspace-tabs="session-detail" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="charts">Charts</button><button type="button" role="tab" data-workspace-tab="shots">Shots</button><button type="button" role="tab" data-workspace-tab="videos">Videos</button><button type="button" role="tab" data-workspace-tab="notes">Notes</button></nav>
 
-
-        <section class="performance-kpis" data-workspace-panel="overview" data-workspace-group="session-detail">
+        <section class="performance-kpis">
             <div class="kpi">
                 <span>Shots</span>
                 <strong>{{ session_metrics.shots }}</strong>
@@ -152,7 +148,7 @@
         </section>
 
 
-        <section class="performance-grid" data-workspace-panel="charts" data-workspace-group="session-detail" hidden>
+        <section class="performance-grid">
 
             <article class="performance-card flight-card">
                 <div class="card-heading">
@@ -253,7 +249,7 @@
         </section>
 
 
-        <section class="performance-card shot-table-card" data-workspace-panel="shots" data-workspace-group="session-detail" hidden>
+        <section class="performance-card shot-table-card">
             <div class="card-heading">
                 <div>
                     <span class="section-kicker">Garmin R10</span>
@@ -384,15 +380,14 @@
 
 
         <!-- =========================================================
-             PHASE 5.2.5C — SWING VIDEO → P-POSITION ANALYSIS
+             PHASE 5.1.1 — ORIGINAL SWING ↔ ONFORM ANALYSIS
              ========================================================= -->
 
-        <section class="performance-card video-section" data-workspace-panel="videos" data-workspace-group="session-detail" hidden>
+        <section class="performance-card video-section">
             <div class="card-heading">
                 <div>
-                    <span class="section-kicker">Phase 5.2.5C · Manual P-Position Source</span>
-                    <h2>Swing Video for P-Position Analysis</h2>
-                    <p>Upload the actual swing video here. Onform metric screenshots are uploaded separately inside Swing Analysis.</p>
+                    <span class="section-kicker">Onform · Phase 5.1.1</span>
+                    <h2>Swing Video Workflow</h2>
                 </div>
 
                 <button
@@ -401,7 +396,7 @@
                     data-open-video
                     data-video-mode="original_swing"
                 >
-                    Add Swing Video for P-Position Analysis
+                    Add Original Swing
                 </button>
             </div>
 
@@ -450,14 +445,6 @@
                                         Download / Share
                                     </a>
 
-                                    <a
-                                        class="table-action"
-                                        href="/swing-analysis/video/{{ video.id }}/open"
-                                    >
-                                        Open Swing Analysis
-                                    </a>
-
-
                                     {% if video.onform_url %}
                                     <a
                                         class="table-action"
@@ -468,6 +455,17 @@
                                         Onform Link
                                     </a>
                                     {% endif %}
+
+                                    <button
+                                        class="table-action"
+                                        type="button"
+                                        data-open-video
+                                        data-video-mode="onform_analysis"
+                                        data-parent-video-id="{{ video.id }}"
+                                        data-parent-video-title="{{ video.title or 'Swing Video' }}"
+                                    >
+                                        Import Onform Analysis
+                                    </button>
 
                                     <form
                                         method="post"
@@ -482,6 +480,91 @@
                             </div>
 
 
+                            <div class="onform-analysis-list">
+                                <div class="analysis-heading">
+                                    <strong>Onform Analysis</strong>
+                                </div>
+
+                                {% set analysis_ns = namespace(count=0) %}
+
+                                {% for analysis in session_videos %}
+                                    {% if analysis.video_type == "onform_analysis"
+                                          and analysis.parent_video_id == video.id %}
+
+                                        {% set analysis_ns.count = analysis_ns.count + 1 %}
+
+                                        <div class="linked-analysis-card">
+                                            <video
+                                                controls
+                                                preload="metadata"
+                                                src="/sessions/{{ session.id }}/videos/{{ analysis.id }}/stream"
+                                            ></video>
+
+                                            <div class="video-meta">
+                                                <div>
+                                                    <strong>
+                                                        {{ analysis.title or "Onform Analysis" }}
+                                                    </strong>
+
+                                                    <span>
+                                                        {{ analysis.camera_view or video.camera_view or "View not specified" }}
+                                                        {% if analysis.club or video.club %}
+                                                            · {{ analysis.club or video.club }}
+                                                        {% endif %}
+                                                        {% if analysis.shot_number or video.shot_number %}
+                                                            · Shot {{ analysis.shot_number or video.shot_number }}
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+
+                                                {% if analysis.notes %}
+                                                <p>{{ analysis.notes }}</p>
+                                                {% endif %}
+
+                                                <div class="video-actions">
+                                                    <a
+                                                        class="table-action"
+                                                        href="/sessions/{{ session.id }}/videos/{{ analysis.id }}/download"
+                                                    >
+                                                        Download
+                                                    </a>
+
+                                                    {% if analysis.onform_url %}
+                                                    <a
+                                                        class="table-action"
+                                                        href="{{ analysis.onform_url }}"
+                                                        target="_blank"
+                                                        rel="noopener"
+                                                    >
+                                                        Onform Link
+                                                    </a>
+                                                    {% endif %}
+
+                                                    <form
+                                                        method="post"
+                                                        action="/sessions/{{ session.id }}/videos/{{ analysis.id }}/delete"
+                                                        onsubmit="return confirm('Delete this Onform analysis?')"
+                                                    >
+                                                        <button class="table-action" type="submit">
+                                                            Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if analysis_ns.count == 0 %}
+                                <div class="video-empty">
+                                    No Onform analysis imported for this swing yet.
+                                    Download/share the original to Onform, complete the
+                                    analysis, export it, then choose
+                                    <strong>Import Onform Analysis</strong>.
+                                </div>
+                                {% endif %}
+                            </div>
                         </article>
 
                     {% endif %}
@@ -500,7 +583,7 @@
         </section>
 
 
-        <section class="performance-card coaching-card" data-workspace-panel="notes" data-workspace-group="session-detail" hidden>
+        <section class="performance-card coaching-card">
             <div class="card-heading">
                 <div>
                     <span class="section-kicker">Coach</span>
@@ -568,7 +651,7 @@
 
 
 <!-- =============================================================
-     ORIGINAL SWING UPLOAD MODAL
+     VIDEO UPLOAD MODAL
      ============================================================= -->
 
 <div
@@ -581,7 +664,7 @@
         <div class="modal-heading">
             <div>
                 <span class="section-kicker">Onform</span>
-                <h2>Add Swing Video for P-Position Analysis</h2>
+                <h2 id="video-modal-title">Add Original Swing</h2>
             </div>
 
             <button
@@ -593,19 +676,21 @@
             </button>
         </div>
 
+
         <form
-            id="original-swing-upload-form"
+            id="onform-upload-form"
             data-session-id="{{ session.id }}"
             method="post"
             action="/sessions/{{ session.id }}/videos"
             enctype="multipart/form-data"
         >
+
             <div class="video-form-grid">
 
                 <label>
-                    <span>Swing Video File · MP4 / MOV / M4V / WEBM</span>
+                    <span>Video File</span>
+
                     <input
-                        id="original-swing-video-file"
                         type="file"
                         name="video_file"
                         accept="video/mp4,video/quicktime,video/x-m4v,video/webm,.mp4,.mov,.m4v,.webm"
@@ -613,13 +698,62 @@
                     >
                 </label>
 
+
+                <label>
+                    <span>Video Type</span>
+
+                    <select id="video-type-selector">
+                        <option value="original_swing" selected>
+                            Original Swing
+                        </option>
+
+                        <option value="onform_analysis">
+                            Onform Analysis
+                        </option>
+                    </select>
+                </label>
+
+
+                <label id="parent-video-label">
+                    <span>Original Swing</span>
+
+                    <select id="parent-video-selector" disabled>
+                        <option value="">
+                            Not required for original swing
+                        </option>
+
+                        {% for original in session_videos %}
+                            {% if original.video_type == "original_swing"
+                               or not original.video_type %}
+                            <option value="{{ original.id }}">
+                                {{ original.title or "Swing Video" }}
+                                {% if original.club %}
+                                    · {{ original.club }}
+                                {% endif %}
+                                {% if original.camera_view %}
+                                    · {{ original.camera_view }}
+                                {% endif %}
+                            </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </label>
+
+
                 <label>
                     <span>Title</span>
-                    <input name="title" value="Swing Video">
+
+                    <input
+                        name="title"
+                        id="video-title-field"
+                        value="Swing Video"
+                    >
                 </label>
+
 
                 <label>
                     <span>Camera View</span>
+
                     <select name="camera_view">
                         <option value="">Select view</option>
                         <option>Down the Line</option>
@@ -630,8 +764,10 @@
                     </select>
                 </label>
 
+
                 <label>
                     <span>Club</span>
+
                     <input
                         name="club"
                         value="{{ session.primary_club or '' }}"
@@ -639,8 +775,10 @@
                     >
                 </label>
 
+
                 <label>
                     <span>Link to Garmin Shot #</span>
+
                     <input
                         name="shot_number"
                         type="number"
@@ -649,8 +787,10 @@
                     >
                 </label>
 
+
                 <label>
                     <span>Onform Share URL</span>
+
                     <input
                         name="onform_url"
                         type="url"
@@ -658,8 +798,10 @@
                     >
                 </label>
 
+
                 <label class="full-width">
                     <span>Video Notes</span>
+
                     <textarea
                         name="notes"
                         placeholder="Swing notes, checkpoint, comparison..."
@@ -668,34 +810,34 @@
 
             </div>
 
-            <div class="manual-shot-help">
-                This video is the visual source for manual P1–P10 timing and landmark measurements. Onform PNG/JPG metric screenshots are added later inside Swing Analysis; do not upload screenshots here.
+
+            <div
+                class="manual-shot-help"
+                id="video-type-help"
+            >
+                Original Swing preserves the raw swing video for
+                P1–P10, TGM, TPI and biomechanical analysis.
             </div>
+
+
+            <div
+                id="onform-upload-progress"
+                class="upload-progress"
+                hidden
+            >
+                <div><span></span></div>
+                <strong>Preparing video upload…</strong>
+            </div>
+
 
             <button
                 class="button button-primary"
-                id="original-swing-upload-button"
                 type="submit"
+                id="video-submit-button"
             >
-                Upload Swing Video
+                Upload Original Swing
             </button>
 
-            <div
-                id="original-swing-upload-progress-wrap"
-                class="manual-shot-help"
-                hidden
-                aria-live="polite"
-            >
-                <progress
-                    id="original-swing-upload-progress"
-                    max="100"
-                    value="0"
-                    style="width:100%;"
-                ></progress>
-                <div id="original-swing-upload-status">
-                    Preparing video upload…
-                </div>
-            </div>
         </form>
     </div>
 </div>
@@ -710,235 +852,161 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const originalModal = document.getElementById("video-modal");
-    const uploadForm = document.getElementById("original-swing-upload-form");
-    const uploadFile = document.getElementById("original-swing-video-file");
-    const uploadButton = document.getElementById("original-swing-upload-button");
-    const progressWrap = document.getElementById("original-swing-upload-progress-wrap");
-    const progressBar = document.getElementById("original-swing-upload-progress");
-    const progressText = document.getElementById("original-swing-upload-status");
+    const modal = document.getElementById("video-modal");
+    const form = document.getElementById("onform-upload-form");
+    const modalTitle = document.getElementById("video-modal-title");
 
-    document.querySelectorAll("[data-open-video]").forEach(function (button) {
-        button.addEventListener("click", function () {
-            if (originalModal) {
-                originalModal.hidden = false;
+    const typeSelector = document.getElementById("video-type-selector");
+    const parentSelector = document.getElementById("parent-video-selector");
+
+    const titleField = document.getElementById("video-title-field");
+    const help = document.getElementById("video-type-help");
+    const submitButton = document.getElementById("video-submit-button");
+
+
+    function syncVideoType(mode, requestedParentId) {
+        const selectedMode =
+            mode ||
+            (typeSelector ? typeSelector.value : "original_swing");
+
+        const isOnform = selectedMode === "onform_analysis";
+
+        if (typeSelector) {
+            typeSelector.value = selectedMode;
+        }
+
+        if (parentSelector) {
+            parentSelector.disabled = !isOnform;
+
+            if (isOnform) {
+                if (requestedParentId) {
+                    parentSelector.value = requestedParentId;
+                }
+
+                if (
+                    !parentSelector.value &&
+                    parentSelector.options.length > 1
+                ) {
+                    parentSelector.selectedIndex = 1;
+                }
+            } else {
+                parentSelector.value = "";
             }
-        });
-    });
+        }
 
-    document.querySelectorAll("[data-close-video]").forEach(function (button) {
-        button.addEventListener("click", function () {
-            if (originalModal) {
-                originalModal.hidden = true;
+        const sessionId = form ? form.dataset.sessionId : "";
+
+        if (form && sessionId) {
+            if (isOnform) {
+                const parentId =
+                    parentSelector && parentSelector.value
+                        ? parentSelector.value
+                        : requestedParentId || "";
+
+                if (parentId) {
+                    form.action =
+                        `/sessions/${sessionId}/videos/${parentId}/onform-analysis`;
+                }
+            } else {
+                form.action = `/sessions/${sessionId}/videos`;
             }
-        });
-    });
+        }
 
-    if (originalModal) {
-        originalModal.addEventListener("click", function (event) {
-            if (event.target === originalModal) {
-                originalModal.hidden = true;
-            }
-        });
-    }
+        if (titleField) {
+            titleField.value = isOnform
+                ? "Onform Analysis"
+                : "Swing Video";
+        }
 
-    async function readError(response, fallback) {
-        try {
-            const payload = await response.json();
-            return payload.detail || payload.message || fallback;
-        } catch (_error) {
-            return fallback;
+        if (modalTitle) {
+            modalTitle.textContent = isOnform
+                ? "Import Onform Analysis"
+                : "Add Original Swing";
+        }
+
+        if (submitButton) {
+            submitButton.textContent = isOnform
+                ? "Import Onform Analysis"
+                : "Upload Original Swing";
+        }
+
+        if (help) {
+            help.textContent = isOnform
+                ? "Choose the original swing this exported Onform analysis belongs to."
+                : "Original Swing preserves the raw swing video for P1–P10, TGM, TPI and biomechanical analysis.";
         }
     }
 
-    if (uploadForm) {
-        uploadForm.addEventListener("submit", async function (event) {
-            event.preventDefault();
+    document.querySelectorAll("[data-open-video]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const mode =
+                button.dataset.videoMode ||
+                "original_swing";
 
-            const file = uploadFile && uploadFile.files
-                ? uploadFile.files[0]
-                : null;
+            const parentId =
+                button.dataset.parentVideoId ||
+                "";
 
-            if (!file) {
-                if (progressText) {
-                    progressText.textContent = "Choose a swing video first.";
-                }
-                if (progressWrap) {
-                    progressWrap.hidden = false;
-                }
-                return;
+            syncVideoType(
+                mode,
+                parentId
+            );
+
+            if (modal) {
+                modal.hidden = false;
             }
+        });
+    });
 
-            const sessionId = uploadForm.dataset.sessionId;
-            if (!sessionId) {
-                if (progressWrap) {
-                    progressWrap.hidden = false;
-                }
-                if (progressText) {
-                    progressText.textContent = "Session identifier is missing.";
-                }
-                return;
+
+    document.querySelectorAll("[data-close-video]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            if (modal) {
+                modal.hidden = true;
             }
+        });
+    });
 
-            if (uploadButton) {
-                uploadButton.disabled = true;
-            }
-            if (progressWrap) {
-                progressWrap.hidden = false;
-            }
-            if (progressBar) {
-                progressBar.value = 0;
-            }
-            if (progressText) {
-                progressText.textContent = "Preparing video upload…";
-            }
 
-            try {
-                const initResponse = await fetch(
-                    `/sessions/${encodeURIComponent(sessionId)}/videos/chunked/init`,
-                    {
-                        method: "POST",
-                        credentials: "same-origin"
-                    }
-                );
-
-                if (!initResponse.ok) {
-                    throw new Error(
-                        await readError(
-                            initResponse,
-                            `Unable to start upload (${initResponse.status}).`
-                        )
-                    );
-                }
-
-                const init = await initResponse.json();
-                const uploadId = init.upload_id;
-                const chunkBytes = Number(init.chunk_bytes) || (512 * 1024);
-
-                if (!uploadId) {
-                    throw new Error("Upload identifier was not returned.");
-                }
-
-                const totalChunks = Math.ceil(file.size / chunkBytes);
-
-                for (let index = 0; index < totalChunks; index += 1) {
-                    const start = index * chunkBytes;
-                    const end = Math.min(start + chunkBytes, file.size);
-                    const chunk = file.slice(start, end);
-
-                    const partResponse = await fetch(
-                        `/sessions/${encodeURIComponent(sessionId)}` +
-                        `/videos/chunked/${encodeURIComponent(uploadId)}` +
-                        `/part/${index}`,
-                        {
-                            method: "POST",
-                            body: chunk,
-                            credentials: "same-origin",
-                            headers: {
-                                "Content-Type": "application/octet-stream"
-                            }
-                        }
-                    );
-
-                    if (!partResponse.ok) {
-                        throw new Error(
-                            await readError(
-                                partResponse,
-                                `Video chunk ${index + 1} failed (${partResponse.status}).`
-                            )
-                        );
-                    }
-
-                    const percent = Math.round(
-                        ((index + 1) / totalChunks) * 95
-                    );
-
-                    if (progressBar) {
-                        progressBar.value = percent;
-                    }
-                    if (progressText) {
-                        progressText.textContent =
-                            `Uploading Swing Video — ${percent}%`;
-                    }
-                }
-
-                const formData = new FormData(uploadForm);
-                const payload = {
-                    filename: file.name,
-                    total_chunks: totalChunks,
-                    content_type: file.type || "video/mp4",
-                    video_type: "original_swing",
-                    title: String(formData.get("title") || "Swing Video"),
-                    camera_view: String(formData.get("camera_view") || ""),
-                    club: String(formData.get("club") || ""),
-                    shot_number: String(formData.get("shot_number") || ""),
-                    notes: String(formData.get("notes") || ""),
-                    onform_url: String(formData.get("onform_url") || "")
-                };
-
-                if (progressText) {
-                    progressText.textContent =
-                        "Finalizing Swing Video — 98%";
-                }
-                if (progressBar) {
-                    progressBar.value = 98;
-                }
-
-                const finalizeResponse = await fetch(
-                    `/sessions/${encodeURIComponent(sessionId)}` +
-                    `/videos/chunked/${encodeURIComponent(uploadId)}/finalize`,
-                    {
-                        method: "POST",
-                        credentials: "same-origin",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(payload)
-                    }
-                );
-
-                if (!finalizeResponse.ok) {
-                    throw new Error(
-                        await readError(
-                            finalizeResponse,
-                            `Unable to finalize upload (${finalizeResponse.status}).`
-                        )
-                    );
-                }
-
-                const result = await finalizeResponse.json();
-
-                if (progressBar) {
-                    progressBar.value = 100;
-                }
-                if (progressText) {
-                    progressText.textContent =
-                        "Swing Video uploaded successfully — 100%";
-                }
-
-                window.location.href =
-                    result.redirect_url ||
-                    `/sessions/${encodeURIComponent(sessionId)}?video_added=1`;
-
-            } catch (error) {
-                console.error(error);
-                if (progressText) {
-                    progressText.textContent =
-                        `Upload failed: ${error.message || "Unknown error"}`;
-                }
-                if (uploadButton) {
-                    uploadButton.disabled = false;
-                }
+    if (modal) {
+        modal.addEventListener("click", function (event) {
+            if (event.target === modal) {
+                modal.hidden = true;
             }
         });
     }
+
+
+    if (typeSelector) {
+        typeSelector.addEventListener("change", function () {
+            syncVideoType(
+                typeSelector.value,
+                ""
+            );
+        });
+    }
+
+
+    if (parentSelector) {
+        parentSelector.addEventListener("change", function () {
+            syncVideoType(
+                "onform_analysis",
+                parentSelector.value
+            );
+        });
+    }
+
+
+    syncVideoType(
+        "original_swing",
+        ""
+    );
 });
 </script>
 
 
 <script src="/static/js/session_performance.js?v=2.4.5"></script>
 
-    <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 </body>
 </html>

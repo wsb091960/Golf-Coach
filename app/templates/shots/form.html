@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block page_styles %}
+<link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
+
+    {% block page_styles %}
 <link
     rel="stylesheet"
     href="{{ url_for('static', path='css/shots.css') }}"
@@ -48,6 +50,8 @@
         </p>
 
     </div>
+
+    <img class="workspace-hero__logo" src="/static/img/golf-coach-dashboard-hero.png" alt="WSBCO golfer motion logo">
 
 </section>
 
@@ -106,6 +110,14 @@
 
 {% endif %}
 
+<nav class="workspace-tabs" role="tablist" data-workspace-tabs="shot-form" data-default-tab="information">
+    <button type="button" role="tab" data-workspace-tab="information">Shot Information</button>
+    <button type="button" role="tab" data-workspace-tab="distance">Distance</button>
+    <button type="button" role="tab" data-workspace-tab="speed">Speed</button>
+    <button type="button" role="tab" data-workspace-tab="launch">Launch</button>
+    <button type="button" role="tab" data-workspace-tab="delivery">Club Delivery</button>
+</nav>
+
 
 <form
     method="post"
@@ -127,7 +139,7 @@
              SHOT IDENTIFICATION
         =================================================== -->
 
-        <section class="shot-form-card">
+        <section class="shot-form-card" data-workspace-panel="information" data-workspace-group="shot-form">
 
             <div class="shot-form-card__header">
 
@@ -270,7 +282,7 @@
              DISTANCE
         =================================================== -->
 
-        <section class="shot-form-card">
+        <section class="shot-form-card" data-workspace-panel="distance" data-workspace-group="shot-form" hidden>
 
             <div class="shot-form-card__header">
 
@@ -470,7 +482,7 @@
              SPEED AND EFFICIENCY
         =================================================== -->
 
-        <section class="shot-form-card">
+        <section class="shot-form-card" data-workspace-panel="speed" data-workspace-group="shot-form" hidden>
 
             <div class="shot-form-card__header">
 
@@ -599,7 +611,7 @@
              LAUNCH CONDITIONS
         =================================================== -->
 
-        <section class="shot-form-card">
+        <section class="shot-form-card" data-workspace-panel="launch" data-workspace-group="shot-form" hidden>
 
             <div class="shot-form-card__header">
 
@@ -765,7 +777,7 @@
              CLUB DELIVERY
         =================================================== -->
 
-        <section class="shot-form-card shot-form-card--full">
+        <section class="shot-form-card shot-form-card--full" data-workspace-panel="delivery" data-workspace-group="shot-form" hidden>
 
             <div class="shot-form-card__header">
 

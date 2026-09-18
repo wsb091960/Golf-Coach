@@ -1,0 +1,301 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+import re
+from urllib.parse import quote_plus
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+
+from app.coach_assistant_models import CoachingAssistantCase, CoachingAssistantMessage
+from app.database import get_db
+from app.models import CoachingSession, SessionVideo, Shot, Student
+from app.services.coach_assistant_ai import generate, CoachingAIError
+
+APP_DIR = Path(__file__).resolve().parent.parent
+templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
+router = APIRouter(prefix="/coach-assistant", tags=["Coaching Assistant"])
+
+
+def _case_or_404(db: Session, case_id: str) -> CoachingAssistantCase:
+    case = db.get(CoachingAssistantCase, case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Coaching case not found")
+    return case
+
+
+VIDEO_INSTRUCTORS = (
+    {
+        "name": "MyTPI",
+        "focus": "Body-swing connection and movement screening",
+        "query": "MyTPI",
+    },
+    {
+        "name": "Clay Ballard",
+        "focus": "Clear swing mechanics and practice drills",
+        "query": "Clay Ballard Top Speed Golf",
+    },
+    {
+        "name": "Eric Cogorno",
+        "focus": "Detailed technique and ball-flight instruction",
+        "query": "Eric Cogorno Golf",
+    },
+)
+
+
+def _video_recommendations(topic: str) -> list[dict[str, str]]:
+    """Build safe topic searches instead of trusting generated video URLs."""
+    clean_topic = re.sub(r"\s+", " ", topic or "golf swing practice drills").strip()
+    clean_topic = clean_topic[:180] or "golf swing practice drills"
+    return [
+        {
+            "name": instructor["name"],
+            "focus": instructor["focus"],
+            "url": "https://www.youtube.com/results?search_query="
+            + quote_plus(f'{instructor["query"]} {clean_topic} drill'),
+        }
+        for instructor in VIDEO_INSTRUCTORS
+    ]
+
+
+def _plan_view(value: str | None, topic: str = "") -> dict:
+    """Turn new and previously saved JSON plans into template-friendly data."""
+    if not value:
+        return {}
+    try:
+        parsed = json.loads(value)
+        if isinstance(parsed, str):
+            parsed = json.loads(parsed)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return {"raw": value, "videos": _video_recommendations(topic)}
+    if not isinstance(parsed, dict):
+        return {"raw": value, "videos": _video_recommendations(topic)}
+    drills = parsed.get("drills", [])
+    if not isinstance(drills, list):
+        drills = []
+    return {
+        "priority": parsed.get("priority", ""),
+        "explanation": parsed.get("explanation_for_student", parsed.get("student_explanation", "")),
+        "drills": [drill for drill in drills if isinstance(drill, dict)],
+        "ball_flight_cue": parsed.get("ball_flight_cue", ""),
+        "pass_fail_test": parsed.get("pass_fail_test", parsed.get("pass_fail", "")),
+        "reassessment": parsed.get("reassessment", ""),
+        "videos": _video_recommendations(
+            topic or str(parsed.get("priority", "golf swing practice drills"))
+        ),
+    }
+
+
+def _case_topic(case: CoachingAssistantCase | None, observations: dict) -> str:
+    if not case:
+        return "golf swing practice drills"
+    return str(
+        observations.get("swing_characteristics")
+        or case.goal
+        or "golf swing practice drills"
+    )
+
+
+def _session_display_title(
+    session: CoachingSession | None,
+    fallback: str = "",
+) -> str:
+    """Keep Coaching Assistant assessment titles aligned with Sessions."""
+    if session:
+        session_type = (session.session_type or "").strip()
+        custom_name = (session.name or "").strip()
+        if session_type and custom_name and custom_name.casefold() != session_type.casefold():
+            return f"{session_type} · {custom_name}"
+        if session_type:
+            return session_type
+        if custom_name:
+            return custom_name
+    return (fallback or "").strip() or "Swing assessment"
+
+
+def _normalized_session_text(value: str | None) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", (value or "").casefold()).strip()
+
+
+def _has_meaningful_value(value: str | None, *, generated_labels: tuple[str, ...] = ()) -> bool:
+    normalized = _normalized_session_text(value)
+    if not normalized or normalized in {"none", "na", "n a", "not specified", "unknown"}:
+        return False
+    return not any(normalized == label or normalized.startswith(label + " ") for label in generated_labels)
+
+
+def _session_is_unused(db: Session, session: CoachingSession, excluding_case_id: str = "") -> bool:
+    """Only classify a session as removable when it contains no retained work."""
+    # Names generated by the Coaching Assistant are labels, not retained coach work.
+    # The earlier cleanup treated "Coaching Session" as user content and therefore
+    # protected every empty session created by the assistant.
+    generated_names = ("coaching session", "coaching assistant session", "swing assessment")
+    if _has_meaningful_value(session.name, generated_labels=generated_names):
+        return False
+    if _has_meaningful_value(session.primary_club):
+        return False
+    generated_notes = ("created by coaching assistant", "coaching assistant session")
+    if _has_meaningful_value(session.notes, generated_labels=generated_notes):
+        return False
+    if _has_meaningful_value(session.coaching_notes, generated_labels=generated_notes):
+        return False
+    if db.query(Shot.id).filter(Shot.session_id == session.id).first():
+        return False
+    if db.query(SessionVideo.id).filter(SessionVideo.session_id == session.id).first():
+        return False
+    cases = db.query(CoachingAssistantCase.id).filter(CoachingAssistantCase.session_id == session.id)
+    if excluding_case_id:
+        cases = cases.filter(CoachingAssistantCase.id != excluding_case_id)
+    return cases.first() is None
+
+
+@router.post("/{case_id}/delete")
+def delete_assessment(case_id: str, db: Session = Depends(get_db)):
+    case = _case_or_404(db, case_id)
+    student_id = case.student_id
+    linked_session = db.get(CoachingSession, case.session_id)
+    remove_linked_session = bool(linked_session and _session_is_unused(db, linked_session, excluding_case_id=case.id))
+    db.query(CoachingAssistantMessage).filter_by(case_id=case.id).delete(synchronize_session=False)
+    db.delete(case)
+    db.flush()
+    if remove_linked_session:
+        db.delete(linked_session)
+    db.commit()
+    suffix = "&session_removed=1" if remove_linked_session else ""
+    return RedirectResponse(url=f"/coach-assistant?student_id={student_id}{suffix}", status_code=303)
+
+
+@router.post("/cleanup-empty-sessions")
+def cleanup_empty_sessions(student_id: str = Form(...), db: Session = Depends(get_db)):
+    if not db.get(Student, student_id):
+        raise HTTPException(status_code=404, detail="Student not found")
+    removed = 0
+    candidates = db.query(CoachingSession).filter(CoachingSession.student_id == student_id).all()
+    for session in candidates:
+        if _session_is_unused(db, session):
+            db.delete(session)
+            removed += 1
+    db.flush()
+    db.commit()
+    return RedirectResponse(url=f"/coach-assistant?student_id={student_id}&cleanup_done=1&cleaned={removed}", status_code=303)
+
+
+@router.post("/delete-session")
+def delete_selected_session(session_id: str = Form(...), db: Session = Depends(get_db)):
+    """Permanently delete the exact selected session and its dependent records."""
+    linked_session = db.get(CoachingSession, session_id)
+    if not linked_session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    student_id = linked_session.student_id
+    cases = db.query(CoachingAssistantCase).filter(
+        CoachingAssistantCase.session_id == session_id
+    ).all()
+    case_ids = [case.id for case in cases]
+    if case_ids:
+        db.query(CoachingAssistantMessage).filter(
+            CoachingAssistantMessage.case_id.in_(case_ids)
+        ).delete(synchronize_session=False)
+        db.query(CoachingAssistantCase).filter(
+            CoachingAssistantCase.id.in_(case_ids)
+        ).delete(synchronize_session=False)
+    db.delete(linked_session)
+    db.commit()
+    return RedirectResponse(
+        url=f"/coach-assistant?student_id={student_id}&session_deleted=1",
+        status_code=303,
+    )
+
+
+@router.get("", response_class=HTMLResponse, name="coach_assistant_page")
+def page(request: Request, student_id: str = "", session_id: str = "", case_id: str = "", cleanup_done: int = 0, cleaned: int = 0, session_removed: int = 0, session_deleted: int = 0, db: Session = Depends(get_db)):
+    students = db.query(Student).order_by(Student.last_name, Student.first_name).all()
+    sessions = db.query(CoachingSession).order_by(CoachingSession.session_date.desc()).all()
+    case = _case_or_404(db, case_id) if case_id else None
+    history = db.query(CoachingAssistantCase).order_by(CoachingAssistantCase.updated_at.desc()).limit(20).all()
+    latest = db.query(CoachingAssistantMessage).filter_by(case_id=case.id).order_by(CoachingAssistantMessage.id.desc()).first() if case else None
+    observations = json.loads(case.observations_json or "{}") if case else {}
+    evidence = json.loads(case.evidence_json or "{}") if case else {}
+    topic = _case_topic(case, observations)
+    sessions_by_id = {session.id: session for session in sessions}
+    history_items = [
+        {
+            "case": item,
+            "title": _session_display_title(
+                sessions_by_id.get(item.session_id),
+                item.goal,
+            ),
+        }
+        for item in history
+    ]
+    assessment_title = _session_display_title(
+        sessions_by_id.get(case.session_id) if case else None,
+        case.goal if case else "",
+    ) if case else ""
+    return templates.TemplateResponse(request=request, name="coach_assistant.html", context={"page_title": "Coaching Assistant", "page_name": "coach_assistant", "students": students, "sessions": sessions, "selected_student_id": student_id or (case.student_id if case else ""), "selected_session_id": session_id or (case.session_id if case else ""), "case": case, "history_items": history_items, "assessment_title": assessment_title, "observations": observations, "evidence": evidence, "ai_error": latest.content if latest and latest.role == "error" else "", "preliminary_plan_view": _plan_view(case.preliminary_plan, topic) if case else {}, "refined_plan_view": _plan_view(case.refined_plan, topic) if case else {}, "cleanup_done": bool(cleanup_done), "cleaned": cleaned, "session_removed": bool(session_removed), "session_deleted": bool(session_deleted)})
+
+
+@router.post("/analyze")
+def analyze(student_id: str = Form(...), session_id: str = Form(...), goal: str = Form(""), swing_characteristics: str = Form(...), mobility: str = Form(""), stability: str = Form(""), balance: str = Form(""), sequencing: str = Form(""), p_positions: str = Form(""), db: Session = Depends(get_db)):
+    session = db.get(CoachingSession, session_id)
+    if not session or session.student_id != student_id:
+        raise HTTPException(status_code=400, detail="Choose a session belonging to the selected student")
+    observations = {"swing_characteristics": swing_characteristics, "mobility": mobility, "stability": stability, "balance": balance, "sequencing": sequencing, "p_positions": p_positions}
+    try:
+        result = generate(goal, observations)
+    except CoachingAIError as error:
+        case = CoachingAssistantCase(id=str(uuid4()), student_id=student_id, session_id=session_id, goal=goal, observations_json=json.dumps(observations), status="ai_error")
+        db.add(case)
+        db.flush()
+        db.add(CoachingAssistantMessage(case_id=case.id, role="error", content=str(error)))
+        db.commit()
+        return RedirectResponse(url=f"/coach-assistant?case_id={case.id}", status_code=303)
+    case = CoachingAssistantCase(id=str(uuid4()), student_id=student_id, session_id=session_id, goal=goal, observations_json=json.dumps(observations), preliminary_analysis=result["analysis"], preliminary_plan=result["practice_plan"], status="preliminary")
+    db.add(case)
+    db.add(CoachingAssistantMessage(case_id=case.id, role="coach", content=swing_characteristics))
+    db.add(CoachingAssistantMessage(case_id=case.id, role="assistant", content=result["analysis"] + "\n\n" + result["practice_plan"]))
+    db.commit()
+    return RedirectResponse(url=f"/coach-assistant?case_id={case.id}", status_code=303)
+
+
+@router.post("/{case_id}/refine")
+def refine(case_id: str, garmin_evidence: str = Form(""), onform_evidence: str = Form(""), coach_followup: str = Form(""), db: Session = Depends(get_db)):
+    case = _case_or_404(db, case_id)
+    observations = json.loads(case.observations_json or "{}")
+    evidence = {"garmin": garmin_evidence, "onform": onform_evidence, "coach_followup": coach_followup}
+    case.evidence_json = json.dumps(evidence)
+    try:
+        result = generate(case.goal, observations, evidence)
+    except CoachingAIError as error:
+        db.add(CoachingAssistantMessage(case_id=case.id, role="error", content=str(error)))
+        db.commit()
+        return RedirectResponse(url=f"/coach-assistant?case_id={case.id}", status_code=303)
+    case.evidence_json = json.dumps(evidence)
+    case.refined_analysis = result["analysis"]
+    case.refined_plan = result["practice_plan"]
+    case.status = "refined"
+    db.add(CoachingAssistantMessage(case_id=case.id, role="coach", content="Evidence refinement: " + " | ".join(v for v in evidence.values() if v)))
+    db.add(CoachingAssistantMessage(case_id=case.id, role="assistant", content=result["analysis"] + "\n\n" + result["practice_plan"]))
+    db.commit()
+    return RedirectResponse(url=f"/coach-assistant?case_id={case.id}", status_code=303)
+
+
+@router.post("/{case_id}/retry")
+def retry(case_id: str, db: Session = Depends(get_db)):
+    case = _case_or_404(db, case_id)
+    try:
+        result = generate(case.goal, json.loads(case.observations_json or "{}"))
+    except CoachingAIError as error:
+        db.add(CoachingAssistantMessage(case_id=case.id, role="error", content=str(error)))
+    else:
+        if case.preliminary_analysis or case.preliminary_plan:
+            db.add(CoachingAssistantMessage(case_id=case.id, role="archive", content=case.preliminary_analysis + "\n\n" + case.preliminary_plan))
+        case.preliminary_analysis = result["analysis"]
+        case.preliminary_plan = result["practice_plan"]
+        case.status = "preliminary"
+        db.add(CoachingAssistantMessage(case_id=case.id, role="assistant", content=result["analysis"] + "\n\n" + result["practice_plan"]))
+    db.commit()
+    return RedirectResponse(url=f"/coach-assistant?case_id={case.id}", status_code=303)

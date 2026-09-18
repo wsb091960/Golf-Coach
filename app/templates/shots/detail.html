@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block page_styles %}
+<link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
+
+    {% block page_styles %}
 <link
     rel="stylesheet"
     href="{{ url_for('static', path='css/shots.css') }}"
@@ -92,6 +94,8 @@
 
     <div class="shot-flight-badge">
 
+        <img class="workspace-hero__logo" src="/static/img/golf-coach-dashboard-hero.png" alt="WSBCO golfer motion logo">
+
         <span class="shot-flight-badge__label">
             Shot Shape
         </span>
@@ -104,8 +108,16 @@
 
 </section>
 
+<nav class="workspace-tabs" role="tablist" data-workspace-tabs="shot-detail" data-default-tab="metrics">
+    <button type="button" role="tab" data-workspace-tab="metrics">Metrics</button>
+    <button type="button" role="tab" data-workspace-tab="launch">Launch &amp; Distance</button>
+    <button type="button" role="tab" data-workspace-tab="speed">Speed &amp; Efficiency</button>
+    <button type="button" role="tab" data-workspace-tab="delivery">Club Delivery</button>
+    <button type="button" role="tab" data-workspace-tab="notes">Notes &amp; Actions</button>
+</nav>
 
-<section class="shot-metric-grid">
+
+<section class="shot-metric-grid" data-workspace-panel="metrics" data-workspace-group="shot-detail">
 
     <article class="shot-metric-card">
 
@@ -282,7 +294,7 @@
     <main class="shot-detail-main">
 
 
-        <section class="panel">
+        <section class="panel" data-workspace-panel="launch" data-workspace-group="shot-detail" hidden>
 
             <div class="panel__header">
 
@@ -418,7 +430,7 @@
         </section>
 
 
-        <section class="panel">
+        <section class="panel" data-workspace-panel="speed" data-workspace-group="shot-detail" hidden>
 
             <div class="panel__header">
 
@@ -488,7 +500,7 @@
         </section>
 
 
-        <section class="panel">
+        <section class="panel" data-workspace-panel="delivery" data-workspace-group="shot-detail" hidden>
 
             <div class="panel__header">
 
@@ -588,7 +600,7 @@
         </section>
 
 
-        <section class="panel">
+        <section class="panel" data-workspace-panel="notes" data-workspace-group="shot-detail" hidden>
 
             <div class="panel__header">
 
@@ -649,7 +661,7 @@
     <aside class="shot-detail-sidebar">
 
 
-        <section class="panel">
+        <section class="panel" data-workspace-panel="notes" data-workspace-group="shot-detail" hidden>
 
             <div class="panel__header">
 
@@ -721,7 +733,7 @@
         </section>
 
 
-        <section class="panel">
+        <section class="panel" data-workspace-panel="notes" data-workspace-group="shot-detail" hidden>
 
             <div class="panel__header">
 
@@ -781,7 +793,7 @@
         </section>
 
 
-        <section class="panel panel--danger">
+        <section class="panel panel--danger" data-workspace-panel="notes" data-workspace-group="shot-detail" hidden>
 
             <div class="panel__header">
 

@@ -68,6 +68,8 @@
     font-size:11px;
 }
 </style>
+    <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
+    <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
 </head>
 
 <body>
@@ -82,30 +84,47 @@
 </div>
 </div>
 
-<nav class="sidebar-nav">
-<a class="nav-item" href="/">Dashboard</a>
-<a class="nav-item" href="/students">Students</a>
-<a class="nav-item" href="/sessions">Sessions</a>
-<a class="nav-item" href="/imports/garmin">Garmin Import</a>
-<a class="nav-item active" href="/analysis">Coaching Analysis</a>
-<a class="nav-item" href="/biomechanics">Biomechanics</a>
-<a class="nav-item" href="/gapping">Gapping</a>
-</nav>
+<nav class="sidebar-nav nav-list app-standard-navigation" aria-label="Primary">
+                {% set current_path = request.url.path if request else '' %}
+                <div class="sidebar-nav__section">
+                    <a class="sidebar-nav__link nav-item {% if current_path == '/' %}is-active active{% endif %}" href="/" {% if current_path == '/' %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⌂</span><span>Dashboard</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/students') %}is-active active{% endif %}" href="/students" {% if current_path.startswith('/students') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◉</span><span>Students</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⇧</span><span>Garmin and Onform Import</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/coach-assistant') %}is-active active{% endif %}" href="/coach-assistant" {% if current_path.startswith('/coach-assistant') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">✦</span><span>Coaching Assistant</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if 'gapping' in current_path %}is-active active{% endif %}" href="/gapping" {% if 'gapping' in current_path %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">↔</span><span>Gapping</span>
+                    </a>
+                </div>
+            </nav>
 </aside>
 
-<main class="main-content">
+<main class="main-content workspace-shell">
 
-<header class="topbar">
+<header class="workspace-hero">
 <div>
-<div class="eyebrow">Performance Intelligence</div>
+<div class="workspace-kicker">Performance Intelligence</div>
 <h1>Coaching Analysis</h1>
-<p class="page-subtitle">
+<p>
 Club averages, attack angle, face-to-path, and shot-shape patterns from imported Garmin R10 shots.
 </p>
 </div>
+<img class="workspace-hero__logo" src="/static/img/golf-coach-dashboard-hero.png" alt="WSBCO golfer motion logo">
 </header>
 
-<section class="metric-grid">
+<nav class="workspace-tabs" role="tablist" data-workspace-tabs="analysis" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="clubs">Club Averages</button></nav>
+
+<section class="metric-grid" data-workspace-panel="overview" data-workspace-group="analysis">
 
 <article class="metric-card">
 <div class="metric-header">Total Shots</div>
@@ -146,7 +165,7 @@ Most common included shot
 </section>
 
 
-<section class="content-card">
+<section class="content-card" data-workspace-panel="overview" data-workspace-group="analysis">
 
 <div class="panel-header">
 <div>
@@ -186,7 +205,7 @@ Most common included shot
 </section>
 
 
-<section class="content-card">
+<section class="content-card" data-workspace-panel="clubs" data-workspace-group="analysis" hidden>
 
 <div class="panel-header">
 <div>
@@ -288,5 +307,7 @@ Import Garmin R10 shot data to begin analysis.
 
 </main>
 </div>
+    <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
+    <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 </body>
 </html>

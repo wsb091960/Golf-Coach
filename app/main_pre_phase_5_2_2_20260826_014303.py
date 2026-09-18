@@ -4,7 +4,6 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from app.routers.coach_assistant import router as coach_assistant_router
 
 from app.database import Base, engine
 from app.routers.gapping import router as gapping_router
@@ -23,7 +22,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="WSBCO Golf Coach",
-    version="5.3A",
+    version="2.1.2",
 )
 
 app.mount(
@@ -33,7 +32,6 @@ app.mount(
 )
 
 app.include_router(dashboard_router)
-app.include_router(coach_assistant_router)
 app.include_router(students_router)
 app.include_router(sessions_router)
 app.include_router(importer_router)
@@ -50,15 +48,3 @@ def health() -> dict[str, str]:
         "version": app.version,
         "database": "sqlite",
     }
-
-from app.routers import swing_analysis as swing_analysis_router
-app.include_router(swing_analysis_router.router)
-
-from app.routers import swing_analysis_workspace as swing_analysis_workspace_router
-app.include_router(swing_analysis_workspace_router.router)
-
-from app.routers import swing_analysis_launch as swing_analysis_launch_router
-app.include_router(swing_analysis_launch_router.router)
-
-from app.routers import swing_analysis_assist as swing_analysis_assist_router
-app.include_router(swing_analysis_assist_router.router)

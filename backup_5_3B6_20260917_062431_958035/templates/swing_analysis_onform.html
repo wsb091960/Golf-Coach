@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <title>Onform Import | WSBCO Golf Coach</title>
+
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/swing_analysis_workspace.css">
+    <link rel="stylesheet" href="/static/css/swing_analysis_assist.css">
+</head>
+
+<body>
+<div class="app-shell">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">GC</div>
+            <div>
+                <div class="brand-name">WSBCO</div>
+                <div class="brand-subtitle">Golf Coach</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav nav-list app-standard-navigation" aria-label="Primary">
+                {% set current_path = request.url.path if request else '' %}
+                <div class="sidebar-nav__section">
+                    <a class="sidebar-nav__link nav-item {% if current_path == '/' %}is-active active{% endif %}" href="/" {% if current_path == '/' %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⌂</span><span>Dashboard</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/students') %}is-active active{% endif %}" href="/students" {% if current_path.startswith('/students') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◉</span><span>Students</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⇧</span><span>Garmin and Onform Import</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/coach-assistant') %}is-active active{% endif %}" href="/coach-assistant" {% if current_path.startswith('/coach-assistant') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">✦</span><span>Coaching Assistant</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if 'gapping' in current_path %}is-active active{% endif %}" href="/gapping" {% if 'gapping' in current_path %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">↔</span><span>Gapping</span>
+                    </a>
+                </div>
+            </nav>
+    </aside>
+
+
+    <main
+        class="main-content swing-analysis-page"
+        data-analysis-id="{{ analysis.id }}"
+    >
+
+        <div class="analysis-compact-toolbar">
+            <a class="button button-secondary analysis-back-button"
+               href="/sessions/{{ analysis.session_id }}">
+                Back to Session
+            </a>
+
+            <nav class="analysis-step-nav" aria-label="Analysis workflow">
+                <a class="analysis-step-link active" href="/swing-analysis/{{ analysis.id }}/onform-import">Onform Import</a>
+            <a class="analysis-step-link" href="/swing-analysis/{{ analysis.id }}/p-position">P-Position Analysis</a>
+            <a class="analysis-step-link" href="/swing-analysis/{{ analysis.id }}/coaching">Coaching Analysis</a>
+            </nav>
+
+            <button type="button"
+                    class="button button-primary analysis-save-button"
+                    id="save-analysis">
+                Verify &amp; Save Shot
+            </button>
+        </div>
+
+
+<section class="analysis-card onform-screenshot-import" id="onform-screenshot-import">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Step 1 · Onform Screenshot Import</span>
+                    <h2>Upload & Extract Onform Screenshots First</h2>
+                    <p>Upload Garmin, Onform body, and Kinematic Sequence screenshots. Extraction auto-saves the screenshots as evidence; coach verification commits approved metrics.</p>
+                </div>
+            </div>
+
+            <div class="onform-screenshot-pair compact-evidence-strip">
+                <div class="onform-screenshot-slot compact-evidence-card">
+                    <div class="onform-screenshot-preview-wrap">
+                        {% set saved_s1 = (latest_onform_import.screenshots | selectattr("slot", "equalto", 1) | list | first) if latest_onform_import else none %}
+                        <img id="onform-screenshot-preview-1" alt="Onform screenshot 1 preview"
+                             {% if saved_s1 and saved_s1.available %}src="{{ saved_s1.url }}"{% else %}hidden{% endif %}>
+                        {% if saved_s1 and saved_s1.available %}<span class="saved-evidence-badge">Saved evidence</span>{% endif %}
+                    </div>
+                    <label><span>Onform Metric Screenshot 1 · PNG / JPG</span><input id="onform-screenshot-file-1" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg"></label>
+                </div>
+                <div class="onform-screenshot-slot compact-evidence-card">
+                    <div class="onform-screenshot-preview-wrap">
+                        {% set saved_s2 = (latest_onform_import.screenshots | selectattr("slot", "equalto", 2) | list | first) if latest_onform_import else none %}
+                        <img id="onform-screenshot-preview-2" alt="Onform screenshot 2 preview"
+                             {% if saved_s2 and saved_s2.available %}src="{{ saved_s2.url }}"{% else %}hidden{% endif %}>
+                        {% if saved_s2 and saved_s2.available %}<span class="saved-evidence-badge">Saved evidence</span>{% endif %}
+                    </div>
+                    <label><span>Onform Metric Screenshot 2 · PNG / JPG</span><input id="onform-screenshot-file-2" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg"></label>
+                </div>
+                <div class="onform-screenshot-slot onform-sequence-slot compact-evidence-card">
+                    <div class="onform-screenshot-preview-wrap">
+                        {% set saved_s3 = (latest_onform_import.screenshots | selectattr("slot", "equalto", 3) | list | first) if latest_onform_import else none %}
+                        <img id="onform-screenshot-preview-3" alt="Onform kinematic sequence screenshot preview"
+                             {% if saved_s3 and saved_s3.available %}src="{{ saved_s3.url }}"{% else %}hidden{% endif %}>
+                        {% if saved_s3 and saved_s3.available %}<span class="saved-evidence-badge">Saved evidence</span>{% endif %}
+                    </div>
+                    <label><span>Onform Kinematic Sequence · PNG / JPG</span><input id="onform-screenshot-file-3" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg"></label>
+                    <p class="field-help">Retained as evidence. Phase 5.2.7 reads visible graph text where possible, but the coach verifies the sequence and peak values before save.</p>
+                </div>
+            </div>
+
+            <div class="onform-import-controls">
+                <label>
+                    <span>Record Launch / Garmin Metrics In Shot Table</span>
+                    <select id="onform-screenshot-shot">
+                        <option value="__new__" {% if not analysis.shot %}selected{% endif %}>
+                            Create new Shot Table record
+                        </option>
+                        <option value="">
+                            Do not write to Shot Table
+                        </option>
+                        {% for shot in shots %}
+                        <option
+                            value="{{ shot.id }}"
+                            {% if analysis.shot and analysis.shot.id == shot.id %}selected{% endif %}
+                        >
+                            Update Shot {{ shot.shot_number }} · {{ shot.club or "Club" }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <div class="field-help shot-table-help">
+                    Saving a verified import will write the extracted launch/club metrics into the selected Shot Table record. Side Spin remains screenshot evidence and is not converted to Spin Axis.
+                </div>
+                <label><span>Apply Onform Body Metrics To</span><select id="onform-screenshot-checkpoint">{% for checkpoint in analysis.checkpoints %}<option value="{{ checkpoint.position }}" {% if checkpoint.position == "P7" %}selected{% endif %}>{{ checkpoint.position }}</option>{% endfor %}</select></label>
+                <label class="onform-verified"><input id="onform-screenshot-verified" type="checkbox"><span>Coach verified body/launch values and sequence against the Onform screenshots (the Save button also confirms this)</span></label>
+            </div>
+
+            <div class="onform-metric-group">
+                <h3>Launch / Garmin Data</h3>
+                <div class="onform-import-metrics">
+                    <label><span>Club</span><input data-onform-metric="club" type="text"></label>
+                    <label><span>Ball Speed</span><input data-onform-metric="ball_speed" type="number" step="0.1"></label>
+                    <label><span>Club Speed</span><input data-onform-metric="club_speed" type="number" step="0.1"></label>
+                    <label><span>Smash</span><input data-onform-metric="smash_factor" type="number" step="0.001"></label>
+                    <label><span>Club Path</span><input data-onform-metric="club_path" type="number" step="0.1"></label>
+                    <label><span>Club Face</span><input data-onform-metric="club_face" type="number" step="0.1"></label>
+                    <label><span>Face to Path</span><input data-onform-metric="face_to_path" type="number" step="0.1"></label>
+                    <label><span>Attack Angle</span><input data-onform-metric="attack_angle" type="number" step="0.1"></label>
+                    <label><span>Launch Direction</span><input data-onform-metric="launch_direction" type="number" step="0.1"></label>
+                    <label><span>Launch Angle</span><input data-onform-metric="launch_angle" type="number" step="0.1"></label>
+                    <label><span>Back Spin (RPM)</span><input data-onform-metric="spin_rate" type="number" step="1"></label>
+                    <label><span>Side Spin (RPM)</span><input data-onform-metric="side_spin_rpm" type="number" step="1"></label>
+                    <label><span>Spin Axis</span><input data-onform-metric="spin_axis" type="number" step="0.1"></label>
+                    <label><span>Carry</span><input data-onform-metric="carry_distance" type="number" step="0.1"></label>
+                    <label><span>Total</span><input data-onform-metric="total_distance" type="number" step="0.1"></label>
+                    <label><span>Apex</span><input data-onform-metric="apex_height" type="number" step="0.1"></label>
+                    <label><span>Offline</span><input data-onform-metric="offline_distance" type="number" step="0.1"></label>
+                </div>
+            </div>
+
+            <div class="onform-metric-group">
+                <h3>Onform Body Data</h3>
+                <div class="onform-import-metrics">
+                    <label><span>Pelvis Turn</span><input data-onform-metric="pelvis_rotation" type="number" step="0.1"></label>
+                    <label><span>Pelvis Turn Direction</span><input data-onform-metric="pelvis_rotation_direction" type="text" readonly></label>
+                    <label><span>Torso Turn</span><input data-onform-metric="torso_rotation" type="number" step="0.1"></label>
+                    <label><span>Torso Turn Direction</span><input data-onform-metric="torso_rotation_direction" type="text" readonly></label>
+                    <label><span>X-Factor</span><input data-onform-metric="x_factor" type="number" step="0.1"></label>
+                    <label><span>Torso Sway (in)</span><input data-onform-metric="torso_sway" type="number" step="0.1"></label>
+                    <label><span>Torso Sway Direction</span><input data-onform-metric="torso_sway_direction" type="text" readonly></label>
+                    <label><span>Pelvis Sway (in)</span><input data-onform-metric="pelvis_sway" type="number" step="0.1"></label>
+                    <label><span>Pelvis Sway Direction</span><input data-onform-metric="pelvis_sway_direction" type="text" readonly></label>
+                    <label><span>Pelvis Lift (in)</span><input data-onform-metric="pelvis_lift" type="number" step="0.1"></label>
+                    <label><span>Pelvis Lift Direction</span><input data-onform-metric="pelvis_lift_direction" type="text" readonly></label>
+                    <label><span>Shoulder Tilt</span><input data-onform-metric="shoulder_tilt" type="number" step="0.1"></label>
+                    <label><span>Hip/Pelvis Tilt</span><input data-onform-metric="hip_tilt" type="number" step="0.1"></label>
+                    <label><span>Spine Tilt</span><input data-onform-metric="spine_tilt" type="number" step="0.1"></label>
+                    <label><span>Shaft Angle</span><input data-onform-metric="shaft_angle" type="number" step="0.1"></label>
+                </div>
+            </div>
+
+
+            <details class="body-intelligence" open>
+                <summary>How Onform Body Data Works · Coaching Interpretation</summary>
+                <div class="body-intelligence-content">
+                    <p><strong>Use these measurements as context, not grades.</strong> Onform reconstructs 3D body motion from video. Turn describes rotation, sway describes target-line translation, lift describes vertical movement, and X-Factor is the rotational difference between torso and pelvis. The meaning changes by P-position, club and player.</p>
+                    <div class="body-intelligence-grid">
+                        <article><h4>Pelvis Turn</h4><p>Lower-body rotation. In transition it helps show whether the pelvis leads the upper body; at impact it shows how open the lower body is. More is not automatically better—opening too aggressively can pull the handle and path left.</p></article>
+                        <article><h4>Torso Turn</h4><p>Upper-torso rotation. Compare it with pelvis turn to understand separation and whether the chest is overtaking the lower body too early.</p></article>
+                        <article><h4>X-Factor</h4><p>Torso turn minus pelvis turn. It describes rotational separation. For coaching, the change in separation during transition is often more useful than chasing one large number.</p></article>
+                        <article><h4>Torso / Pelvis Sway</h4><p>Lateral movement toward or away from the target. It helps distinguish useful pressure/mass movement from a slide that can interfere with rotation, low point or face/path control.</p></article>
+                        <article><h4>Pelvis Lift</h4><p>Vertical pelvis displacement from address. It helps identify lowering and extension patterns through the swing.</p></article>
+                        <article><h4>Tilt / Bend</h4><p>Shoulder, pelvis and spine orientation provide context for side bend and delivery. These values should be read with turn and sway rather than in isolation.</p></article>
+                    </div>
+                    <div class="reference-range-note">
+                        <strong>Onform reference ranges:</strong> Green = within the typical professional range (mean ±1 SD); Orange = within ±2 SD but outside green; Red = outside ±2 SD. Onform separates references by male/female and driver/iron at Address, Top and Impact. These are comparison ranges—not mandatory positions or universal “good/bad” numbers.
+                    </div>
+                </div>
+            </details>
+
+            <details class="sequence-intelligence compact-sequence-review">
+                <summary>Kinematic Sequence Details · Peak order & speeds</summary>
+
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Phase 5.2.7 · Sequencing</span>
+                        <h3>Onform Kinematic Sequence Review</h3>
+                        <p>The normal coaching reference is a proximal-to-distal peak order: pelvis → torso → lead arm → club. Deceleration of one segment while the next accelerates is part of effective energy transfer; do not coach every segment to keep accelerating to impact.</p>
+                    </div>
+                </div>
+                <div class="sequence-fields">
+                    <label><span>Detected / Verified Peak Order</span><input data-onform-sequence="peak_order" type="text" placeholder="Pelvis → Torso → Lead Arm → Club"></label>
+                    <label><span>Pelvis Peak (°/s)</span><input data-onform-sequence="pelvis_peak" type="number" step="1"></label>
+                    <label><span>Torso Peak (°/s)</span><input data-onform-sequence="torso_peak" type="number" step="1"></label>
+                    <label><span>Lead Arm Peak (°/s)</span><input data-onform-sequence="lead_arm_peak" type="number" step="1"></label>
+                    <label><span>Club Peak (°/s)</span><input data-onform-sequence="club_peak" type="number" step="1"></label>
+                    <label class="sequence-notes"><span>Coach Sequence Notes</span><textarea data-onform-sequence="notes" rows="3" placeholder="Example: arms accelerate before a distinct pelvis-to-torso cascade; pelvis continues accelerating late."></textarea></label>
+                </div>
+            
+            </details>
+
+            <div class="push-draw-read coaching-goal-read" id="coaching-goal-read">
+                    <div class="coaching-goal-heading">
+                        <h4>Coaching Goal Analysis</h4>
+                        <span class="coaching-goal-label">Student Primary Goal</span>
+                    </div>
+                    <p class="coaching-primary-goal" id="coaching-primary-goal">
+                        {{ primary_goal if primary_goal else "No Primary Goal entered on the Student page." }}
+                    </p>
+                    <p id="coaching-goal-text">Enter or extract the launch/body data and verify the sequence. Golf Coach will interpret the swing relative to the student's Primary Goal.</p>
+                </div>
+
+            <div id="onform-screenshot-conflicts" class="onform-conflicts" hidden></div>
+
+            <div class="onform-import-actions">
+                <button type="button" class="button button-secondary" id="onform-screenshot-extract">Extract &amp; Combine Metrics</button>
+                <button type="button" class="button button-primary" id="onform-screenshot-save">Verify &amp; Save to Shot Table</button>
+            </div>
+            <strong id="onform-screenshot-status"></strong>
+        </section>
+
+        
+
+<script
+            id="analysis-data"
+            type="application/json"
+        >{{ analysis | tojson }}</script>
+
+        <script
+            id="shots-data"
+            type="application/json"
+        >{{ shots | tojson }}</script>
+
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script id="student-primary-goal" type="application/json">{{ primary_goal | tojson }}</script>
+<script id="onform-saved-import" type="application/json">{{ latest_onform_import | tojson if latest_onform_import else "null" }}</script>
+<script src="/static/js/onform_screenshot_import.js?v=5.2.7I"></script>
+</body>
+</html>

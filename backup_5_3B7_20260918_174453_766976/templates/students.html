@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Students | WSBCO Golf Coach</title>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<style>
+.content-card{background:#fff;border:1px solid #dfe7e3;border-radius:18px;padding:22px;margin-bottom:18px}
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.form-grid input,.form-grid select{width:100%;padding:11px;border:1px solid #dfe7e3;border-radius:10px}
+.student-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.student-card{display:block;background:#fff;border:1px solid #dfe7e3;border-radius:15px;padding:18px}
+@media(max-width:800px){.form-grid,.student-grid{grid-template-columns:1fr}}
+</style>
+    <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3B6">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar">
+<div class="brand"><div class="brand-mark">GC</div><div><div class="brand-name">WSBCO</div><div class="brand-subtitle">Golf Coach</div></div></div>
+<nav class="sidebar-nav nav-list app-standard-navigation" aria-label="Primary">
+                {% set current_path = request.url.path if request else '' %}
+                <div class="sidebar-nav__section">
+                    <a class="sidebar-nav__link nav-item {% if current_path == '/' %}is-active active{% endif %}" href="/" {% if current_path == '/' %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⌂</span><span>Dashboard</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/students') %}is-active active{% endif %}" href="/students" {% if current_path.startswith('/students') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◉</span><span>Students</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⇧</span><span>Garmin and Onform Import</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/coach-assistant') %}is-active active{% endif %}" href="/coach-assistant" {% if current_path.startswith('/coach-assistant') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">✦</span><span>Coaching Assistant</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if 'gapping' in current_path %}is-active active{% endif %}" href="/gapping" {% if 'gapping' in current_path %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">↔</span><span>Gapping</span>
+                    </a>
+                </div>
+            </nav>
+</aside>
+
+<main class="main-content">
+<header class="topbar">
+<div>
+<div class="eyebrow">Player Management</div>
+<h1>Students</h1>
+<p class="page-subtitle">Player profiles, handedness, goals and coaching history.</p>
+</div>
+</header>
+
+<section class="content-card">
+<div class="panel-header"><div><div class="panel-eyebrow">New Player</div><h2>Add Student</h2></div></div>
+
+<form method="post" action="/students">
+<div class="form-grid">
+<input name="first_name" placeholder="First name" required>
+<input name="last_name" placeholder="Last name" required>
+
+<select name="handedness" required>
+<option value="Unknown">Select handedness</option>
+<option value="Right">Right Handed</option>
+<option value="Left">Left Handed</option>
+</select>
+
+<input name="email" placeholder="Email">
+<input name="phone" placeholder="Phone">
+<input name="skill_level" placeholder="Skill level">
+<input name="handicap_index" placeholder="Handicap index">
+<input name="primary_goal" placeholder="Primary goal">
+</div>
+
+<div style="margin-top:14px">
+<button class="button button-primary" type="submit">Add Student</button>
+</div>
+</form>
+</section>
+
+<section class="student-grid">
+{% for student in students %}
+<a class="student-card" href="/students/{{ student.id }}">
+<div class="panel-eyebrow">{{ student.handedness or "Unknown" }} Handed</div>
+<h2 style="margin:6px 0">{{ student.name }}</h2>
+<div class="page-subtitle">
+{% if student.handicap_index is not none %}
+HCP {{ student.handicap_index }}
+{% else %}
+Handicap not set
+{% endif %}
+</div>
+</a>
+{% else %}
+<div class="content-card">No students yet.</div>
+{% endfor %}
+</section>
+</main>
+</div>
+    <script src="/static/js/navigation_repair.js?v=5.3B6"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Garmin R10 Import | WSBCO Golf Coach</title>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<style>
+.content-card{max-width:850px;background:#fff;border:1px solid #dfe7e3;border-radius:18px;padding:26px}
+.field{display:grid;gap:6px;margin-bottom:16px}
+.field select,.field input{padding:12px;border:1px solid #dfe7e3;border-radius:10px}
+.success{padding:14px;background:#e5f1ed;color:#155444;border-radius:10px;margin-bottom:16px}
+.warning{padding:14px;background:#fff7dc;color:#725d18;border-radius:10px;margin-bottom:16px}
+</style>
+    <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3B6">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar">
+<div class="brand"><div class="brand-mark">GC</div><div><div class="brand-name">WSBCO</div><div class="brand-subtitle">Golf Coach</div></div></div>
+<nav class="sidebar-nav nav-list app-standard-navigation" aria-label="Primary">
+                {% set current_path = request.url.path if request else '' %}
+                <div class="sidebar-nav__section">
+                    <a class="sidebar-nav__link nav-item {% if current_path == '/' %}is-active active{% endif %}" href="/" {% if current_path == '/' %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⌂</span><span>Dashboard</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/students') %}is-active active{% endif %}" href="/students" {% if current_path.startswith('/students') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◉</span><span>Students</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⇧</span><span>Garmin and Onform Import</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/coach-assistant') %}is-active active{% endif %}" href="/coach-assistant" {% if current_path.startswith('/coach-assistant') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">✦</span><span>Coaching Assistant</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if 'gapping' in current_path %}is-active active{% endif %}" href="/gapping" {% if 'gapping' in current_path %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">↔</span><span>Gapping</span>
+                    </a>
+                </div>
+            </nav>
+</aside>
+
+<main class="main-content">
+<header class="topbar">
+<div>
+<div class="eyebrow">Persistent Launch Monitor Import</div>
+<h1>Garmin R10 Import</h1>
+<p class="page-subtitle">Imported shots are now saved permanently in SQLite.</p>
+</div>
+</header>
+
+{% if imported %}
+<div class="success">{{ imported }} Garmin shots imported successfully.</div>
+{% endif %}
+
+{% if duplicates %}
+<div class="warning">{{ duplicates }} duplicate shots were skipped.</div>
+{% endif %}
+
+<section class="content-card">
+<form method="post" action="/imports/garmin" enctype="multipart/form-data">
+<div class="field">
+<label>Coaching Session</label>
+<select name="session_id" required>
+<option value="">Select session</option>
+{% for session in sessions %}
+<option value="{{ session.id }}" {% if selected_session_id == session.id %}selected{% endif %}>
+{{ session.student_name }} · {{ session.session_date }} · {{ session.session_type }}
+</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="field">
+<label>Garmin R10 CSV</label>
+<input name="csv_file" type="file" accept=".csv,text/csv" required>
+</div>
+
+<button class="button button-primary" type="submit">Import R10 CSV</button>
+</form>
+</section>
+</main>
+</div>
+    <script src="/static/js/navigation_repair.js?v=5.3B6"></script>
+</body>
+</html>

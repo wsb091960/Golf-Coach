@@ -1,0 +1,59 @@
+<div class="modal-backdrop" id="video-modal" hidden>
+<div class="video-modal">
+<div class="modal-heading">
+<div>
+<span class="section-kicker">Onform</span>
+<h2>Add Session Video</h2>
+</div>
+<button type="button" class="modal-close" data-close-video>×</button>
+</div>
+<form id="onform-upload-form" data-session-id="{{ session.id }}" method="post" action="/sessions/{{ session.id }}/videos" enctype="multipart/form-data">
+<div class="video-form-grid">
+<label>
+<span>Video File</span>
+<input type="file" name="video_file" accept="video/mp4,video/quicktime,video/x-m4v,video/webm,.mp4,.mov,.m4v,.webm" required>
+</label>
+<label>
+<span>Title</span>
+<input name="title" value="Onform Video">
+</label>
+<label>
+<span>Camera View</span>
+<select name="camera_view">
+<option value="">Select view</option>
+<option>Down the Line</option>
+<option>Face On</option>
+<option>Rear</option>
+<option>Front</option>
+<option>Other</option>
+</select>
+</label>
+<label>
+<span>Club</span>
+<input name="club" value="{{ session_metrics.dominant_club or session.primary_club or '' }}" placeholder="Club">
+</label>
+<label>
+<span>Link to Garmin Shot #</span>
+<input name="shot_number" type="number" min="1" placeholder="Optional">
+</label>
+<label>
+<span>Original Onform Share URL</span>
+<input name="onform_url" type="url" placeholder="Optional">
+</label>
+<label class="full-width">
+<span>Video Notes</span>
+<textarea name="notes" placeholder="Swing notes, checkpoint, comparison...">
+</textarea>
+</label>
+</div>
+<div id="onform-upload-progress" class="upload-progress" hidden>
+<div>
+<span>
+</span>
+</div>
+<strong>Preparing video upload…</strong>
+</div>
+<button class="button button-primary" type="submit">Upload to Session</button>
+</form>
+</div>
+</div>

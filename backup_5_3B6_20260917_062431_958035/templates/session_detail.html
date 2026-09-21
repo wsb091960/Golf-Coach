@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Session Performance | WSBCO Golf Coach</title>
+
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/session_performance.css">
+    <link rel="stylesheet" href="/static/css/topdown_flight.css">
+</head>
+
+<body>
+<div class="app-shell">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">GC</div>
+            <div>
+                <div class="brand-name">WSBCO</div>
+                <div class="brand-subtitle">Golf Coach</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav nav-list app-standard-navigation" aria-label="Primary">
+                {% set current_path = request.url.path if request else '' %}
+                <div class="sidebar-nav__section">
+                    <a class="sidebar-nav__link nav-item {% if current_path == '/' %}is-active active{% endif %}" href="/" {% if current_path == '/' %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⌂</span><span>Dashboard</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/students') %}is-active active{% endif %}" href="/students" {% if current_path.startswith('/students') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◉</span><span>Students</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⇧</span><span>Garmin and Onform Import</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/coach-assistant') %}is-active active{% endif %}" href="/coach-assistant" {% if current_path.startswith('/coach-assistant') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">✦</span><span>Coaching Assistant</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if 'gapping' in current_path %}is-active active{% endif %}" href="/gapping" {% if 'gapping' in current_path %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">↔</span><span>Gapping</span>
+                    </a>
+                </div>
+            </nav>
+    </aside>
+
+    <main class="main-content performance-page">
+
+        <header class="performance-header">
+            <div>
+                <div class="eyebrow">TrackMan-Style Performance</div>
+                <h1>{{ student.name if student else "Unknown Student" }}</h1>
+                <p>
+                    {{ session.session_date }}
+                    · {{ session.session_type }}
+                    · {{ student.handedness if student else "Unknown" }} Handed
+                </p>
+            </div>
+
+            <div class="performance-actions">
+                <a
+                    class="button button-secondary"
+                    href="/imports/garmin?session_id={{ session.id }}"
+                >
+                    Import Garmin R10
+                </a>
+
+                <button
+                    class="button button-primary"
+                    type="button"
+                    data-open-video
+                    data-video-mode="original_swing"
+                >
+                    Add Swing Video
+                </button>
+            </div>
+        </header>
+
+
+        <section class="performance-kpis">
+            <div class="kpi">
+                <span>Shots</span>
+                <strong>{{ session_metrics.shots }}</strong>
+            </div>
+
+            <div class="kpi">
+                <span>Primary Club</span>
+                <strong>{{ session.primary_club or "—" }}</strong>
+            </div>
+
+            <div class="kpi">
+                <span>Avg Carry</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.carry)
+                       if session_metrics.carry is not none else "—" }}
+                </strong>
+                <small>yd</small>
+            </div>
+
+            <div class="kpi">
+                <span>Ball Speed</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.ball_speed)
+                       if session_metrics.ball_speed is not none else "—" }}
+                </strong>
+                <small>mph</small>
+            </div>
+
+            <div class="kpi">
+                <span>Club Speed</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.club_speed)
+                       if session_metrics.club_speed is not none else "—" }}
+                </strong>
+                <small>mph</small>
+            </div>
+
+            <div class="kpi">
+                <span>Attack</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.attack)
+                       if session_metrics.attack is not none else "—" }}
+                </strong>
+                <small>°</small>
+            </div>
+
+            <div class="kpi">
+                <span>Path</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.path)
+                       if session_metrics.path is not none else "—" }}
+                </strong>
+                <small>°</small>
+            </div>
+
+            <div class="kpi">
+                <span>Face</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.face)
+                       if session_metrics.face is not none else "—" }}
+                </strong>
+                <small>°</small>
+            </div>
+        </section>
+
+
+        <section class="performance-grid">
+
+            <article class="performance-card flight-card">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Ball Flight</span>
+                        <h2 id="selected-shot-title">Select a Shot</h2>
+                    </div>
+
+                    <div class="selected-shape" id="selected-shape">—</div>
+                </div>
+
+                <canvas id="flight-canvas" width="1000" height="430"></canvas>
+
+                <div class="simulation-note">
+                    Trajectory is a visualization fitted to measured Garmin
+                    launch/outcome data, not an independent launch-monitor measurement.
+                </div>
+            </article>
+
+
+            <article class="performance-card topdown-flight-card">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Ball Flight · Top Down</span>
+                        <h2>Start Line + Curvature</h2>
+                    </div>
+                </div>
+
+                <canvas
+                    id="topdown-flight-canvas"
+                    width="1000"
+                    height="430"
+                ></canvas>
+
+                <div class="simulation-note">
+                    Top-down trajectory uses Garmin launch direction, measured
+                    offline distance when available, and curvature from spin
+                    axis or face-to-path.
+                </div>
+            </article>
+
+
+            <article class="performance-card metric-card-panel">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Selected Shot</span>
+                        <h2>Launch Metrics</h2>
+                    </div>
+                </div>
+
+                <div class="selected-metrics" id="selected-metrics">
+                    {% for key,label in [
+                        ('carry_distance','Carry'),
+                        ('total_distance','Total'),
+                        ('ball_speed','Ball Speed'),
+                        ('club_speed','Club Speed'),
+                        ('smash_factor','Smash'),
+                        ('launch_angle','Launch'),
+                        ('attack_angle','Attack'),
+                        ('spin_rate','Spin'),
+                        ('club_path','Path'),
+                        ('club_face','Face'),
+                        ('face_to_path','Face/Path'),
+                        ('offline_distance','Offline')
+                    ] %}
+                    <div>
+                        <span>{{ label }}</span>
+                        <strong data-metric="{{ key }}">—</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </article>
+
+
+            <article class="performance-card">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Dispersion</span>
+                        <h2>Top-Down Pattern</h2>
+                    </div>
+                </div>
+
+                <canvas id="dispersion-canvas" width="700" height="430"></canvas>
+            </article>
+
+
+            <article class="performance-card">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Delivery</span>
+                        <h2>Face vs Path</h2>
+                    </div>
+                </div>
+
+                <canvas id="face-path-canvas" width="700" height="430"></canvas>
+            </article>
+
+        </section>
+
+
+        <section class="performance-card shot-table-card">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Garmin R10</span>
+                    <h2>Shot Table</h2>
+                </div>
+            </div>
+
+            <div class="performance-table-wrap">
+                <table class="performance-table">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Club</th>
+                        <th>Shape</th>
+                        <th>Carry</th>
+                        <th>Ball</th>
+                        <th>Club</th>
+                        <th>Smash</th>
+                        <th>Launch</th>
+                        <th>Attack</th>
+                        <th>Path</th>
+                        <th>Face</th>
+                        <th>F/P</th>
+                        <th>Spin</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for shot in session_shots %}
+                    <tr
+                        class="shot-row {% if not shot.included %}excluded{% endif %}"
+                        data-shot-index="{{ loop.index0 }}"
+                    >
+                        <td>
+                            <button type="button" class="shot-select">
+                                {{ shot.shot_number or loop.index }}
+                            </button>
+                        </td>
+
+                        <td>{{ shot.club or session.primary_club or "—" }}</td>
+
+                        <td>
+                            <span class="shape-pill">
+                                {{ shot.shot_shape or "Unknown" }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.carry_distance)
+                               if shot.carry_distance is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.ball_speed)
+                               if shot.ball_speed is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.club_speed)
+                               if shot.club_speed is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.smash_factor)
+                               if shot.smash_factor is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.launch_angle)
+                               if shot.launch_angle is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.attack_angle)
+                               if shot.attack_angle is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.club_path)
+                               if shot.club_path is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.club_face)
+                               if shot.club_face is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.face_to_path)
+                               if shot.face_to_path is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.0f"|format(shot.spin_rate)
+                               if shot.spin_rate is not none else "—" }}
+                        </td>
+
+                        <td>
+                            <form
+                                method="post"
+                                action="/sessions/{{ session.id }}/shots/{{ shot.id }}/toggle"
+                            >
+                                <input
+                                    type="hidden"
+                                    name="included"
+                                    value="{{ 'false' if shot.included else 'true' }}"
+                                >
+
+                                <button class="table-action" type="submit">
+                                    {{ "Exclude" if shot.included else "Include" }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+                        <td colspan="14">No Garmin shots imported yet.</td>
+                    </tr>
+
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+
+        <!-- =========================================================
+             PHASE 5.2.5C — SWING VIDEO → P-POSITION ANALYSIS
+             ========================================================= -->
+
+        <section class="performance-card video-section">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Phase 5.2.5C · Manual P-Position Source</span>
+                    <h2>Swing Video for P-Position Analysis</h2>
+                    <p>Upload the actual swing video here. Onform metric screenshots are uploaded separately inside Swing Analysis.</p>
+                </div>
+
+                <button
+                    class="button button-primary"
+                    type="button"
+                    data-open-video
+                    data-video-mode="original_swing"
+                >
+                    Add Swing Video for P-Position Analysis
+                </button>
+            </div>
+
+
+            <div class="video-grid">
+
+                {% set ns = namespace(original_count=0) %}
+
+                {% for video in session_videos %}
+                    {% if video.video_type == "original_swing" or not video.video_type %}
+                        {% set ns.original_count = ns.original_count + 1 %}
+
+                        <article class="video-card original-swing-card">
+                            <div class="video-type-label">Original Swing</div>
+
+                            <video
+                                controls
+                                preload="metadata"
+                                src="/sessions/{{ session.id }}/videos/{{ video.id }}/stream"
+                            ></video>
+
+                            <div class="video-meta">
+                                <div>
+                                    <strong>{{ video.title or "Swing Video" }}</strong>
+
+                                    <span>
+                                        {{ video.camera_view or "View not specified" }}
+                                        {% if video.club %}
+                                            · {{ video.club }}
+                                        {% endif %}
+                                        {% if video.shot_number %}
+                                            · Shot {{ video.shot_number }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+
+                                {% if video.notes %}
+                                <p>{{ video.notes }}</p>
+                                {% endif %}
+
+                                <div class="video-actions">
+                                    <a
+                                        class="table-action"
+                                        href="/sessions/{{ session.id }}/videos/{{ video.id }}/download"
+                                    >
+                                        Download / Share
+                                    </a>
+
+                                    <a
+                                        class="table-action"
+                                        href="/swing-analysis/video/{{ video.id }}/open"
+                                    >
+                                        Open Swing Analysis
+                                    </a>
+
+
+                                    {% if video.onform_url %}
+                                    <a
+                                        class="table-action"
+                                        href="{{ video.onform_url }}"
+                                        target="_blank"
+                                        rel="noopener"
+                                    >
+                                        Onform Link
+                                    </a>
+                                    {% endif %}
+
+                                    <form
+                                        method="post"
+                                        action="/sessions/{{ session.id }}/videos/{{ video.id }}/delete"
+                                        onsubmit="return confirm('Delete this original swing?')"
+                                    >
+                                        <button class="table-action" type="submit">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+
+                        </article>
+
+                    {% endif %}
+                {% endfor %}
+
+
+                {% if ns.original_count == 0 %}
+                <div class="video-empty">
+                    No original swing videos attached yet.
+                    Add a raw swing first, then use Onform for drawing,
+                    voiceover, comparison and biomechanical analysis.
+                </div>
+                {% endif %}
+
+            </div>
+        </section>
+
+
+        <section class="performance-card coaching-card">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Coach</span>
+                    <h2>Session Notes</h2>
+                </div>
+            </div>
+
+            <form
+                method="post"
+                action="/sessions/{{ session.id }}/update"
+            >
+                <div class="coaching-form">
+
+                    <input
+                        type="date"
+                        name="session_date"
+                        value="{{ session.session_date }}"
+                        required
+                    >
+
+                    <select name="session_type">
+                        {% for option in [
+                            "Coaching Session",
+                            "Practice",
+                            "Playing Lesson",
+                            "Club Evaluation"
+                        ] %}
+                        <option
+                            {% if session.session_type == option %}selected{% endif %}
+                        >
+                            {{ option }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <input
+                        name="name"
+                        value="{{ session.name or '' }}"
+                        placeholder="Session name"
+                    >
+
+                    <textarea
+                        name="notes"
+                        placeholder="Session notes"
+                    >{{ session.notes or '' }}</textarea>
+
+                    <textarea
+                        name="coaching_notes"
+                        placeholder="Coaching observations, priorities and drills"
+                    >{{ session.coaching_notes or '' }}</textarea>
+
+                </div>
+
+                <button
+                    class="button button-primary"
+                    type="submit"
+                >
+                    Save Session Notes
+                </button>
+            </form>
+        </section>
+
+    </main>
+</div>
+
+
+<!-- =============================================================
+     ORIGINAL SWING UPLOAD MODAL
+     ============================================================= -->
+
+<div
+    class="modal-backdrop"
+    id="video-modal"
+    hidden
+>
+    <div class="video-modal">
+
+        <div class="modal-heading">
+            <div>
+                <span class="section-kicker">Onform</span>
+                <h2>Add Swing Video for P-Position Analysis</h2>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                data-close-video
+            >
+                ×
+            </button>
+        </div>
+
+        <form
+            id="original-swing-upload-form"
+            data-session-id="{{ session.id }}"
+            method="post"
+            action="/sessions/{{ session.id }}/videos"
+            enctype="multipart/form-data"
+        >
+            <div class="video-form-grid">
+
+                <label>
+                    <span>Swing Video File · MP4 / MOV / M4V / WEBM</span>
+                    <input
+                        id="original-swing-video-file"
+                        type="file"
+                        name="video_file"
+                        accept="video/mp4,video/quicktime,video/x-m4v,video/webm,.mp4,.mov,.m4v,.webm"
+                        required
+                    >
+                </label>
+
+                <label>
+                    <span>Title</span>
+                    <input name="title" value="Swing Video">
+                </label>
+
+                <label>
+                    <span>Camera View</span>
+                    <select name="camera_view">
+                        <option value="">Select view</option>
+                        <option>Down the Line</option>
+                        <option>Face On</option>
+                        <option>Rear</option>
+                        <option>Front</option>
+                        <option>Other</option>
+                    </select>
+                </label>
+
+                <label>
+                    <span>Club</span>
+                    <input
+                        name="club"
+                        value="{{ session.primary_club or '' }}"
+                        placeholder="Club"
+                    >
+                </label>
+
+                <label>
+                    <span>Link to Garmin Shot #</span>
+                    <input
+                        name="shot_number"
+                        type="number"
+                        min="1"
+                        placeholder="Optional"
+                    >
+                </label>
+
+                <label>
+                    <span>Onform Share URL</span>
+                    <input
+                        name="onform_url"
+                        type="url"
+                        placeholder="Optional"
+                    >
+                </label>
+
+                <label class="full-width">
+                    <span>Video Notes</span>
+                    <textarea
+                        name="notes"
+                        placeholder="Swing notes, checkpoint, comparison..."
+                    ></textarea>
+                </label>
+
+            </div>
+
+            <div class="manual-shot-help">
+                This video is the visual source for manual P1–P10 timing and landmark measurements. Onform PNG/JPG metric screenshots are added later inside Swing Analysis; do not upload screenshots here.
+            </div>
+
+            <button
+                class="button button-primary"
+                id="original-swing-upload-button"
+                type="submit"
+            >
+                Upload Swing Video
+            </button>
+
+            <div
+                id="original-swing-upload-progress-wrap"
+                class="manual-shot-help"
+                hidden
+                aria-live="polite"
+            >
+                <progress
+                    id="original-swing-upload-progress"
+                    max="100"
+                    value="0"
+                    style="width:100%;"
+                ></progress>
+                <div id="original-swing-upload-status">
+                    Preparing video upload…
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script
+    id="session-shot-data"
+    type="application/json"
+    data-primary-club="{{ session.primary_club or '' }}"
+>{{ session_shots | tojson }}</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const originalModal = document.getElementById("video-modal");
+    const uploadForm = document.getElementById("original-swing-upload-form");
+    const uploadFile = document.getElementById("original-swing-video-file");
+    const uploadButton = document.getElementById("original-swing-upload-button");
+    const progressWrap = document.getElementById("original-swing-upload-progress-wrap");
+    const progressBar = document.getElementById("original-swing-upload-progress");
+    const progressText = document.getElementById("original-swing-upload-status");
+
+    document.querySelectorAll("[data-open-video]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            if (originalModal) {
+                originalModal.hidden = false;
+            }
+        });
+    });
+
+    document.querySelectorAll("[data-close-video]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            if (originalModal) {
+                originalModal.hidden = true;
+            }
+        });
+    });
+
+    if (originalModal) {
+        originalModal.addEventListener("click", function (event) {
+            if (event.target === originalModal) {
+                originalModal.hidden = true;
+            }
+        });
+    }
+
+    async function readError(response, fallback) {
+        try {
+            const payload = await response.json();
+            return payload.detail || payload.message || fallback;
+        } catch (_error) {
+            return fallback;
+        }
+    }
+
+    if (uploadForm) {
+        uploadForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const file = uploadFile && uploadFile.files
+                ? uploadFile.files[0]
+                : null;
+
+            if (!file) {
+                if (progressText) {
+                    progressText.textContent = "Choose a swing video first.";
+                }
+                if (progressWrap) {
+                    progressWrap.hidden = false;
+                }
+                return;
+            }
+
+            const sessionId = uploadForm.dataset.sessionId;
+            if (!sessionId) {
+                if (progressWrap) {
+                    progressWrap.hidden = false;
+                }
+                if (progressText) {
+                    progressText.textContent = "Session identifier is missing.";
+                }
+                return;
+            }
+
+            if (uploadButton) {
+                uploadButton.disabled = true;
+            }
+            if (progressWrap) {
+                progressWrap.hidden = false;
+            }
+            if (progressBar) {
+                progressBar.value = 0;
+            }
+            if (progressText) {
+                progressText.textContent = "Preparing video upload…";
+            }
+
+            try {
+                const initResponse = await fetch(
+                    `/sessions/${encodeURIComponent(sessionId)}/videos/chunked/init`,
+                    {
+                        method: "POST",
+                        credentials: "same-origin"
+                    }
+                );
+
+                if (!initResponse.ok) {
+                    throw new Error(
+                        await readError(
+                            initResponse,
+                            `Unable to start upload (${initResponse.status}).`
+                        )
+                    );
+                }
+
+                const init = await initResponse.json();
+                const uploadId = init.upload_id;
+                const chunkBytes = Number(init.chunk_bytes) || (512 * 1024);
+
+                if (!uploadId) {
+                    throw new Error("Upload identifier was not returned.");
+                }
+
+                const totalChunks = Math.ceil(file.size / chunkBytes);
+
+                for (let index = 0; index < totalChunks; index += 1) {
+                    const start = index * chunkBytes;
+                    const end = Math.min(start + chunkBytes, file.size);
+                    const chunk = file.slice(start, end);
+
+                    const partResponse = await fetch(
+                        `/sessions/${encodeURIComponent(sessionId)}` +
+                        `/videos/chunked/${encodeURIComponent(uploadId)}` +
+                        `/part/${index}`,
+                        {
+                            method: "POST",
+                            body: chunk,
+                            credentials: "same-origin",
+                            headers: {
+                                "Content-Type": "application/octet-stream"
+                            }
+                        }
+                    );
+
+                    if (!partResponse.ok) {
+                        throw new Error(
+                            await readError(
+                                partResponse,
+                                `Video chunk ${index + 1} failed (${partResponse.status}).`
+                            )
+                        );
+                    }
+
+                    const percent = Math.round(
+                        ((index + 1) / totalChunks) * 95
+                    );
+
+                    if (progressBar) {
+                        progressBar.value = percent;
+                    }
+                    if (progressText) {
+                        progressText.textContent =
+                            `Uploading Swing Video — ${percent}%`;
+                    }
+                }
+
+                const formData = new FormData(uploadForm);
+                const payload = {
+                    filename: file.name,
+                    total_chunks: totalChunks,
+                    content_type: file.type || "video/mp4",
+                    video_type: "original_swing",
+                    title: String(formData.get("title") || "Swing Video"),
+                    camera_view: String(formData.get("camera_view") || ""),
+                    club: String(formData.get("club") || ""),
+                    shot_number: String(formData.get("shot_number") || ""),
+                    notes: String(formData.get("notes") || ""),
+                    onform_url: String(formData.get("onform_url") || "")
+                };
+
+                if (progressText) {
+                    progressText.textContent =
+                        "Finalizing Swing Video — 98%";
+                }
+                if (progressBar) {
+                    progressBar.value = 98;
+                }
+
+                const finalizeResponse = await fetch(
+                    `/sessions/${encodeURIComponent(sessionId)}` +
+                    `/videos/chunked/${encodeURIComponent(uploadId)}/finalize`,
+                    {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    }
+                );
+
+                if (!finalizeResponse.ok) {
+                    throw new Error(
+                        await readError(
+                            finalizeResponse,
+                            `Unable to finalize upload (${finalizeResponse.status}).`
+                        )
+                    );
+                }
+
+                const result = await finalizeResponse.json();
+
+                if (progressBar) {
+                    progressBar.value = 100;
+                }
+                if (progressText) {
+                    progressText.textContent =
+                        "Swing Video uploaded successfully — 100%";
+                }
+
+                window.location.href =
+                    result.redirect_url ||
+                    `/sessions/${encodeURIComponent(sessionId)}?video_added=1`;
+
+            } catch (error) {
+                console.error(error);
+                if (progressText) {
+                    progressText.textContent =
+                        `Upload failed: ${error.message || "Unknown error"}`;
+                }
+                if (uploadButton) {
+                    uploadButton.disabled = false;
+                }
+            }
+        });
+    }
+});
+</script>
+
+
+<script src="/static/js/session_performance.js?v=2.4.5"></script>
+
+</body>
+</html>

@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Session Performance | WSBCO Golf Coach</title>
+
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/session_performance.css">
+    <link rel="stylesheet" href="/static/css/topdown_flight.css">
+    <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3B6">
+</head>
+
+<body>
+<div class="app-shell">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">GC</div>
+            <div>
+                <div class="brand-name">WSBCO</div>
+                <div class="brand-subtitle">Golf Coach</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav nav-list app-standard-navigation" aria-label="Primary">
+                {% set current_path = request.url.path if request else '' %}
+                <div class="sidebar-nav__section">
+                    <a class="sidebar-nav__link nav-item {% if current_path == '/' %}is-active active{% endif %}" href="/" {% if current_path == '/' %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⌂</span><span>Dashboard</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/students') %}is-active active{% endif %}" href="/students" {% if current_path.startswith('/students') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◉</span><span>Students</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⇧</span><span>Garmin and Onform Import</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/coach-assistant') %}is-active active{% endif %}" href="/coach-assistant" {% if current_path.startswith('/coach-assistant') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">✦</span><span>Coaching Assistant</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if 'gapping' in current_path %}is-active active{% endif %}" href="/gapping" {% if 'gapping' in current_path %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">↔</span><span>Gapping</span>
+                    </a>
+                </div>
+            </nav>
+    </aside>
+
+    <main class="main-content performance-page">
+
+        <header class="performance-header">
+            <div>
+                <div class="eyebrow">TrackMan-Style Performance</div>
+                <h1>{{ student.name if student else "Unknown Student" }}</h1>
+                <p>
+                    {{ session.session_date }}
+                    · {{ session.session_type }}
+                    · {{ student.handedness if student else "Unknown" }} Handed
+                </p>
+            </div>
+
+            <div class="performance-actions">
+                <a
+                    class="button button-secondary"
+                    href="/imports/garmin?session_id={{ session.id }}"
+                >
+                    Import Garmin R10
+                </a>
+
+                <button
+                    class="button button-primary"
+                    type="button"
+                    data-open-video
+                    data-video-mode="original_swing"
+                >
+                    Add Swing Video
+                </button>
+            </div>
+        </header>
+
+
+        <section class="performance-kpis">
+            <div class="kpi">
+                <span>Shots</span>
+                <strong>{{ session_metrics.shots }}</strong>
+            </div>
+
+            <div class="kpi">
+                <span>Primary Club</span>
+                <strong>{{ session.primary_club or "—" }}</strong>
+            </div>
+
+            <div class="kpi">
+                <span>Avg Carry</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.carry)
+                       if session_metrics.carry is not none else "—" }}
+                </strong>
+                <small>yd</small>
+            </div>
+
+            <div class="kpi">
+                <span>Ball Speed</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.ball_speed)
+                       if session_metrics.ball_speed is not none else "—" }}
+                </strong>
+                <small>mph</small>
+            </div>
+
+            <div class="kpi">
+                <span>Club Speed</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.club_speed)
+                       if session_metrics.club_speed is not none else "—" }}
+                </strong>
+                <small>mph</small>
+            </div>
+
+            <div class="kpi">
+                <span>Attack</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.attack)
+                       if session_metrics.attack is not none else "—" }}
+                </strong>
+                <small>°</small>
+            </div>
+
+            <div class="kpi">
+                <span>Path</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.path)
+                       if session_metrics.path is not none else "—" }}
+                </strong>
+                <small>°</small>
+            </div>
+
+            <div class="kpi">
+                <span>Face</span>
+                <strong>
+                    {{ "%.1f"|format(session_metrics.face)
+                       if session_metrics.face is not none else "—" }}
+                </strong>
+                <small>°</small>
+            </div>
+        </section>
+
+
+        <section class="performance-grid">
+
+            <article class="performance-card flight-card">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Ball Flight</span>
+                        <h2 id="selected-shot-title">Select a Shot</h2>
+                    </div>
+
+                    <div class="selected-shape" id="selected-shape">—</div>
+                </div>
+
+                <canvas id="flight-canvas" width="1000" height="430"></canvas>
+
+                <div class="simulation-note">
+                    Trajectory is a visualization fitted to measured Garmin
+                    launch/outcome data, not an independent launch-monitor measurement.
+                </div>
+            </article>
+
+
+            <article class="performance-card topdown-flight-card">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Ball Flight · Top Down</span>
+                        <h2>Start Line + Curvature</h2>
+                    </div>
+                </div>
+
+                <canvas
+                    id="topdown-flight-canvas"
+                    width="1000"
+                    height="430"
+                ></canvas>
+
+                <div class="simulation-note">
+                    Top-down trajectory uses Garmin launch direction, measured
+                    offline distance when available, and curvature from spin
+                    axis or face-to-path.
+                </div>
+            </article>
+
+
+            <article class="performance-card metric-card-panel">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Selected Shot</span>
+                        <h2>Launch Metrics</h2>
+                    </div>
+                </div>
+
+                <div class="selected-metrics" id="selected-metrics">
+                    {% for key,label in [
+                        ('carry_distance','Carry'),
+                        ('total_distance','Total'),
+                        ('ball_speed','Ball Speed'),
+                        ('club_speed','Club Speed'),
+                        ('smash_factor','Smash'),
+                        ('launch_angle','Launch'),
+                        ('attack_angle','Attack'),
+                        ('spin_rate','Spin'),
+                        ('club_path','Path'),
+                        ('club_face','Face'),
+                        ('face_to_path','Face/Path'),
+                        ('offline_distance','Offline')
+                    ] %}
+                    <div>
+                        <span>{{ label }}</span>
+                        <strong data-metric="{{ key }}">—</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </article>
+
+
+            <article class="performance-card">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Dispersion</span>
+                        <h2>Top-Down Pattern</h2>
+                    </div>
+                </div>
+
+                <canvas id="dispersion-canvas" width="700" height="430"></canvas>
+            </article>
+
+
+            <article class="performance-card">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Delivery</span>
+                        <h2>Face vs Path</h2>
+                    </div>
+                </div>
+
+                <canvas id="face-path-canvas" width="700" height="430"></canvas>
+            </article>
+
+        </section>
+
+
+        <section class="performance-card shot-table-card">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Garmin R10</span>
+                    <h2>Shot Table</h2>
+                </div>
+            </div>
+
+            <div class="performance-table-wrap">
+                <table class="performance-table">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Club</th>
+                        <th>Shape</th>
+                        <th>Carry</th>
+                        <th>Ball</th>
+                        <th>Club</th>
+                        <th>Smash</th>
+                        <th>Launch</th>
+                        <th>Attack</th>
+                        <th>Path</th>
+                        <th>Face</th>
+                        <th>F/P</th>
+                        <th>Spin</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for shot in session_shots %}
+                    <tr
+                        class="shot-row {% if not shot.included %}excluded{% endif %}"
+                        data-shot-index="{{ loop.index0 }}"
+                    >
+                        <td>
+                            <button type="button" class="shot-select">
+                                {{ shot.shot_number or loop.index }}
+                            </button>
+                        </td>
+
+                        <td>{{ shot.club or session.primary_club or "—" }}</td>
+
+                        <td>
+                            <span class="shape-pill">
+                                {{ shot.shot_shape or "Unknown" }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.carry_distance)
+                               if shot.carry_distance is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.ball_speed)
+                               if shot.ball_speed is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.club_speed)
+                               if shot.club_speed is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.smash_factor)
+                               if shot.smash_factor is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.launch_angle)
+                               if shot.launch_angle is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.attack_angle)
+                               if shot.attack_angle is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.club_path)
+                               if shot.club_path is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.club_face)
+                               if shot.club_face is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.2f"|format(shot.face_to_path)
+                               if shot.face_to_path is not none else "—" }}
+                        </td>
+
+                        <td>
+                            {{ "%.0f"|format(shot.spin_rate)
+                               if shot.spin_rate is not none else "—" }}
+                        </td>
+
+                        <td>
+                            <form
+                                method="post"
+                                action="/sessions/{{ session.id }}/shots/{{ shot.id }}/toggle"
+                            >
+                                <input
+                                    type="hidden"
+                                    name="included"
+                                    value="{{ 'false' if shot.included else 'true' }}"
+                                >
+
+                                <button class="table-action" type="submit">
+                                    {{ "Exclude" if shot.included else "Include" }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+                        <td colspan="14">No Garmin shots imported yet.</td>
+                    </tr>
+
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+
+        <!-- =========================================================
+             PHASE 5.1.1 — ORIGINAL SWING ↔ ONFORM ANALYSIS
+             ========================================================= -->
+
+        <section class="performance-card video-section">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Onform · Phase 5.1.1</span>
+                    <h2>Swing Video Workflow</h2>
+                </div>
+
+                <button
+                    class="button button-primary"
+                    type="button"
+                    data-open-video
+                    data-video-mode="original_swing"
+                >
+                    Add Original Swing
+                </button>
+            </div>
+
+
+            <div class="video-grid">
+
+                {% set ns = namespace(original_count=0) %}
+
+                {% for video in session_videos %}
+                    {% if video.video_type == "original_swing" or not video.video_type %}
+                        {% set ns.original_count = ns.original_count + 1 %}
+
+                        <article class="video-card original-swing-card">
+                            <div class="video-type-label">Original Swing</div>
+
+                            <video
+                                controls
+                                preload="metadata"
+                                src="/sessions/{{ session.id }}/videos/{{ video.id }}/stream"
+                            ></video>
+
+                            <div class="video-meta">
+                                <div>
+                                    <strong>{{ video.title or "Swing Video" }}</strong>
+
+                                    <span>
+                                        {{ video.camera_view or "View not specified" }}
+                                        {% if video.club %}
+                                            · {{ video.club }}
+                                        {% endif %}
+                                        {% if video.shot_number %}
+                                            · Shot {{ video.shot_number }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+
+                                {% if video.notes %}
+                                <p>{{ video.notes }}</p>
+                                {% endif %}
+
+                                <div class="video-actions">
+                                    <a
+                                        class="table-action"
+                                        href="/sessions/{{ session.id }}/videos/{{ video.id }}/download"
+                                    >
+                                        Download / Share
+                                    </a>
+
+                                    {% if video.onform_url %}
+                                    <a
+                                        class="table-action"
+                                        href="{{ video.onform_url }}"
+                                        target="_blank"
+                                        rel="noopener"
+                                    >
+                                        Onform Link
+                                    </a>
+                                    {% endif %}
+
+                                    <button
+                                        class="table-action"
+                                        type="button"
+                                        data-open-video
+                                        data-video-mode="onform_analysis"
+                                        data-parent-video-id="{{ video.id }}"
+                                        data-parent-video-title="{{ video.title or 'Swing Video' }}"
+                                    >
+                                        Import Onform Analysis
+                                    </button>
+
+                                    <form
+                                        method="post"
+                                        action="/sessions/{{ session.id }}/videos/{{ video.id }}/delete"
+                                        onsubmit="return confirm('Delete this original swing?')"
+                                    >
+                                        <button class="table-action" type="submit">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+
+                            <div class="onform-analysis-list">
+                                <div class="analysis-heading">
+                                    <strong>Onform Analysis</strong>
+                                </div>
+
+                                {% set analysis_ns = namespace(count=0) %}
+
+                                {% for analysis in session_videos %}
+                                    {% if analysis.video_type == "onform_analysis"
+                                          and analysis.parent_video_id == video.id %}
+
+                                        {% set analysis_ns.count = analysis_ns.count + 1 %}
+
+                                        <div class="linked-analysis-card">
+                                            <video
+                                                controls
+                                                preload="metadata"
+                                                src="/sessions/{{ session.id }}/videos/{{ analysis.id }}/stream"
+                                            ></video>
+
+                                            <div class="video-meta">
+                                                <div>
+                                                    <strong>
+                                                        {{ analysis.title or "Onform Analysis" }}
+                                                    </strong>
+
+                                                    <span>
+                                                        {{ analysis.camera_view or video.camera_view or "View not specified" }}
+                                                        {% if analysis.club or video.club %}
+                                                            · {{ analysis.club or video.club }}
+                                                        {% endif %}
+                                                        {% if analysis.shot_number or video.shot_number %}
+                                                            · Shot {{ analysis.shot_number or video.shot_number }}
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+
+                                                {% if analysis.notes %}
+                                                <p>{{ analysis.notes }}</p>
+                                                {% endif %}
+
+                                                <div class="video-actions">
+                                                    <a
+                                                        class="table-action"
+                                                        href="/sessions/{{ session.id }}/videos/{{ analysis.id }}/download"
+                                                    >
+                                                        Download
+                                                    </a>
+
+                                                    {% if analysis.onform_url %}
+                                                    <a
+                                                        class="table-action"
+                                                        href="{{ analysis.onform_url }}"
+                                                        target="_blank"
+                                                        rel="noopener"
+                                                    >
+                                                        Onform Link
+                                                    </a>
+                                                    {% endif %}
+
+                                                    <form
+                                                        method="post"
+                                                        action="/sessions/{{ session.id }}/videos/{{ analysis.id }}/delete"
+                                                        onsubmit="return confirm('Delete this Onform analysis?')"
+                                                    >
+                                                        <button class="table-action" type="submit">
+                                                            Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if analysis_ns.count == 0 %}
+                                <div class="video-empty">
+                                    No Onform analysis imported for this swing yet.
+                                    Download/share the original to Onform, complete the
+                                    analysis, export it, then choose
+                                    <strong>Import Onform Analysis</strong>.
+                                </div>
+                                {% endif %}
+                            </div>
+                        </article>
+
+                    {% endif %}
+                {% endfor %}
+
+
+                {% if ns.original_count == 0 %}
+                <div class="video-empty">
+                    No original swing videos attached yet.
+                    Add a raw swing first, then use Onform for drawing,
+                    voiceover, comparison and biomechanical analysis.
+                </div>
+                {% endif %}
+
+            </div>
+        </section>
+
+
+        <section class="performance-card coaching-card">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Coach</span>
+                    <h2>Session Notes</h2>
+                </div>
+            </div>
+
+            <form
+                method="post"
+                action="/sessions/{{ session.id }}/update"
+            >
+                <div class="coaching-form">
+
+                    <input
+                        type="date"
+                        name="session_date"
+                        value="{{ session.session_date }}"
+                        required
+                    >
+
+                    <select name="session_type">
+                        {% for option in [
+                            "Coaching Session",
+                            "Practice",
+                            "Playing Lesson",
+                            "Club Evaluation"
+                        ] %}
+                        <option
+                            {% if session.session_type == option %}selected{% endif %}
+                        >
+                            {{ option }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <input
+                        name="name"
+                        value="{{ session.name or '' }}"
+                        placeholder="Session name"
+                    >
+
+                    <textarea
+                        name="notes"
+                        placeholder="Session notes"
+                    >{{ session.notes or '' }}</textarea>
+
+                    <textarea
+                        name="coaching_notes"
+                        placeholder="Coaching observations, priorities and drills"
+                    >{{ session.coaching_notes or '' }}</textarea>
+
+                </div>
+
+                <button
+                    class="button button-primary"
+                    type="submit"
+                >
+                    Save Session Notes
+                </button>
+            </form>
+        </section>
+
+    </main>
+</div>
+
+
+<!-- =============================================================
+     VIDEO UPLOAD MODAL
+     ============================================================= -->
+
+<div
+    class="modal-backdrop"
+    id="video-modal"
+    hidden
+>
+    <div class="video-modal">
+
+        <div class="modal-heading">
+            <div>
+                <span class="section-kicker">Onform</span>
+                <h2 id="video-modal-title">Add Original Swing</h2>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                data-close-video
+            >
+                ×
+            </button>
+        </div>
+
+
+        <form
+            id="onform-upload-form"
+            data-session-id="{{ session.id }}"
+            method="post"
+            action="/sessions/{{ session.id }}/videos"
+            enctype="multipart/form-data"
+        >
+
+            <div class="video-form-grid">
+
+                <label>
+                    <span>Video File</span>
+
+                    <input
+                        type="file"
+                        name="video_file"
+                        accept="video/mp4,video/quicktime,video/x-m4v,video/webm,.mp4,.mov,.m4v,.webm"
+                        required
+                    >
+                </label>
+
+
+                <label>
+                    <span>Video Type</span>
+
+                    <select id="video-type-selector">
+                        <option value="original_swing" selected>
+                            Original Swing
+                        </option>
+
+                        <option value="onform_analysis">
+                            Onform Analysis
+                        </option>
+                    </select>
+                </label>
+
+
+                <label id="parent-video-label">
+                    <span>Original Swing</span>
+
+                    <select id="parent-video-selector" disabled>
+                        <option value="">
+                            Not required for original swing
+                        </option>
+
+                        {% for original in session_videos %}
+                            {% if original.video_type == "original_swing"
+                               or not original.video_type %}
+                            <option value="{{ original.id }}">
+                                {{ original.title or "Swing Video" }}
+                                {% if original.club %}
+                                    · {{ original.club }}
+                                {% endif %}
+                                {% if original.camera_view %}
+                                    · {{ original.camera_view }}
+                                {% endif %}
+                            </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </label>
+
+
+                <label>
+                    <span>Title</span>
+
+                    <input
+                        name="title"
+                        id="video-title-field"
+                        value="Swing Video"
+                    >
+                </label>
+
+
+                <label>
+                    <span>Camera View</span>
+
+                    <select name="camera_view">
+                        <option value="">Select view</option>
+                        <option>Down the Line</option>
+                        <option>Face On</option>
+                        <option>Rear</option>
+                        <option>Front</option>
+                        <option>Other</option>
+                    </select>
+                </label>
+
+
+                <label>
+                    <span>Club</span>
+
+                    <input
+                        name="club"
+                        value="{{ session.primary_club or '' }}"
+                        placeholder="Club"
+                    >
+                </label>
+
+
+                <label>
+                    <span>Link to Garmin Shot #</span>
+
+                    <input
+                        name="shot_number"
+                        type="number"
+                        min="1"
+                        placeholder="Optional"
+                    >
+                </label>
+
+
+                <label>
+                    <span>Onform Share URL</span>
+
+                    <input
+                        name="onform_url"
+                        type="url"
+                        placeholder="Optional"
+                    >
+                </label>
+
+
+                <label class="full-width">
+                    <span>Video Notes</span>
+
+                    <textarea
+                        name="notes"
+                        placeholder="Swing notes, checkpoint, comparison..."
+                    ></textarea>
+                </label>
+
+            </div>
+
+
+            <div
+                class="manual-shot-help"
+                id="video-type-help"
+            >
+                Original Swing preserves the raw swing video for
+                P1–P10, TGM, TPI and biomechanical analysis.
+            </div>
+
+
+            <div
+                id="onform-upload-progress"
+                class="upload-progress"
+                hidden
+            >
+                <div><span></span></div>
+                <strong>Preparing video upload…</strong>
+            </div>
+
+
+            <button
+                class="button button-primary"
+                type="submit"
+                id="video-submit-button"
+            >
+                Upload Original Swing
+            </button>
+
+        </form>
+    </div>
+</div>
+
+
+<script
+    id="session-shot-data"
+    type="application/json"
+    data-primary-club="{{ session.primary_club or '' }}"
+>{{ session_shots | tojson }}</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("video-modal");
+    const form = document.getElementById("onform-upload-form");
+    const modalTitle = document.getElementById("video-modal-title");
+
+    const typeSelector = document.getElementById("video-type-selector");
+    const parentSelector = document.getElementById("parent-video-selector");
+
+    const titleField = document.getElementById("video-title-field");
+    const help = document.getElementById("video-type-help");
+    const submitButton = document.getElementById("video-submit-button");
+
+
+    function syncVideoType(mode, requestedParentId) {
+        const selectedMode =
+            mode ||
+            (typeSelector ? typeSelector.value : "original_swing");
+
+        const isOnform = selectedMode === "onform_analysis";
+
+        if (typeSelector) {
+            typeSelector.value = selectedMode;
+        }
+
+        if (parentSelector) {
+            parentSelector.disabled = !isOnform;
+
+            if (isOnform) {
+                if (requestedParentId) {
+                    parentSelector.value = requestedParentId;
+                }
+
+                if (
+                    !parentSelector.value &&
+                    parentSelector.options.length > 1
+                ) {
+                    parentSelector.selectedIndex = 1;
+                }
+            } else {
+                parentSelector.value = "";
+            }
+        }
+
+        const sessionId = form ? form.dataset.sessionId : "";
+
+        if (form && sessionId) {
+            if (isOnform) {
+                const parentId =
+                    parentSelector && parentSelector.value
+                        ? parentSelector.value
+                        : requestedParentId || "";
+
+                if (parentId) {
+                    form.action =
+                        `/sessions/${sessionId}/videos/${parentId}/onform-analysis`;
+                }
+            } else {
+                form.action = `/sessions/${sessionId}/videos`;
+            }
+        }
+
+        if (titleField) {
+            titleField.value = isOnform
+                ? "Onform Analysis"
+                : "Swing Video";
+        }
+
+        if (modalTitle) {
+            modalTitle.textContent = isOnform
+                ? "Import Onform Analysis"
+                : "Add Original Swing";
+        }
+
+        if (submitButton) {
+            submitButton.textContent = isOnform
+                ? "Import Onform Analysis"
+                : "Upload Original Swing";
+        }
+
+        if (help) {
+            help.textContent = isOnform
+                ? "Choose the original swing this exported Onform analysis belongs to."
+                : "Original Swing preserves the raw swing video for P1–P10, TGM, TPI and biomechanical analysis.";
+        }
+    }
+
+    document.querySelectorAll("[data-open-video]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const mode =
+                button.dataset.videoMode ||
+                "original_swing";
+
+            const parentId =
+                button.dataset.parentVideoId ||
+                "";
+
+            syncVideoType(
+                mode,
+                parentId
+            );
+
+            if (modal) {
+                modal.hidden = false;
+            }
+        });
+    });
+
+
+    document.querySelectorAll("[data-close-video]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            if (modal) {
+                modal.hidden = true;
+            }
+        });
+    });
+
+
+    if (modal) {
+        modal.addEventListener("click", function (event) {
+            if (event.target === modal) {
+                modal.hidden = true;
+            }
+        });
+    }
+
+
+    if (typeSelector) {
+        typeSelector.addEventListener("change", function () {
+            syncVideoType(
+                typeSelector.value,
+                ""
+            );
+        });
+    }
+
+
+    if (parentSelector) {
+        parentSelector.addEventListener("change", function () {
+            syncVideoType(
+                "onform_analysis",
+                parentSelector.value
+            );
+        });
+    }
+
+
+    syncVideoType(
+        "original_swing",
+        ""
+    );
+});
+</script>
+
+
+<script src="/static/js/session_performance.js?v=2.4.5"></script>
+
+    <script src="/static/js/navigation_repair.js?v=5.3B6"></script>
+</body>
+</html>

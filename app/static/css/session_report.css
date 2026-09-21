@@ -1,0 +1,124 @@
+:root{--navy:#10263f;--blue:#1764a3;--sky:#dff3fb;--gold:#d6a84b;--ink:#172334;--muted:#637083;--paper:#fff;--line:#dbe3ea;--wash:#f3f7fa}*{box-sizing:border-box}body{margin:0;background:#e8eef3;color:var(--ink);font:15px/1.55 Inter,Arial,sans-serif}.report-toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;max-width:1060px;margin:0 auto;padding:14px 24px;background:rgba(16,38,63,.96)}.report-toolbar a{color:#fff;text-decoration:none;font-weight:700}.report-toolbar button{border:0;border-radius:9px;padding:10px 16px;background:var(--gold);color:#10263f;font:700 14px Inter;cursor:pointer}.report{max-width:1060px;margin:24px auto 48px;background:var(--paper);box-shadow:0 20px 55px rgba(16,38,63,.15)}.report-hero{min-height:235px;padding:38px 46px;display:flex;align-items:center;justify-content:space-between;gap:30px;background:linear-gradient(125deg,#10263f,#174d76 62%,#1d759e);color:#fff;overflow:hidden}.report-hero .eyebrow{font:600 12px Roboto Mono;letter-spacing:.16em;text-transform:uppercase;color:#9edcf1}.report-hero h1{margin:8px 0 5px;font-size:46px;line-height:1}.report-hero p{margin:0;color:#dbeefa;font-size:18px}.report-hero img{width:260px;max-height:180px;object-fit:contain;filter:drop-shadow(0 12px 22px rgba(0,0,0,.25))}.student-band{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}.student-band div{padding:20px 24px;background:#f8fbfd}.student-band span{display:block;margin-bottom:4px;color:var(--muted);font:600 11px Roboto Mono;text-transform:uppercase;letter-spacing:.08em}.student-band strong{font-size:14px;overflow-wrap:anywhere}.report-section{display:grid;grid-template-columns:58px 1fr;gap:20px;padding:34px 46px;border-bottom:1px solid var(--line)}.section-number{display:grid;place-items:center;width:45px;height:45px;border-radius:50%;background:var(--navy);color:#fff;font:600 13px Roboto Mono}.report-section h2{margin:4px 0 20px;color:var(--navy);font-size:27px}.report-section h3{margin:0 0 5px;color:var(--blue);font-size:14px}.report-section p{margin:0;white-space:pre-line}.goal{background:var(--sky)}.goal p{font-size:18px;font-weight:600}.observation{padding:16px 18px;margin:0 0 12px;border-left:4px solid #51a8cc;background:var(--wash);border-radius:0 10px 10px 0}.prose{white-space:pre-wrap;padding:20px;background:var(--wash);border-radius:12px}.evidence-badge{display:inline-block;margin:-8px 0 16px;padding:6px 10px;border-radius:999px;background:#e5f5ed;color:#17613e;font-size:12px;font-weight:700}.correction{padding:18px;margin-bottom:14px;border:1px solid var(--line);border-radius:12px}.correction.priority{border-left:5px solid var(--gold);background:#fffaf0}.correction-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.correction-grid>div{padding:16px;background:var(--wash);border-radius:10px}.drills-section{background:#f8fbfd}.drill-grid{display:grid;gap:16px}.drill{break-inside:avoid;padding:20px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 5px 15px rgba(16,38,63,.05)}.drill header{display:flex;align-items:center;gap:12px;margin-bottom:14px}.drill header span{display:grid;place-items:center;min-width:34px;height:34px;border-radius:50%;background:var(--gold);color:var(--navy);font-weight:800}.drill header h3{margin:0;color:var(--navy);font-size:18px}.drill>div{display:grid;grid-template-columns:105px 1fr;gap:10px;padding:7px 0;border-top:1px solid #eef2f5}.drill>div strong{color:var(--blue);font-size:12px;text-transform:uppercase;letter-spacing:.04em}footer{display:flex;justify-content:space-between;padding:25px 46px;background:var(--navy);color:#dbeefa}footer span{color:#9edcf1}@media(max-width:760px){.report{margin:0}.report-toolbar{padding:12px}.report-hero{padding:28px 24px;min-height:190px}.report-hero h1{font-size:36px}.report-hero img{width:145px}.student-band{grid-template-columns:1fr 1fr}.report-section{grid-template-columns:1fr;padding:28px 24px}.correction-grid{grid-template-columns:1fr}.drill>div{grid-template-columns:1fr}footer{padding:22px 24px;gap:12px;flex-direction:column}}@media print{@page{size:letter;margin:.42in}body{background:#fff;font-size:10.5pt}.report-toolbar{display:none}.report{margin:0;max-width:none;box-shadow:none}.report-hero{min-height:1.35in;padding:20px 28px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.report-hero img{width:170px;max-height:105px}.report-hero h1{font-size:30px}.student-band div{padding:11px 14px}.report-section{grid-template-columns:38px 1fr;gap:12px;padding:18px 25px}.section-number{width:32px;height:32px}.report-section h2{font-size:20px;margin:2px 0 12px}.observation,.correction,.drill{padding:11px 13px;margin-bottom:8px}.drill-grid{gap:8px}.drill header{margin-bottom:7px}.drill>div{padding:4px 0}.correction-grid{gap:7px}.correction-grid>div{padding:10px}footer{padding:14px 25px}.drill,.observation,.correction{break-inside:avoid}}
+
+/* Phase 5.3E-P1: ink-friendly print/PDF treatment. The full-color web report is unchanged. */
+@media print {
+  .report-hero {
+    min-height: 1.15in;
+    background: #fff;
+    color: var(--navy);
+    border-top: 3px solid var(--gold);
+    border-bottom: 2px solid var(--navy);
+    -webkit-print-color-adjust: economy;
+    print-color-adjust: economy;
+  }
+
+  .report-hero .eyebrow,
+  .report-hero p {
+    color: var(--navy);
+  }
+
+  .report-hero img {
+    width: 145px;
+    max-height: 88px;
+    filter: none;
+  }
+
+  .student-band,
+  .student-band div,
+  .goal,
+  .drills-section,
+  .observation,
+  .prose,
+  .correction,
+  .correction.priority,
+  .correction-grid > div,
+  .drill {
+    background: #fff;
+  }
+
+  .section-number,
+  .drill header span {
+    background: #fff;
+    color: var(--navy);
+    border: 1.5px solid var(--navy);
+  }
+
+  .drill {
+    box-shadow: none;
+  }
+
+  footer {
+    background: #fff;
+    color: var(--navy);
+    border-top: 2px solid var(--navy);
+  }
+
+  footer span {
+    color: var(--muted);
+  }
+}
+
+/* Phase 5.3E-P2: WSBCO green-and-gold report palette. */
+:root {
+  --navy: #173f2a;
+  --blue: #276747;
+  --sky: #e8f2e9;
+  --gold: #d4a62a;
+  --ink: #1d2b23;
+  --muted: #66736a;
+  --line: #d7e1d9;
+  --wash: #f3f7f3;
+}
+
+.report-toolbar {
+  background: rgba(23, 63, 42, .97);
+}
+
+.report-hero {
+  background: linear-gradient(125deg, #173f2a, #215d3d 62%, #347a52);
+}
+
+.report-hero .eyebrow {
+  color: #f1d582;
+}
+
+.report-hero p,
+footer {
+  color: #f5edd4;
+}
+
+.observation {
+  border-left-color: #4f8a63;
+}
+
+footer {
+  background: #173f2a;
+}
+
+footer span {
+  color: #e7c766;
+}
+
+@media print {
+  .report-hero {
+    background: #fff;
+    color: var(--navy);
+    border-top-color: var(--gold);
+    border-bottom-color: var(--navy);
+  }
+
+  .report-hero .eyebrow {
+    color: #7b5b00;
+  }
+
+  .report-hero p,
+  footer,
+  footer span {
+    color: var(--navy);
+  }
+
+  footer {
+    background: #fff;
+    border-top-color: var(--navy);
+  }
+}

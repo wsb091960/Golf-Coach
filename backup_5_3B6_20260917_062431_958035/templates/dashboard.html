@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="/static/css/dashboard_landing.css?v=5.3B5">
+{% endblock %}
+
+{% block content %}
+<div class="landing-page">
+    <section class="landing-hero" aria-labelledby="landing-title">
+        <div class="landing-hero__copy">
+            <span class="landing-kicker">WSBCO Golf Coach</span>
+            <h2 id="landing-title">See the motion.<br>Coach the cause.</h2>
+            <p class="landing-lead">
+                Begin with what you observe. Build the initial plan with the Coaching
+                Assistant, then use Garmin R10 and Onform evidence to verify and refine it.
+            </p>
+
+            <div class="landing-actions">
+                <a class="landing-button landing-button--primary" href="/coach-assistant">
+                    Open Coaching Assistant
+                </a>
+                <a class="landing-button landing-button--secondary" href="/students">
+                    View Students
+                </a>
+            </div>
+
+            <div class="landing-framework" aria-label="Coaching framework">
+                <span>TGM</span>
+                <span>TPI</span>
+                <span>P1–P10</span>
+                <span>Ball flight</span>
+            </div>
+        </div>
+
+        <figure class="landing-hero__visual">
+            <div class="landing-image-frame">
+                <img
+                    src="/static/img/golf-coach-dashboard-hero.png?v=5.3B5"
+                    alt="Golfer finishing a swing surrounded by directional movement arrows"
+                >
+            </div>
+            <figcaption>Observation first. Evidence second. Coach the individual.</figcaption>
+        </figure>
+    </section>
+
+    <section class="landing-workflow" aria-labelledby="workflow-title">
+        <div class="landing-section-heading">
+            <span class="landing-kicker">Coaching workflow</span>
+            <h2 id="workflow-title">From first observation to measurable progress</h2>
+        </div>
+
+        <div class="landing-step-grid">
+            <a class="landing-step" href="/coach-assistant">
+                <span class="landing-step__number">01</span>
+                <h3>Observe &amp; analyze</h3>
+                <p>Record visual swing characteristics and generate the preliminary coaching plan.</p>
+                <span class="landing-step__link">Start assessment →</span>
+            </a>
+
+            <a class="landing-step" href="/imports/garmin">
+                <span class="landing-step__number">02</span>
+                <h3>Add evidence</h3>
+                <p>Import Garmin data and add Onform measurements to test the initial diagnosis.</p>
+                <span class="landing-step__link">Open imports →</span>
+            </a>
+
+            <a class="landing-step" href="/gapping">
+                <span class="landing-step__number">03</span>
+                <h3>Measure progress</h3>
+                <p>Review gapping, ball-flight patterns, and the changes that matter to the student.</p>
+                <span class="landing-step__link">Open gapping →</span>
+            </a>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -100,23 +100,6 @@ def _case_topic(case: CoachingAssistantCase | None, observations: dict) -> str:
     )
 
 
-def _session_display_title(
-    session: CoachingSession | None,
-    fallback: str = "",
-) -> str:
-    """Keep Coaching Assistant assessment titles aligned with Sessions."""
-    if session:
-        session_type = (session.session_type or "").strip()
-        custom_name = (session.name or "").strip()
-        if session_type and custom_name and custom_name.casefold() != session_type.casefold():
-            return f"{session_type} · {custom_name}"
-        if session_type:
-            return session_type
-        if custom_name:
-            return custom_name
-    return (fallback or "").strip() or "Swing assessment"
-
-
 def _normalized_session_text(value: str | None) -> str:
     return re.sub(r"[^a-z0-9]+", " ", (value or "").casefold()).strip()
 
@@ -220,70 +203,7 @@ def page(request: Request, student_id: str = "", session_id: str = "", case_id: 
     observations = json.loads(case.observations_json or "{}") if case else {}
     evidence = json.loads(case.evidence_json or "{}") if case else {}
     topic = _case_topic(case, observations)
-    sessions_by_id = {session.id: session for session in sessions}
-    history_items = [
-        {
-            "case": item,
-            "title": _session_display_title(
-                sessions_by_id.get(item.session_id),
-                item.goal,
-            ),
-        }
-        for item in history
-    ]
-    assessment_title = _session_display_title(
-        sessions_by_id.get(case.session_id) if case else None,
-        case.goal if case else "",
-    ) if case else ""
-    return templates.TemplateResponse(request=request, name="coach_assistant.html", context={"page_title": "Coaching Assistant", "page_name": "coach_assistant", "students": students, "sessions": sessions, "selected_student_id": student_id or (case.student_id if case else ""), "selected_session_id": session_id or (case.session_id if case else ""), "case": case, "history_items": history_items, "assessment_title": assessment_title, "observations": observations, "evidence": evidence, "ai_error": latest.content if latest and latest.role == "error" else "", "preliminary_plan_view": _plan_view(case.preliminary_plan, topic) if case else {}, "refined_plan_view": _plan_view(case.refined_plan, topic) if case else {}, "cleanup_done": bool(cleanup_done), "cleaned": cleaned, "session_removed": bool(session_removed), "session_deleted": bool(session_deleted)})
-
-
-@router.get("/{case_id}/report", response_class=HTMLResponse, name="coach_assistant_report")
-def session_report(
-    request: Request,
-    case_id: str,
-    db: Session = Depends(get_db),
-):
-    """Render a student-facing session report from a saved assessment."""
-    case = _case_or_404(db, case_id)
-    student = db.get(Student, case.student_id)
-    session = db.get(CoachingSession, case.session_id)
-    if not student or not session:
-        raise HTTPException(status_code=404, detail="Student or session not found")
-
-    observations = json.loads(case.observations_json or "{}")
-    use_refined = bool(case.refined_analysis or case.refined_plan)
-    analysis = case.refined_analysis if use_refined else case.preliminary_analysis
-    plan = _plan_view(
-        case.refined_plan if use_refined else case.preliminary_plan,
-        _case_topic(case, observations),
-    )
-    plan["drills"] = plan.get("drills", [])[:5]
-
-    visual_details = [
-        {"label": "Primary observation", "value": observations.get("swing_characteristics", "")},
-        {"label": "P1–P10 checkpoints", "value": observations.get("p_positions", "")},
-        {"label": "Sequencing", "value": observations.get("sequencing", "")},
-        {"label": "Mobility", "value": observations.get("mobility", "")},
-        {"label": "Stability", "value": observations.get("stability", "")},
-        {"label": "Balance", "value": observations.get("balance", "")},
-    ]
-
-    return templates.TemplateResponse(
-        request=request,
-        name="coach_assistant_report.html",
-        context={
-            "page_title": f"{student.name} Session Report",
-            "student": student,
-            "session": session,
-            "case": case,
-            "assessment_title": _session_display_title(session, case.goal),
-            "visual_details": [item for item in visual_details if item["value"]],
-            "analysis": analysis,
-            "plan": plan,
-            "use_refined": use_refined,
-        },
-    )
+    return templates.TemplateResponse(request=request, name="coach_assistant.html", context={"page_title": "Coaching Assistant", "page_name": "coach_assistant", "students": students, "sessions": sessions, "selected_student_id": student_id or (case.student_id if case else ""), "selected_session_id": session_id or (case.session_id if case else ""), "case": case, "history": history, "observations": observations, "evidence": evidence, "ai_error": latest.content if latest and latest.role == "error" else "", "preliminary_plan_view": _plan_view(case.preliminary_plan, topic) if case else {}, "refined_plan_view": _plan_view(case.refined_plan, topic) if case else {}, "cleanup_done": bool(cleanup_done), "cleaned": cleaned, "session_removed": bool(session_removed), "session_deleted": bool(session_deleted)})
 
 
 @router.post("/analyze")

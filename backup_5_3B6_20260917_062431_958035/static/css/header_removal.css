@@ -1,0 +1,167 @@
+/* WSBCO Golf Coach — Phase 5.3B5
+   Stable shell, header removal, green navigation, and responsive menu. */
+
+:root {
+    --sidebar-width: 270px;
+    --navigation-green: #123f38;
+    --navigation-green-dark: #0b302b;
+    --navigation-gold: #cda767;
+}
+
+/* Desktop uses a fixed navigation rail. This avoids the three-column grid
+   collision that previously squeezed page content into the sidebar. */
+@media (min-width: 993px) {
+    .app-layout {
+        display: block !important;
+        min-height: 100vh;
+    }
+
+    .sidebar {
+        position: fixed !important;
+        inset: 0 auto 0 0 !important;
+        z-index: 1000;
+        display: flex !important;
+        width: var(--sidebar-width) !important;
+        height: 100vh !important;
+        overflow-x: hidden;
+        overflow-y: auto;
+        color: #fff !important;
+        background: linear-gradient(180deg, var(--navigation-green), var(--navigation-green-dark)) !important;
+    }
+
+    .app-main {
+        display: flex !important;
+        flex-direction: column;
+        width: calc(100% - var(--sidebar-width)) !important;
+        min-width: 0;
+        min-height: 100vh;
+        margin-left: var(--sidebar-width) !important;
+    }
+
+    .sidebar-backdrop,
+    .sidebar__close,
+    .topbar__menu-button,
+    #sidebar-open-button {
+        display: none !important;
+    }
+}
+
+.sidebar-nav__link.is-active,
+.sidebar-nav__link.active {
+    color: var(--navigation-green) !important;
+    background: #fff !important;
+}
+
+.sidebar-nav__link:hover {
+    background: rgba(205, 167, 103, 0.19) !important;
+}
+
+.brand__mark {
+    color: var(--navigation-green) !important;
+}
+
+/* The repeated title/profile header is removed, but its mobile menu control
+   remains available at small widths. */
+.topbar {
+    position: relative !important;
+    z-index: 1050;
+    display: block !important;
+    width: 100%;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.topbar > *,
+.topbar__left > div,
+.topbar__actions,
+.coach-profile,
+#theme-toggle-button {
+    display: none !important;
+}
+
+.page-content,
+.assistant-shell {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.assistant-shell {
+    max-width: 1180px;
+}
+
+@media (max-width: 992px) {
+    .app-layout {
+        display: block !important;
+        min-height: 100vh;
+    }
+
+    .app-main {
+        width: 100% !important;
+        min-width: 0;
+        margin-left: 0 !important;
+    }
+
+    .sidebar {
+        position: fixed !important;
+        inset: 0 auto 0 0 !important;
+        z-index: 1200;
+        display: flex !important;
+        width: min(var(--sidebar-width), 86vw) !important;
+        height: 100vh !important;
+        overflow-y: auto;
+        color: #fff !important;
+        background: linear-gradient(180deg, var(--navigation-green), var(--navigation-green-dark)) !important;
+        transform: translateX(-105%);
+        transition: transform 180ms ease;
+    }
+
+    .sidebar.is-open {
+        left: 0 !important;
+        transform: translateX(0);
+    }
+
+    .sidebar-backdrop.is-visible,
+    .sidebar-backdrop.is-open {
+        position: fixed;
+        inset: 0;
+        z-index: 1150;
+        display: block !important;
+        background: rgba(6, 22, 35, 0.55);
+    }
+
+    .topbar .topbar__left {
+        display: block !important;
+        width: 0;
+        height: 0;
+    }
+
+    .topbar .topbar__menu-button,
+    .topbar #sidebar-open-button {
+        position: fixed !important;
+        top: 0.85rem;
+        left: 0.85rem;
+        z-index: 1100;
+        display: grid !important;
+        width: 2.9rem;
+        height: 2.9rem;
+        padding: 0 !important;
+        place-items: center;
+        border: 1px solid rgba(18, 63, 56, 0.22) !important;
+        border-radius: 0.7rem;
+        color: var(--navigation-green);
+        background: #fff !important;
+        box-shadow: 0 0.45rem 1.2rem rgba(15, 31, 54, 0.14);
+    }
+
+    .page-content,
+    .page-content:has(.landing-page) {
+        padding-top: 4.6rem !important;
+    }
+}

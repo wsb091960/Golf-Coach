@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block page_styles %}<link rel="stylesheet" href="/static/css/gapping.css?v=2.4.0">{% endblock %}
+{% block content %}
+<section class="gap-page">
+  <header class="gap-header"><div><p>WSBCO PERFORMANCE LAB</p><h2>Club Gapping</h2><span>Map the bag, identify overlaps and build confident distance decisions.</span></div><div class="gap-header__summary"><strong id="mappedClubCount">0</strong><span>mapped clubs</span></div></header>
+  <form class="gap-filters" method="get" action="/gapping">
+    <label>Student<select name="student_id" onchange="this.form.submit()">{% for student in students %}<option value="{{ student.id }}" {% if student.id|string == selected_student_id|string %}selected{% endif %}>{{ student.name or ((student.first_name or '') ~ ' ' ~ (student.last_name or '')) }}</option>{% endfor %}</select></label>
+    <label>Session<select name="session_id" onchange="this.form.submit()"><option value="">All sessions</option>{% for session in sessions %}<option value="{{ session.id }}" {% if session.id|string == selected_session_id|string %}selected{% endif %}>{{ session.session_date }} · {{ session.name or session.session_type }}</option>{% endfor %}</select></label>
+    <div class="distance-toggle" role="group" aria-label="Distance type"><button type="button" class="active" data-distance="carry">Carry</button><button type="button" data-distance="total">Total</button></div>
+    <button type="button" class="gap-quiet" id="showAllClubs">Show all clubs</button>
+  </form>
+  <div class="gap-workspace">
+    <aside class="club-panel"><div class="club-panel__heading"><div><span>BAG MAP</span><h3>Select a club</h3></div><button type="button" id="clubInfo" title="Mapped clubs require usable distance data.">ⓘ</button></div><div id="clubList" class="club-list"></div><div class="map-key"><span><i class="mapped"></i>Mapped</span><span><i class="unmapped"></i>Unmapped</span></div></aside>
+    <section class="range-panel"><canvas id="gappingCanvas" aria-label="Top-down club gapping range"></canvas><div class="range-tooltip" id="rangeTooltip" hidden></div><div class="range-legend" id="rangeLegend"></div></section>
+  </div>
+  <section class="gap-analysis"><div class="section-heading"><div><span>GAPPING ANALYSIS</span><h3>Distance ladder</h3></div><p id="gapHeadline">Select a student with mapped shots.</p></div><div class="gap-alerts" id="gapAlerts"></div><div class="table-wrap"><table><thead><tr><th>Club</th><th>Shots</th><th>Median carry</th><th>Average carry</th><th>Average total</th><th>Gap to next</th><th>Carry spread</th><th>Offline spread</th><th>Status</th></tr></thead><tbody id="gapTableBody"></tbody></table></div></section>
+</section>
+<script id="gapping-shot-data" type="application/json">{{ gapping_shots|tojson }}</script>
+{% endblock %}
+{% block page_scripts %}<script src="/static/js/gapping.js?v=2.4.0"></script>{% endblock %}

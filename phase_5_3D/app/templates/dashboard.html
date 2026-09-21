@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="workspace-shell">
+  <header class="workspace-hero"><div class="workspace-hero__copy"><span class="workspace-kicker">WSBCO Golf Coach</span><h1>See the motion. Coach the cause.</h1><p>Begin with observation, build the initial plan, then use Garmin R10 and Onform evidence to verify and refine it.</p></div><img class="workspace-hero__logo" src="/static/img/golf-coach-dashboard-hero.png" alt="WSBCO golfer motion logo"></header>
+  <nav class="workspace-tabs" role="tablist" data-workspace-tabs="dashboard" data-default-tab="start" aria-label="Dashboard sections"><button type="button" role="tab" data-workspace-tab="start">Quick Start</button><button type="button" role="tab" data-workspace-tab="workflow">Coaching Workflow</button></nav>
+  <section data-workspace-panel="start" data-workspace-group="dashboard">
+    <div class="workspace-directory">
+      <a class="workspace-card" href="/coach-assistant"><span class="workspace-kicker">Observe</span><h2>Coaching Assistant</h2><p>Describe the swing, generate five drills, and build the first coaching plan.</p></a>
+      <a class="workspace-card" href="/imports/garmin"><span class="workspace-kicker">Verify</span><h2>Garmin &amp; Onform</h2><p>Add launch-monitor and video evidence without replacing the preliminary plan.</p></a>
+      <a class="workspace-card" href="/gapping"><span class="workspace-kicker">Measure</span><h2>Gapping</h2><p>Review the distance ladder, overlaps, dispersion, and progress.</p></a>
+    </div>
+  </section>
+  <section data-workspace-panel="workflow" data-workspace-group="dashboard" hidden>
+    <div class="workspace-card"><span class="workspace-kicker">Observation to outcome</span><h2>The coaching sequence</h2><div class="workspace-list"><a class="workspace-list-item" href="/students"><span><strong>1. Select the student</strong><small>Confirm goals, handedness, and coaching history.</small></span><span>→</span></a><a class="workspace-list-item" href="/sessions"><span><strong>2. Open the session</strong><small>Connect the assessment, shots, video, and notes.</small></span><span>→</span></a><a class="workspace-list-item" href="/coach-assistant"><span><strong>3. Observe and prescribe</strong><small>Generate the preliminary plan before measurement.</small></span><span>→</span></a><a class="workspace-list-item" href="/imports/garmin"><span><strong>4. Add evidence</strong><small>Use Garmin R10 and Onform to verify or refine.</small></span><span>→</span></a></div></div>
+  </section>
+</div>
+{% endblock %}

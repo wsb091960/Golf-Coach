@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block page_styles %}<link rel="stylesheet" href="/static/css/coach_assistant.css?v=5.3D">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="/static/css/coach_assistant.css?v=5.3C2">{% endblock %}
 
 {% macro render_videos(videos) %}
   {% if videos %}
@@ -73,7 +73,7 @@
   </form>
 
   {% if case %}
-  <section id="tab-drills" class="tab-panel" role="tabpanel" data-tab-panel="drills" hidden><div class="coach-card results"><div class="result-heading"><div><span class="eyebrow dark">{{ assessment_title }}</span><h2>Five Practice Drills</h2></div><div class="report-actions"><span class="status">{{ case.status|title }}</span><a class="primary report-button" href="/coach-assistant/{{ case.id }}/report">Generate Session Report</a></div></div>{{ render_drills(preliminary_plan_view) }}{% if case.refined_plan %}<div class="refined"><span class="eyebrow dark">Garmin / Onform informed</span><h2>Refined Practice Drills</h2>{{ render_drills(refined_plan_view) }}</div>{% endif %}</div></section>
+  <section id="tab-drills" class="tab-panel" role="tabpanel" data-tab-panel="drills" hidden><div class="coach-card results"><div class="result-heading"><div><span class="eyebrow dark">{{ assessment_title }}</span><h2>Five Practice Drills</h2></div><span class="status">{{ case.status|title }}</span></div>{{ render_drills(preliminary_plan_view) }}{% if case.refined_plan %}<div class="refined"><span class="eyebrow dark">Garmin / Onform informed</span><h2>Refined Practice Drills</h2>{{ render_drills(refined_plan_view) }}</div>{% endif %}</div></section>
 
   <section id="tab-videos" class="tab-panel" role="tabpanel" data-tab-panel="videos" hidden><div class="coach-card results"><span class="eyebrow dark">{{ assessment_title }} · Topic-matched instruction</span><h2>Video Library</h2><p class="tab-intro">Choose an instructor to open current YouTube results for this student’s observed swing pattern.</p>{{ render_videos(preliminary_plan_view.videos) }}</div></section>
 
@@ -89,4 +89,4 @@
 </div>
 {% endblock %}
 
-{% block page_scripts %}<script src="/static/js/coach_assistant_tabs.js?v=5.3D"></script>{% endblock %}
+{% block page_scripts %}<script src="/static/js/coach_assistant_tabs.js?v=5.3C2"></script>{% endblock %}

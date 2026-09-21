@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block page_styles %}<link rel="stylesheet" href="/static/css/coach_assistant.css?v=5.3D">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="/static/css/coach_assistant.css?v=5.3C">{% endblock %}
 
 {% macro render_videos(videos) %}
   {% if videos %}
@@ -12,35 +12,36 @@
   {% endif %}
 {% endmacro %}
 
-{% macro render_drills(plan) %}
+{% macro render_plan(plan) %}
   {% if plan.raw %}
-    <div class="output plan">{{ plan.raw }}</div>
+    <div class="output plan">{{ plan.raw }}</div>{{ render_videos(plan.videos) }}
   {% else %}
-    {% if plan.drills %}<div class="drill-list">{% for drill in plan.drills %}<article class="drill-card"><header><span class="drill-number">{{ loop.index }}</span><h4>{{ drill.get('name', 'Drill ' ~ loop.index) }}</h4></header><dl>
-      {% if drill.get('setup') %}<div><dt>Setup</dt><dd>{{ drill.get('setup') }}</dd></div>{% endif %}
-      {% if drill.get('action') %}<div><dt>Action</dt><dd>{{ drill.get('action') }}</dd></div>{% endif %}
-      {% if drill.get('feel') or drill.get('coaching_feel') %}<div><dt>Feel</dt><dd>{{ drill.get('feel', drill.get('coaching_feel', '')) }}</dd></div>{% endif %}
-      {% if drill.get('dosage') %}<div><dt>Dosage</dt><dd>{{ drill.get('dosage') }}</dd></div>{% endif %}
-      {% if drill.get('success_check') %}<div><dt>Success check</dt><dd>{{ drill.get('success_check') }}</dd></div>{% endif %}
-    </dl></article>{% endfor %}</div>{% else %}<p>No drills are available for this assessment yet.</p>{% endif %}
+    <div class="plan-layout">
+      {% if plan.priority %}<section class="plan-summary priority"><span class="plan-label">Coaching priority</span><p>{{ plan.priority }}</p></section>{% endif %}
+      {% if plan.explanation %}<section class="plan-summary"><span class="plan-label">Explain it to the student</span><p>{{ plan.explanation }}</p></section>{% endif %}
+      {% if plan.drills %}
+        <section class="drill-section"><h3>Five practice drills</h3><div class="drill-list">
+          {% for drill in plan.drills %}<article class="drill-card"><header><span class="drill-number">{{ loop.index }}</span><h4>{{ drill.get('name', 'Drill ' ~ loop.index) }}</h4></header><dl>
+            {% if drill.get('setup') %}<div><dt>Setup</dt><dd>{{ drill.get('setup') }}</dd></div>{% endif %}
+            {% if drill.get('action') %}<div><dt>Action</dt><dd>{{ drill.get('action') }}</dd></div>{% endif %}
+            {% if drill.get('feel') or drill.get('coaching_feel') %}<div><dt>Feel</dt><dd>{{ drill.get('feel', drill.get('coaching_feel', '')) }}</dd></div>{% endif %}
+            {% if drill.get('dosage') %}<div><dt>Dosage</dt><dd>{{ drill.get('dosage') }}</dd></div>{% endif %}
+            {% if drill.get('success_check') %}<div><dt>Success check</dt><dd>{{ drill.get('success_check') }}</dd></div>{% endif %}
+          </dl></article>{% endfor %}
+        </div></section>
+      {% endif %}
+      {{ render_videos(plan.videos) }}
+      <div class="plan-checks">
+        {% if plan.ball_flight_cue %}<section><span class="plan-label">Ball-flight cue</span><p>{{ plan.ball_flight_cue }}</p></section>{% endif %}
+        {% if plan.pass_fail_test %}<section><span class="plan-label">Pass / fail</span><p>{{ plan.pass_fail_test }}</p></section>{% endif %}
+        {% if plan.reassessment %}<section><span class="plan-label">Reassessment</span><p>{{ plan.reassessment }}</p></section>{% endif %}
+      </div>
+    </div>
   {% endif %}
 {% endmacro %}
 
-{% macro render_corner(plan, analysis) %}
-  <div class="corner-layout">
-    {% if analysis %}<section class="corner-analysis"><span class="plan-label">Swing analysis</span><div class="output">{{ analysis }}</div></section>{% endif %}
-    {% if plan.priority %}<section class="plan-summary priority"><span class="plan-label">Coaching priority</span><p>{{ plan.priority }}</p></section>{% endif %}
-    {% if plan.explanation %}<section class="plan-summary"><span class="plan-label">Explain it to the student</span><p>{{ plan.explanation }}</p></section>{% endif %}
-    <div class="plan-checks">
-      {% if plan.ball_flight_cue %}<section><span class="plan-label">Ball-flight cue</span><p>{{ plan.ball_flight_cue }}</p></section>{% endif %}
-      {% if plan.pass_fail_test %}<section><span class="plan-label">Pass / fail</span><p>{{ plan.pass_fail_test }}</p></section>{% endif %}
-      {% if plan.reassessment %}<section><span class="plan-label">Reassessment</span><p>{{ plan.reassessment }}</p></section>{% endif %}
-    </div>
-  </div>
-{% endmacro %}
-
 {% block content %}
-<div class="assistant-shell" data-default-tab="{% if cleanup_done or session_removed or session_deleted %}assessments{% elif case %}drills{% else %}ask{% endif %}">
+<div class="assistant-shell" data-default-tab="{% if cleanup_done or session_removed or session_deleted %}assessments{% elif case %}plan{% else %}ask{% endif %}">
   {% if ai_error %}<div role="alert" class="notice error"><strong>AI analysis unavailable.</strong> {{ ai_error }} Your observations are saved.</div>{% endif %}
   {% if session_removed %}<div role="status" class="notice success">The assessment and its linked empty session were deleted.</div>{% endif %}
   {% if session_deleted %}<div role="status" class="notice success">The selected session and its linked assessment records were permanently deleted.</div>{% endif %}
@@ -52,7 +53,7 @@
     <button type="button" role="tab" data-tab-target="ask" aria-controls="tab-ask">Ask Coach</button>
     <button type="button" role="tab" data-tab-target="visual" aria-controls="tab-visual">Visual Detail</button>
     <button type="button" role="tab" data-tab-target="body" aria-controls="tab-body">Body Screen</button>
-    {% if case %}<button type="button" role="tab" data-tab-target="drills" aria-controls="tab-drills">Five Practice Drills</button><button type="button" role="tab" data-tab-target="videos" aria-controls="tab-videos">Video Library</button><button type="button" role="tab" data-tab-target="corner" aria-controls="tab-corner">Coach’s Corner</button><button type="button" role="tab" data-tab-target="evidence" aria-controls="tab-evidence">Garmin / Onform</button>{% endif %}
+    {% if case %}<button type="button" role="tab" data-tab-target="plan" aria-controls="tab-plan">Practice Plan</button><button type="button" role="tab" data-tab-target="evidence" aria-controls="tab-evidence">Garmin / Onform</button>{% endif %}
     <button type="button" role="tab" data-tab-target="assessments" aria-controls="tab-assessments">Assessments</button>
   </nav>
 
@@ -73,20 +74,16 @@
   </form>
 
   {% if case %}
-  <section id="tab-drills" class="tab-panel" role="tabpanel" data-tab-panel="drills" hidden><div class="coach-card results"><div class="result-heading"><div><span class="eyebrow dark">{{ assessment_title }}</span><h2>Five Practice Drills</h2></div><div class="report-actions"><span class="status">{{ case.status|title }}</span><a class="primary report-button" href="/coach-assistant/{{ case.id }}/report">Generate Session Report</a></div></div>{{ render_drills(preliminary_plan_view) }}{% if case.refined_plan %}<div class="refined"><span class="eyebrow dark">Garmin / Onform informed</span><h2>Refined Practice Drills</h2>{{ render_drills(refined_plan_view) }}</div>{% endif %}</div></section>
-
-  <section id="tab-videos" class="tab-panel" role="tabpanel" data-tab-panel="videos" hidden><div class="coach-card results"><span class="eyebrow dark">{{ assessment_title }} · Topic-matched instruction</span><h2>Video Library</h2><p class="tab-intro">Choose an instructor to open current YouTube results for this student’s observed swing pattern.</p>{{ render_videos(preliminary_plan_view.videos) }}</div></section>
-
-  <section id="tab-corner" class="tab-panel" role="tabpanel" data-tab-panel="corner" hidden><div class="coach-card results"><div class="result-heading"><div><span class="eyebrow dark">{{ assessment_title }} · Coach’s Corner</span><h2>Analysis and Coaching Checks</h2></div><span class="status">{{ case.status|title }}</span></div>{{ render_corner(preliminary_plan_view, case.preliminary_analysis) }}{% if case.refined_analysis %}<div class="refined"><span class="eyebrow dark">Garmin / Onform informed</span><h2>Refined Coach’s Corner</h2>{{ render_corner(refined_plan_view, case.refined_analysis) }}</div>{% endif %}</div></section>
+  <section id="tab-plan" class="tab-panel" role="tabpanel" data-tab-panel="plan" hidden><div class="coach-card results"><div class="result-heading"><div><span class="eyebrow dark">Saved assessment</span><h2>Preliminary analysis</h2></div><span class="status">{{ case.status|title }}</span></div><div class="output">{{ case.preliminary_analysis }}</div><h2>Preliminary practice plan</h2>{{ render_plan(preliminary_plan_view) }}{% if case.refined_analysis %}<div class="refined"><span class="eyebrow dark">Garmin / Onform informed</span><h2>Evidence-informed analysis</h2><div class="output">{{ case.refined_analysis }}</div><h2>Refined practice plan</h2>{{ render_plan(refined_plan_view) }}</div>{% endif %}</div></section>
 
   <section id="tab-evidence" class="tab-panel" role="tabpanel" data-tab-panel="evidence" hidden><div class="coach-card compact-form"><span class="eyebrow dark">Secondary evidence</span><h2>Refine without replacing the first plan</h2><p>The preliminary plan stays saved. This creates a separate evidence-informed version.</p><form action="/coach-assistant/{{ case.id }}/refine" method="post"><div class="two-col"><label>Garmin R10 evidence<textarea name="garmin_evidence" placeholder="Face, path, launch, spin axis, strike and ball flight">{{ evidence.get('garmin', '') }}</textarea></label><label>Onform evidence<textarea name="onform_evidence" placeholder="Hip, pelvis, shoulder, P-position or timing findings">{{ evidence.get('onform', '') }}</textarea></label></div><label>Coach follow-up observations<textarea name="coach_followup">{{ evidence.get('coach_followup', '') }}</textarea></label><button class="primary" type="submit">Generate refined plan</button></form></div></section>
   {% endif %}
 
   <section id="tab-assessments" class="tab-panel" role="tabpanel" data-tab-panel="assessments" hidden><div class="management-grid">
-    <section class="coach-card history"><span class="eyebrow dark">History</span><h2>Recent assessments</h2>{% for entry in history_items %}{% set item = entry.case %}<article class="history-item"><a href="/coach-assistant?case_id={{ item.id }}"><strong>{{ entry.title }}</strong><small>{{ item.status|title }} · {{ item.updated_at.strftime('%b %d, %Y %H:%M') }} · {{ item.id[:8] }}</small></a><form action="/coach-assistant/{{ item.id }}/delete" method="post" onsubmit="return confirm('Delete this assessment? Its linked session will also be deleted only if it has no retained work.');"><button class="text-danger" type="submit">Delete</button></form></article>{% else %}<p>No saved assessments yet.</p>{% endfor %}</section>
+    <section class="coach-card history"><span class="eyebrow dark">History</span><h2>Recent assessments</h2>{% for item in history %}<article class="history-item"><a href="/coach-assistant?case_id={{ item.id }}"><strong>{{ item.goal or 'Swing assessment' }}</strong><small>{{ item.status|title }} · {{ item.updated_at.strftime('%b %d, %Y %H:%M') }} · {{ item.id[:8] }}</small></a><form action="/coach-assistant/{{ item.id }}/delete" method="post" onsubmit="return confirm('Delete this assessment? Its linked session will also be deleted only if it has no retained work.');"><button class="text-danger" type="submit">Delete</button></form></article>{% else %}<p>No saved assessments yet.</p>{% endfor %}</section>
     <section class="coach-card"><span class="eyebrow dark">Session tools</span><h2>Cleanup and deletion</h2>{% if students %}<div class="history-cleanup"><h3>Clean up empty sessions</h3><p>Removes blank Coaching Assistant sessions. Sessions containing work are protected.</p><form action="/coach-assistant/cleanup-empty-sessions" method="post" onsubmit="return confirm('Delete all completely empty, unlinked sessions for this student?');"><label>Student<select name="student_id" required><option value="">Select student</option>{% for student in students %}<option value="{{ student.id }}" {% if selected_student_id == student.id %}selected{% endif %}>{{ student.name }}</option>{% endfor %}</select></label><button class="danger-button" type="submit">Clean up empty sessions</button></form></div>{% endif %}{% if sessions %}<div class="history-cleanup"><h3>Delete a session permanently</h3><p>Removes the session everywhere, including linked shots, videos, and assessments.</p><form action="/coach-assistant/delete-session" method="post" onsubmit="return confirm('Permanently delete this session and all linked work? This cannot be undone.');"><label>Session<select name="session_id" required><option value="">Select session</option>{% for session in sessions %}<option value="{{ session.id }}" data-student="{{ session.student_id }}">{{ session.session_date }} · {{ session.name or session.session_type }}</option>{% endfor %}</select></label><button class="danger-button" type="submit">Delete selected session</button></form></div>{% endif %}</section>
   </div></section>
 </div>
 {% endblock %}
 
-{% block page_scripts %}<script src="/static/js/coach_assistant_tabs.js?v=5.3D"></script>{% endblock %}
+{% block page_scripts %}<script src="/static/js/coach_assistant_tabs.js?v=5.3C"></script>{% endblock %}

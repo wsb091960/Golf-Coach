@@ -9,17 +9,21 @@
 /* Phase 2.3.13: dense metric canvases need full-width cards for readable text. */
 .performance-grid{grid-auto-flow:dense}
 .performance-card:has(#topdown-flight-canvas),
+.performance-card:has(#shot-simulator-canvas),
 .performance-card:has(#dispersion-canvas){grid-column:1/-1}
 .performance-card:has(#topdown-flight-canvas) canvas,
+.performance-card:has(#shot-simulator-canvas) canvas,
 .performance-card:has(#dispersion-canvas) canvas{min-width:0}
 @media(max-width:960px){
   .performance-card:has(#topdown-flight-canvas),
+  .performance-card:has(#shot-simulator-canvas),
   .performance-card:has(#dispersion-canvas){grid-column:auto}
 }
 
 .upload-progress{display:grid;gap:7px;margin:0 0 12px}.upload-progress[hidden]{display:none}.upload-progress>div{height:9px;overflow:hidden;border-radius:999px;background:#dfe9e5}.upload-progress span{display:block;width:0;height:100%;border-radius:inherit;background:#0f6e5b;transition:width .15s}.upload-progress strong{color:#31594e;font-size:11px}
 
 .manual-shot-modal{width:min(920px,100%)}.manual-shot-modal .modal-heading p{margin:5px 0 0;color:#718079;font-size:12px}.manual-shot-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin-bottom:12px}.manual-shot-grid label{display:grid;gap:5px}.manual-shot-grid span{color:#68766f;font-size:10px;font-weight:800}.manual-shot-grid input,.manual-shot-grid select{width:100%;padding:10px;border:1px solid #d7e1dd;border-radius:9px;font:inherit}.manual-shot-help{margin:0 0 14px;padding:10px 12px;border-radius:9px;background:#edf5f2;color:#486158;font-size:11px}@media(max-width:700px){.manual-shot-grid{grid-template-columns:1fr}}
+.manual-shot-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}.manual-shot-modal h2{margin:4px 0 0;color:#173f2a}.manual-shot-modal input:focus,.manual-shot-modal select:focus{outline:2px solid rgba(212,166,42,.38);border-color:#a97808}
 
 .source-pill{display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:800;white-space:nowrap}.source-pill.source-manual{background:#fff3d8;color:#80560f}.source-pill.source-garmin{background:#e7f0ed;color:#1b5d4e}
 
@@ -34,16 +38,24 @@
   box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -18px 40px rgba(6,28,18,.16);
 }
 .flight-card canvas,.topdown-flight-card canvas{min-height:300px}
+.performance-card:has(#shot-simulator-canvas) canvas,
 .performance-card:has(#dispersion-canvas) canvas,
 .performance-card:has(#face-path-canvas) canvas{min-height:300px}
 .simulation-note{margin-top:11px}
+.estimate-tag{display:inline-block;margin-left:3px;color:#9a6814;font-size:8px;font-weight:900;text-transform:uppercase}
+.delivery-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:11px}.delivery-summary>div{padding:11px 12px;border:1px solid #dbe5e1;border-radius:10px;background:#f7faf8}.delivery-summary span{display:block;color:#718079;font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.06em}.delivery-summary strong{display:block;margin-top:4px;color:#173f35;font-size:17px}.delivery-summary small{display:block;margin-top:3px;color:#697871;font-size:9px;line-height:1.35}.delivery-summary .delivery-outcome{grid-column:1/-1;border-left:4px solid #d7a62a;background:#fffaf0}.delivery-summary .delivery-outcome strong{color:#80560f}
 .performance-card:has(canvas) .card-heading{margin-bottom:12px}
 .performance-card:has(canvas){overflow:hidden}
 @media(max-width:700px){
   .flight-card canvas,.topdown-flight-card canvas,
+  .performance-card:has(#shot-simulator-canvas) canvas,
   .performance-card:has(#dispersion-canvas) canvas,
   .performance-card:has(#face-path-canvas) canvas{min-height:260px}
+  .delivery-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+.performance-card:has(#face-path-canvas){grid-column:1/-1}
+@media(max-width:960px){.performance-card:has(#face-path-canvas){grid-column:auto}}
 
 
 /* Phase 2.4.2: shot metric editor */

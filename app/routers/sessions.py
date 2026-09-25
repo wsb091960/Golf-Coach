@@ -38,6 +38,7 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
     session = require_session(session_id, db)
     student = get_student(str(session.get('student_id','')), db=db)
     shots = get_session_shots(session_id, db=db)
+    _backfill_manual_estimates(shots, db)
     videos = list_session_videos(db, session_id)
     included = [s for s in shots if s.get('included', True)]
     club_counts = Counter(
@@ -159,6 +160,33 @@ def _recalculate_estimated_outcomes(shot: dict, *, carry: bool, total: bool, ape
         if influence is None:
             influence = float(shot.get('spin_axis') or 0) / 2
         shot['offline_distance'] = round(start_yards + float(influence) * max(.4, float(carry_value) / 130), 2)
+
+
+def _backfill_manual_estimates(shots: list[dict], db: Session) -> None:
+    """Fill outcomes for manual shots saved before automatic estimates existed."""
+    outcome_fields = ('carry_distance', 'total_distance', 'apex_height', 'offline_distance')
+    for row in shots:
+        if not str(row.get('source') or '').lower().startswith('manual entry'):
+            continue
+        carry_missing = row.get('carry_distance') is None
+        can_estimate_carry = row.get('ball_speed') is not None or row.get('club_speed') is not None
+        estimate_carry = carry_missing and can_estimate_carry
+        if carry_missing and not can_estimate_carry:
+            continue
+        flags = {
+            'carry': estimate_carry,
+            'total': row.get('total_distance') is None,
+            'apex': row.get('apex_height') is None,
+            'offline': row.get('offline_distance') is None,
+        }
+        if not any(flags.values()):
+            continue
+        refreshed = dict(row)
+        _recalculate_estimated_outcomes(refreshed, **flags)
+        changes = {key: refreshed.get(key) for key in outcome_fields if flags[key.split('_')[0] if key != 'carry_distance' else 'carry']}
+        changes['source'] = 'Manual Entry · Estimated Outcomes'
+        update_shot(str(row.get('id')), changes, db=db)
+        row.update(changes)
 
 
 @router.post('/{session_id}/shots/{shot_id}/edit', name='shot_metrics_edit')
@@ -323,6 +351,34 @@ async def manual_shot_create(request: Request, session_id: str, db: Session = De
         shot['smash_factor']=round(shot['ball_speed']/shot['club_speed'],4)
     if shot['face_to_path'] is None and shot['club_face'] is not None and shot['club_path'] is not None:
         shot['face_to_path']=round(shot['club_face']-shot['club_path'],4)
+
+    # Manual entry often contains the launch-monitor inputs but omits outcome
+    # fields. Build explicitly estimated outcomes instead of leaving the
+    # charts to invent a one-yard placeholder flight.
+    can_estimate_carry = shot['ball_speed'] is not None or shot['club_speed'] is not None
+    has_carry = shot['carry_distance'] is not None
+    estimate_carry = not has_carry and can_estimate_carry
+    can_estimate_outcomes = has_carry or estimate_carry
+    estimated_fields = []
+    if can_estimate_outcomes:
+        for key, should_estimate in (
+            ('carry_distance', estimate_carry),
+            ('total_distance', shot['total_distance'] is None),
+            ('apex_height', shot['apex_height'] is None),
+            ('offline_distance', shot['offline_distance'] is None),
+        ):
+            if should_estimate:
+                estimated_fields.append(key)
+        _recalculate_estimated_outcomes(
+            shot,
+            carry=estimate_carry,
+            total=shot['total_distance'] is None,
+            apex=shot['apex_height'] is None,
+            offline=shot['offline_distance'] is None,
+        )
+    if estimated_fields:
+        shot['source'] = 'Manual Entry · Estimated Outcomes'
+
     shot['shot_shape']=_manual_shape_v2(shot,str(student.get('handedness','') if student else ''))
     add_shot(shot,db=db)
     return RedirectResponse(f'/sessions/{session_id}?manual_shot_added=1',status_code=303)

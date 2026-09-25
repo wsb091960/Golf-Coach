@@ -6,8 +6,8 @@
     <title>Session Performance | WSBCO Golf Coach</title>
 
     <link rel="stylesheet" href="/static/css/dashboard.css">
-    <link rel="stylesheet" href="/static/css/session_performance.css">
-    <link rel="stylesheet" href="/static/css/topdown_flight.css">
+    <link rel="stylesheet" href="/static/css/session_performance.css?v=5.3O">
+    <link rel="stylesheet" href="/static/css/topdown_flight.css?v=5.3O">
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
 </head>
@@ -70,6 +70,14 @@
                 >
                     Import Garmin R10
                 </a>
+
+                <button
+                    class="button button-secondary"
+                    type="button"
+                    data-open-manual-shot
+                >
+                    Add Shot Manually
+                </button>
 
                 <button
                     class="button button-primary"
@@ -154,47 +162,62 @@
 
         <section class="performance-grid" data-workspace-panel="charts" data-workspace-group="session-detail" hidden>
 
-            <article class="performance-card flight-card">
+            <nav class="chart-view-tabs" role="tablist" aria-label="Session chart views">
+                <button type="button" class="chart-view-tab is-active" role="tab" aria-selected="true" aria-controls="chart-view-flight" data-chart-tab="flight">Flight Replay</button>
+                <button type="button" class="chart-view-tab" role="tab" aria-selected="false" aria-controls="chart-view-metrics" data-chart-tab="metrics">Shot Metrics</button>
+                <button type="button" class="chart-view-tab" role="tab" aria-selected="false" aria-controls="chart-view-pattern" data-chart-tab="pattern">Shot Pattern</button>
+                <button type="button" class="chart-view-tab" role="tab" aria-selected="false" aria-controls="chart-view-delivery" data-chart-tab="delivery">Delivery</button>
+            </nav>
+
+            <div class="chart-view-panel is-active" id="chart-view-flight" role="tabpanel" data-chart-panel="flight">
+            <article class="performance-card shot-simulator-card">
                 <div class="card-heading">
                     <div>
-                        <span class="section-kicker">Ball Flight</span>
+                        <span class="section-kicker">Ball Flight · Interactive Replay</span>
                         <h2 id="selected-shot-title">Select a Shot</h2>
                     </div>
 
                     <div class="selected-shape" id="selected-shape">—</div>
                 </div>
 
-                <canvas id="flight-canvas" width="1000" height="430"></canvas>
-
-                <div class="simulation-note">
-                    Trajectory is a visualization fitted to measured Garmin
-                    launch/outcome data, not an independent launch-monitor measurement.
-                </div>
-            </article>
-
-
-            <article class="performance-card topdown-flight-card">
-                <div class="card-heading">
-                    <div>
-                        <span class="section-kicker">Ball Flight · Top Down</span>
-                        <h2>Start Line + Curvature</h2>
+                <div class="simulator-controls" aria-label="Ball flight replay controls">
+                    <div class="simulator-camera" role="group" aria-label="Camera angle">
+                        <button type="button" class="sim-control is-active" data-sim-camera="behind" aria-pressed="true">Behind</button>
+                        <button type="button" class="sim-control" data-sim-camera="side" aria-pressed="false">Side</button>
+                        <button type="button" class="sim-control" data-sim-camera="overhead" aria-pressed="false">Overhead</button>
+                    </div>
+                    <div class="simulator-playback">
+                        <button type="button" class="sim-control sim-control-gold" id="simulator-replay">Replay</button>
+                        <button type="button" class="sim-control" id="simulator-pause" aria-pressed="false">Pause</button>
+                        <label class="sim-speed">Speed
+                            <select id="simulator-speed" aria-label="Replay speed">
+                                <option value="0.5">0.5×</option>
+                                <option value="1" selected>1×</option>
+                                <option value="2">2×</option>
+                            </select>
+                        </label>
                     </div>
                 </div>
 
-                <canvas
-                    id="topdown-flight-canvas"
-                    width="1000"
-                    height="430"
-                ></canvas>
+                <canvas id="shot-simulator-canvas" width="1000" height="470"></canvas>
+
+                <div class="simulator-readout" id="simulator-readout">
+                    <div><span>Distance</span><strong data-sim-readout="distance">—</strong></div>
+                    <div><span>Height</span><strong data-sim-readout="height">—</strong></div>
+                    <div><span>Offline</span><strong data-sim-readout="offline">—</strong></div>
+                    <div><span>Model</span><strong data-sim-readout="mode">—</strong></div>
+                </div>
 
                 <div class="simulation-note">
-                    Top-down trajectory uses Garmin launch direction, measured
-                    offline distance when available, and curvature from spin
-                    axis or face-to-path.
+                    Replay is fitted to the selected shot's saved carry, apex,
+                    offline and total distance. Missing launch or spin inputs are
+                    modeled and labeled as estimated—not launch-monitor measurements.
                 </div>
             </article>
+            </div>
 
 
+            <div class="chart-view-panel" id="chart-view-metrics" role="tabpanel" data-chart-panel="metrics" hidden>
             <article class="performance-card metric-card-panel">
                 <div class="card-heading">
                     <div>
@@ -225,30 +248,46 @@
                     {% endfor %}
                 </div>
             </article>
+            </div>
 
 
-            <article class="performance-card">
+            <div class="chart-view-panel" id="chart-view-pattern" role="tabpanel" data-chart-panel="pattern" hidden>
+            <article class="performance-card dispersion-card">
                 <div class="card-heading">
                     <div>
-                        <span class="section-kicker">Dispersion</span>
-                        <h2>Top-Down Pattern</h2>
+                        <span class="section-kicker">Dispersion · Shot Table</span>
+                        <h2>All Included Shots</h2>
                     </div>
                 </div>
 
-                <canvas id="dispersion-canvas" width="700" height="430"></canvas>
+                <canvas id="dispersion-canvas" width="1000" height="500"></canvas>
+                <div class="selected-shape-map-info" id="dispersion-map-info">
+                    Included shots from the shot table will appear here.
+                </div>
             </article>
+            </div>
 
 
+            <div class="chart-view-panel" id="chart-view-delivery" role="tabpanel" data-chart-panel="delivery" hidden>
             <article class="performance-card">
                 <div class="card-heading">
                     <div>
-                        <span class="section-kicker">Delivery</span>
-                        <h2>Face vs Path</h2>
+                        <span class="section-kicker">Delivery · Impact Geometry</span>
+                        <h2>Why the Ball Started and Curved</h2>
                     </div>
                 </div>
 
-                <canvas id="face-path-canvas" width="700" height="430"></canvas>
+                <canvas id="face-path-canvas" width="1000" height="430"></canvas>
+
+                <div class="delivery-summary" id="delivery-summary">
+                    <div><span>Club Path</span><strong data-delivery="path">—</strong><small data-delivery-note="path">Select a shot</small></div>
+                    <div><span>Face to Target</span><strong data-delivery="face">—</strong><small data-delivery-note="face">Select a shot</small></div>
+                    <div><span>Face to Path</span><strong data-delivery="relation">—</strong><small data-delivery-note="relation">Select a shot</small></div>
+                    <div><span>Attack</span><strong data-delivery="attack">—</strong><small data-delivery-note="attack">Select a shot</small></div>
+                    <div class="delivery-outcome"><span>Expected Ball Flight</span><strong data-delivery="outcome">—</strong><small data-delivery-note="outcome">Select a shot to connect delivery with ball flight.</small></div>
+                </div>
             </article>
+            </div>
 
         </section>
 
@@ -256,9 +295,17 @@
         <section class="performance-card shot-table-card" data-workspace-panel="shots" data-workspace-group="session-detail" hidden>
             <div class="card-heading">
                 <div>
-                    <span class="section-kicker">Garmin R10</span>
+                    <span class="section-kicker">Garmin R10 · Manual Entry</span>
                     <h2>Shot Table</h2>
                 </div>
+
+                <button
+                    class="button button-primary"
+                    type="button"
+                    data-open-manual-shot
+                >
+                    Add Shot Manually
+                </button>
             </div>
 
             <div class="performance-table-wrap">
@@ -305,6 +352,9 @@
                         <td>
                             {{ "%.2f"|format(shot.carry_distance)
                                if shot.carry_distance is not none else "—" }}
+                            {% if shot.carry_distance is not none and 'Estimated Outcomes' in (shot.source or '') %}
+                            <span class="estimate-tag" title="Calculated estimate">est.</span>
+                            {% endif %}
                         </td>
 
                         <td>
@@ -373,7 +423,9 @@
                     {% else %}
 
                     <tr>
-                        <td colspan="14">No Garmin shots imported yet.</td>
+                        <td colspan="14">
+                            No shots recorded yet. Import Garmin R10 data or add a shot manually.
+                        </td>
                     </tr>
 
                     {% endfor %}
@@ -568,6 +620,197 @@
 
 
 <!-- =============================================================
+     MANUAL SHOT METRIC ENTRY MODAL
+     ============================================================= -->
+
+<div
+    class="modal-backdrop"
+    id="manual-shot-modal"
+    hidden
+>
+    <div class="video-modal manual-shot-modal" role="dialog" aria-modal="true" aria-labelledby="manual-shot-heading">
+
+        <div class="modal-heading">
+            <div>
+                <span class="section-kicker">Launch Monitor</span>
+                <h2 id="manual-shot-heading">Add Shot Metrics Manually</h2>
+                <p>Enter the measurements you have. Optional calculated fields may be left blank.</p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                data-close-manual-shot
+                aria-label="Close manual shot entry"
+            >
+                ×
+            </button>
+        </div>
+
+        <form
+            method="post"
+            action="/sessions/{{ session.id }}/shots/manual"
+        >
+            <div class="manual-shot-grid">
+
+                <label>
+                    <span>Club · Required</span>
+                    <input
+                        name="club"
+                        value="{{ session.primary_club or '' }}"
+                        list="manual-shot-clubs"
+                        placeholder="Example: 8 Iron"
+                        required
+                    >
+                </label>
+
+                <label>
+                    <span>Ball Speed · mph</span>
+                    <input name="ball_speed" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Club Speed · mph</span>
+                    <input name="club_speed" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Smash Factor · Auto if blank</span>
+                    <input name="smash_factor" type="number" step="0.01" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Carry · yards · Auto if blank</span>
+                    <input name="carry_distance" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Total · yards · Auto if blank</span>
+                    <input name="total_distance" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Launch Angle · degrees</span>
+                    <input name="launch_angle" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Start Direction · L− / R+</span>
+                    <input name="launch_direction" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Offline · L− / R+ · Auto if blank</span>
+                    <input name="offline_distance" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Spin Rate · rpm</span>
+                    <input name="spin_rate" type="number" step="1" inputmode="numeric">
+                </label>
+
+                <label>
+                    <span>Spin Axis · L− / R+ degrees</span>
+                    <input name="spin_axis" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Apex Height · feet · Auto if blank</span>
+                    <input name="apex_height" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Attack Angle · degrees</span>
+                    <input name="attack_angle" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Club Path · L− / R+</span>
+                    <input name="club_path" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Club Face · L− / R+</span>
+                    <input name="club_face" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Face to Path · Auto if blank</span>
+                    <input name="face_to_path" type="number" step="0.1" inputmode="decimal">
+                </label>
+
+                <label>
+                    <span>Shot Shape · Auto if blank</span>
+                    <select name="shot_shape">
+                        <option value="">Classify automatically</option>
+                        <option>Straight</option>
+                        <option>Draw</option>
+                        <option>Fade</option>
+                        <option>Hook</option>
+                        <option>Slice</option>
+                        <option>Pull Straight</option>
+                        <option>Pull Draw</option>
+                        <option>Pull Fade</option>
+                        <option>Pull Hook</option>
+                        <option>Push Straight</option>
+                        <option>Push Draw</option>
+                        <option>Push Fade</option>
+                        <option>Push Slice</option>
+                    </select>
+                </label>
+
+            </div>
+
+            <datalist id="manual-shot-clubs">
+                <option value="Driver">
+                <option value="3 Wood">
+                <option value="5 Wood">
+                <option value="7 Wood">
+                <option value="3 Hybrid">
+                <option value="4 Hybrid">
+                <option value="5 Hybrid">
+                <option value="4 Iron">
+                <option value="5 Iron">
+                <option value="6 Iron">
+                <option value="7 Iron">
+                <option value="8 Iron">
+                <option value="9 Iron">
+                <option value="Pitching Wedge">
+                <option value="Gap Wedge">
+                <option value="Sand Wedge">
+                <option value="Lob Wedge">
+            </datalist>
+
+            <div class="manual-shot-help">
+                Carry, Total and Apex are estimated when blank if Ball Speed or
+                Club Speed is entered. Smash Factor is calculated from Ball Speed ÷
+                Club Speed. Face to Path is calculated from Club Face − Club Path.
+                Estimated outcomes are labeled as estimates, not measured Garmin data.
+                The saved shot will immediately appear in Overview, Charts and Shots.
+            </div>
+
+            <div class="manual-shot-actions">
+                <button
+                    class="button button-secondary"
+                    type="button"
+                    data-close-manual-shot
+                >
+                    Cancel
+                </button>
+
+                <button
+                    class="button button-primary"
+                    type="submit"
+                >
+                    Save Shot Metrics
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- =============================================================
      ORIGINAL SWING UPLOAD MODAL
      ============================================================= -->
 
@@ -705,6 +948,7 @@
     id="session-shot-data"
     type="application/json"
     data-primary-club="{{ session.primary_club or '' }}"
+    data-handedness="{{ student.handedness if student else '' }}"
 >{{ session_shots | tojson }}</script>
 
 
@@ -936,7 +1180,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 
-<script src="/static/js/session_performance.js?v=2.4.5"></script>
+<script src="/static/js/session_performance.js?v=5.3O"></script>
 
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>

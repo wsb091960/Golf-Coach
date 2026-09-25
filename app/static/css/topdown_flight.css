@@ -57,6 +57,178 @@
     cursor: default;
 }
 
+.shot-simulator-card {
+    grid-column: 1 / -1;
+    overflow: hidden;
+}
+
+.chart-view-tabs {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: min(1180px, 100%);
+    margin: 0 auto;
+    padding: 6px;
+    border: 1px solid #d7e0dc;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 5px 16px rgba(23, 57, 47, .045);
+    box-sizing: border-box;
+}
+
+.chart-view-tab {
+    min-height: 36px;
+    padding: 0 15px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #31564b;
+    font: inherit;
+    font-size: .72rem;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.chart-view-tab:hover {
+    background: #edf5f1;
+}
+
+.chart-view-tab.is-active {
+    border-color: #145744;
+    background: #145744;
+    color: #ffffff;
+    box-shadow: 0 3px 8px rgba(20, 87, 68, .18);
+}
+
+.chart-view-tab:focus-visible {
+    outline: 3px solid rgba(215, 166, 42, .4);
+    outline-offset: 2px;
+}
+
+.chart-view-panel {
+    grid-column: 1 / -1;
+    width: min(1180px, 100%);
+    margin: 0 auto;
+}
+
+.chart-view-panel[hidden] {
+    display: none !important;
+}
+
+.chart-view-panel > .performance-card {
+    width: 100%;
+    margin: 0;
+}
+
+.shot-simulator-card .card-heading {
+    margin-bottom: 10px;
+}
+
+.simulator-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.simulator-camera,
+.simulator-playback {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.sim-control,
+.sim-speed {
+    min-height: 31px;
+    border: 1px solid #cbd9d3;
+    border-radius: 8px;
+    background: #f7faf8;
+    color: #23443b;
+    font: inherit;
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+.sim-control {
+    padding: 0 11px;
+    cursor: pointer;
+}
+
+.sim-control:hover,
+.sim-control.is-active {
+    border-color: #17634f;
+    background: #17634f;
+    color: #fff;
+}
+
+.sim-control-gold {
+    border-color: #c79725;
+    background: #d7a62a;
+    color: #173f35;
+}
+
+.sim-speed {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 6px 0 10px;
+}
+
+.sim-speed select {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+}
+
+#shot-simulator-canvas {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1000 / 470;
+    min-height: 300px;
+    border: 1px solid #38533b;
+    border-radius: 12px;
+    background: #315b35;
+    box-sizing: border-box;
+}
+
+.simulator-readout {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+    margin-top: 9px;
+}
+
+.simulator-readout > div {
+    padding: 8px 10px;
+    border: 1px solid #dbe5e1;
+    border-radius: 9px;
+    background: #f7faf8;
+}
+
+.simulator-readout span {
+    display: block;
+    color: #718079;
+    font-size: 0.55rem;
+    font-weight: 850;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.simulator-readout strong {
+    display: block;
+    margin-top: 3px;
+    color: #173f35;
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+}
+
 .topdown-flight-card .simulation-note,
 .simulation-note {
     margin-top: 10px;
@@ -68,15 +240,15 @@
 .selected-metrics {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
+    gap: 8px;
 }
 
 .selected-metrics > div {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 72px;
-    padding: 10px 12px;
+    min-height: 58px;
+    padding: 8px 10px;
     border: 1px solid #e1e6ed;
     border-radius: 10px;
     background: #f8fafc;
@@ -84,8 +256,8 @@
 }
 
 .selected-metrics span {
-    margin-bottom: 5px;
-    font-size: 0.68rem;
+    margin-bottom: 3px;
+    font-size: 0.58rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -93,7 +265,7 @@
 }
 
 .selected-metrics strong {
-    font-size: 1.12rem;
+    font-size: 0.92rem;
     font-weight: 700;
     line-height: 1.15;
     color: #182335;
@@ -101,6 +273,7 @@
 }
 
 #flight-canvas,
+#shot-simulator-canvas,
 #dispersion-canvas,
 #face-path-canvas {
     display: block;
@@ -148,12 +321,42 @@
     }
 
     .selected-metrics > div {
-        min-height: 66px;
-        padding: 9px 10px;
+        min-height: 54px;
+        padding: 7px 9px;
     }
 
     .selected-metrics strong {
-        font-size: 1rem;
+        font-size: 0.88rem;
+    }
+
+    .simulator-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .simulator-camera,
+    .simulator-playback {
+        width: 100%;
+    }
+
+    #shot-simulator-canvas {
+        min-height: 230px;
+        aspect-ratio: 1000 / 470;
+    }
+
+    .simulator-readout {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .chart-view-tabs {
+        overflow-x: auto;
+        justify-content: flex-start;
+        scrollbar-width: thin;
+    }
+
+    .chart-view-tab {
+        flex: 0 0 auto;
+        padding: 0 12px;
     }
 }
 

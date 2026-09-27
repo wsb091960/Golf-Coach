@@ -284,11 +284,17 @@
   }
 
   .report-page {
-    min-height: 10.12in;
+    /* Keep the designed sheet comfortably inside Chrome's printable box.
+       The former 10.12in value sat on the rounding boundary for Letter paper
+       with .42in page margins and caused every report section to spill onto
+       a second sheet (six intended pages became twelve). */
+    min-height: 9.35in;
     margin: 0;
     box-shadow: none;
     break-after: page;
     page-break-after: always;
+    break-inside: auto;
+    page-break-inside: auto;
   }
 
   .report-page:last-child {

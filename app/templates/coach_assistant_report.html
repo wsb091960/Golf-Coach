@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/session_report.css?v=5.3E-P2">
+  <link rel="stylesheet" href="/static/css/session_report.css?v=5.3P">
 </head>
 <body>
   <div class="report-toolbar">
@@ -15,93 +15,139 @@
     <button type="button" onclick="window.print()">Print / Save as PDF</button>
   </div>
 
+  {% macro report_footer(label='Session Report') %}
+  <footer class="report-footer">
+    <strong>WSBCO Golf Coach</strong>
+    <span>PGA coaching · TGM · TPI · P1–P10</span>
+    <small>{{ label }}</small>
+  </footer>
+  {% endmacro %}
+
+  {% macro drill_card(drill, number) %}
+  <article class="drill">
+    <header><span>{{ number }}</span><h3>{{ drill.get('name', 'Drill ' ~ number) }}</h3></header>
+    {% if drill.get('setup') %}<div><strong>Setup</strong><p>{{ drill.get('setup') }}</p></div>{% endif %}
+    {% if drill.get('action') %}<div><strong>Action</strong><p>{{ drill.get('action') }}</p></div>{% endif %}
+    {% if drill.get('feel') or drill.get('coaching_feel') %}<div><strong>Feel</strong><p>{{ drill.get('feel', drill.get('coaching_feel', '')) }}</p></div>{% endif %}
+    {% if drill.get('dosage') %}<div><strong>Dosage</strong><p>{{ drill.get('dosage') }}</p></div>{% endif %}
+    {% if drill.get('success_check') %}<div><strong>Success check</strong><p>{{ drill.get('success_check') }}</p></div>{% endif %}
+  </article>
+  {% endmacro %}
+
   <main class="report">
-    <header class="report-hero">
-      <div>
-        <span class="eyebrow">WSBCO Golf Coach</span>
-        <h1>Session Report</h1>
-        <p>{{ assessment_title }}</p>
-      </div>
-      <img src="/static/img/golf-coach-dashboard-hero.png" alt="WSBCO golfer motion logo">
-    </header>
-
-    <section class="student-band">
-      <div><span>Student</span><strong>{{ student.name }}</strong></div>
-      <div><span>Session date</span><strong>{{ session.session_date.strftime('%B %d, %Y') }}</strong></div>
-      <div><span>Email</span><strong>{{ student.email or 'Not provided' }}</strong></div>
-      <div><span>Phone</span><strong>{{ student.phone or 'Not provided' }}</strong></div>
-    </section>
-
-    {% if case.goal or student.primary_goal %}
-    <section class="report-section goal">
-      <span class="section-number">01</span>
-      <div><h2>Student Goal</h2><p>{{ case.goal or student.primary_goal }}</p></div>
-    </section>
-    {% endif %}
-
-    <section class="report-section">
-      <span class="section-number">02</span>
-      <div class="section-content">
-        <h2>Visual Observation</h2>
-        {% for item in visual_details %}
-        <article class="observation">
-          <h3>{{ item.label }}</h3>
-          <p>{{ item.value }}</p>
-        </article>
-        {% else %}
-        <p>No visual observation was recorded.</p>
-        {% endfor %}
-      </div>
-    </section>
-
-    <section class="report-section">
-      <span class="section-number">03</span>
-      <div class="section-content">
-        <h2>Swing Problem</h2>
-        <div class="prose">{{ analysis or 'No swing analysis is available yet.' }}</div>
-      </div>
-    </section>
-
-    <section class="report-section">
-      <span class="section-number">04</span>
-      <div class="section-content">
-        <h2>Corrections</h2>
-        {% if use_refined %}<span class="evidence-badge">Garmin / Onform informed</span>{% endif %}
-        {% if plan.priority %}<div class="correction priority"><h3>Primary coaching priority</h3><p>{{ plan.priority }}</p></div>{% endif %}
-        {% if plan.explanation %}<div class="correction"><h3>What to change</h3><p>{{ plan.explanation }}</p></div>{% endif %}
-        <div class="correction-grid">
-          {% if plan.ball_flight_cue %}<div><h3>Ball-flight cue</h3><p>{{ plan.ball_flight_cue }}</p></div>{% endif %}
-          {% if plan.pass_fail_test %}<div><h3>Success test</h3><p>{{ plan.pass_fail_test }}</p></div>{% endif %}
-          {% if plan.reassessment %}<div><h3>Reassessment</h3><p>{{ plan.reassessment }}</p></div>{% endif %}
+    <section class="report-page report-cover">
+      <header class="report-hero">
+        <div>
+          <span class="eyebrow">WSBCO Golf Coach</span>
+          <h1>Session Report</h1>
+          <p>{{ assessment_title }}</p>
         </div>
+        <img src="/static/img/golf-coach-dashboard-hero.png" alt="WSBCO golfer motion logo">
+      </header>
+
+      <section class="student-band">
+        <div><span>Student</span><strong>{{ student.name }}</strong></div>
+        <div><span>Session date</span><strong>{{ session.session_date.strftime('%B %d, %Y') }}</strong></div>
+        <div><span>Email</span><strong>{{ student.email or 'Not provided' }}</strong></div>
+        <div><span>Phone</span><strong>{{ student.phone or 'Not provided' }}</strong></div>
+      </section>
+
+      {% if case.goal or student.primary_goal %}
+      <section class="report-section goal">
+        <span class="section-number">01</span>
+        <div><h2>Student Goal</h2><p>{{ case.goal or student.primary_goal }}</p></div>
+      </section>
+      {% endif %}
+      <div class="cover-summary">
+        <span>Coaching Roadmap</span>
+        <h2>Observe. Understand. Correct. Practice.</h2>
+        <p>This report connects the coach’s visual assessment with a clear correction plan, five purposeful drills, and trusted instructional resources.</p>
       </div>
+      {{ report_footer('Student & Session') }}
     </section>
 
-    <section class="report-section drills-section">
-      <span class="section-number">05</span>
-      <div class="section-content">
-        <h2>Five Practice Drills</h2>
-        <div class="drill-grid">
-          {% for drill in plan.drills %}
-          <article class="drill">
-            <header><span>{{ loop.index }}</span><h3>{{ drill.get('name', 'Drill ' ~ loop.index) }}</h3></header>
-            {% if drill.get('setup') %}<div><strong>Setup</strong><p>{{ drill.get('setup') }}</p></div>{% endif %}
-            {% if drill.get('action') %}<div><strong>Action</strong><p>{{ drill.get('action') }}</p></div>{% endif %}
-            {% if drill.get('feel') or drill.get('coaching_feel') %}<div><strong>Feel</strong><p>{{ drill.get('feel', drill.get('coaching_feel', '')) }}</p></div>{% endif %}
-            {% if drill.get('dosage') %}<div><strong>Dosage</strong><p>{{ drill.get('dosage') }}</p></div>{% endif %}
-            {% if drill.get('success_check') %}<div><strong>Success check</strong><p>{{ drill.get('success_check') }}</p></div>{% endif %}
+    <section class="report-page observation-problem-page">
+      <header class="page-heading"><span>Coaching Assessment</span><h1>What We See and Why It Matters</h1></header>
+      <section class="report-section observation-section">
+        <span class="section-number">02</span>
+        <div class="section-content">
+          <h2>Visual Observation</h2>
+          <div class="observation-grid">
+          {% for item in visual_details %}
+          <article class="observation">
+            <h3>{{ item.label }}</h3>
+            <p>{{ item.value }}</p>
           </article>
           {% else %}
-          <p>No drills are available for this assessment yet.</p>
+          <p>No visual observation was recorded.</p>
           {% endfor %}
+          </div>
         </div>
-      </div>
+      </section>
+      <section class="report-section problem-section">
+        <span class="section-number">03</span>
+        <div class="section-content">
+          <h2>Swing Problem</h2>
+          <div class="prose">{{ analysis or 'No swing analysis is available yet.' }}</div>
+        </div>
+      </section>
+      {{ report_footer('Visual Observation & Swing Problem') }}
     </section>
 
-    <footer>
-      <strong>WSBCO Golf Coach</strong>
-      <span>PGA coaching · TGM · TPI · P1–P10</span>
-    </footer>
+    <section class="report-page corrections-page">
+      <header class="page-heading"><span>Coaching Plan</span><h1>Corrections</h1></header>
+      <section class="report-section">
+        <span class="section-number">04</span>
+        <div class="section-content">
+          {% if use_refined %}<span class="evidence-badge">Garmin / Onform informed</span>{% endif %}
+          {% if plan.priority %}<div class="correction priority"><h3>Primary coaching priority</h3><p>{{ plan.priority }}</p></div>{% endif %}
+          {% if plan.explanation %}<div class="correction"><h3>What to change</h3><p>{{ plan.explanation }}</p></div>{% endif %}
+          <div class="correction-grid">
+            {% if plan.ball_flight_cue %}<div><h3>Ball-flight cue</h3><p>{{ plan.ball_flight_cue }}</p></div>{% endif %}
+            {% if plan.pass_fail_test %}<div><h3>Success test</h3><p>{{ plan.pass_fail_test }}</p></div>{% endif %}
+            {% if plan.reassessment %}<div><h3>Reassessment</h3><p>{{ plan.reassessment }}</p></div>{% endif %}
+          </div>
+        </div>
+      </section>
+      {{ report_footer('Corrections') }}
+    </section>
+
+    {% if plan.drills %}
+    {% for drill_pair in plan.drills|batch(2) %}
+    {% set drill_page_index = loop.index0 %}
+    {% set drill_start = drill_page_index * 2 + 1 %}
+    {% set drill_end = drill_page_index * 2 + (drill_pair|length) %}
+    <section class="report-page drill-page {% if loop.last %}final-drill-page{% endif %}">
+      <header class="page-heading"><span>Practice Plan · Section 05</span><h1>Five Practice Drills</h1><p>Drills {{ drill_start }}–{{ drill_end }} of {{ plan.drills|length }}</p></header>
+      <div class="drill-grid">
+        {% for drill in drill_pair %}
+        {{ drill_card(drill, drill_page_index * 2 + loop.index) }}
+        {% endfor %}
+      </div>
+
+      {% if loop.last and plan.videos %}
+      <section class="report-videos">
+        <div class="video-heading"><span>Continue Learning</span><h2>Three Relevant Instructional Videos</h2><p>These links open targeted YouTube results for this student’s swing pattern from trusted golf-instruction sources.</p></div>
+        <div class="report-video-grid">
+          {% for video in plan.videos[:3] %}
+          <a href="{{ video.url }}" target="_blank" rel="noopener noreferrer">
+            <span class="video-number">{{ loop.index }}</span>
+            <span><strong>{{ video.name }}</strong><small>{{ video.focus }}</small><em>Open targeted video results ↗</em></span>
+          </a>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+      {{ report_footer('Practice Drills ' ~ drill_start ~ '–' ~ drill_end) }}
+    </section>
+    {% endfor %}
+    {% else %}
+    <section class="report-page drill-page">
+      <header class="page-heading"><span>Practice Plan · Section 05</span><h1>Five Practice Drills</h1></header>
+      <p class="empty-report-message">No drills are available for this assessment yet.</p>
+      {{ report_footer('Practice Plan') }}
+    </section>
+    {% endif %}
   </main>
 </body>
 </html>

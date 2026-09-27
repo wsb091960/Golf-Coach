@@ -253,9 +253,12 @@ def session_report(
 
     observations = json.loads(case.observations_json or "{}")
     use_refined = bool(case.refined_analysis or case.refined_plan)
-    analysis = case.refined_analysis if use_refined else case.preliminary_analysis
+    # Refined analysis and refined practice plans are saved independently.
+    # Keep the preliminary five-drill plan when only the analysis was refined.
+    analysis = case.refined_analysis or case.preliminary_analysis
+    plan_source = case.refined_plan or case.preliminary_plan
     plan = _plan_view(
-        case.refined_plan if use_refined else case.preliminary_plan,
+        plan_source,
         _case_topic(case, observations),
     )
     plan["drills"] = plan.get("drills", [])[:5]

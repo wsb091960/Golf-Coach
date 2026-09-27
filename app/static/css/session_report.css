@@ -1,5 +1,19 @@
 :root{--navy:#10263f;--blue:#1764a3;--sky:#dff3fb;--gold:#d6a84b;--ink:#172334;--muted:#637083;--paper:#fff;--line:#dbe3ea;--wash:#f3f7fa}*{box-sizing:border-box}body{margin:0;background:#e8eef3;color:var(--ink);font:15px/1.55 Inter,Arial,sans-serif}.report-toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;max-width:1060px;margin:0 auto;padding:14px 24px;background:rgba(16,38,63,.96)}.report-toolbar a{color:#fff;text-decoration:none;font-weight:700}.report-toolbar button{border:0;border-radius:9px;padding:10px 16px;background:var(--gold);color:#10263f;font:700 14px Inter;cursor:pointer}.report{max-width:1060px;margin:24px auto 48px;background:var(--paper);box-shadow:0 20px 55px rgba(16,38,63,.15)}.report-hero{min-height:235px;padding:38px 46px;display:flex;align-items:center;justify-content:space-between;gap:30px;background:linear-gradient(125deg,#10263f,#174d76 62%,#1d759e);color:#fff;overflow:hidden}.report-hero .eyebrow{font:600 12px Roboto Mono;letter-spacing:.16em;text-transform:uppercase;color:#9edcf1}.report-hero h1{margin:8px 0 5px;font-size:46px;line-height:1}.report-hero p{margin:0;color:#dbeefa;font-size:18px}.report-hero img{width:260px;max-height:180px;object-fit:contain;filter:drop-shadow(0 12px 22px rgba(0,0,0,.25))}.student-band{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}.student-band div{padding:20px 24px;background:#f8fbfd}.student-band span{display:block;margin-bottom:4px;color:var(--muted);font:600 11px Roboto Mono;text-transform:uppercase;letter-spacing:.08em}.student-band strong{font-size:14px;overflow-wrap:anywhere}.report-section{display:grid;grid-template-columns:58px 1fr;gap:20px;padding:34px 46px;border-bottom:1px solid var(--line)}.section-number{display:grid;place-items:center;width:45px;height:45px;border-radius:50%;background:var(--navy);color:#fff;font:600 13px Roboto Mono}.report-section h2{margin:4px 0 20px;color:var(--navy);font-size:27px}.report-section h3{margin:0 0 5px;color:var(--blue);font-size:14px}.report-section p{margin:0;white-space:pre-line}.goal{background:var(--sky)}.goal p{font-size:18px;font-weight:600}.observation{padding:16px 18px;margin:0 0 12px;border-left:4px solid #51a8cc;background:var(--wash);border-radius:0 10px 10px 0}.prose{white-space:pre-wrap;padding:20px;background:var(--wash);border-radius:12px}.evidence-badge{display:inline-block;margin:-8px 0 16px;padding:6px 10px;border-radius:999px;background:#e5f5ed;color:#17613e;font-size:12px;font-weight:700}.correction{padding:18px;margin-bottom:14px;border:1px solid var(--line);border-radius:12px}.correction.priority{border-left:5px solid var(--gold);background:#fffaf0}.correction-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.correction-grid>div{padding:16px;background:var(--wash);border-radius:10px}.drills-section{background:#f8fbfd}.drill-grid{display:grid;gap:16px}.drill{break-inside:avoid;padding:20px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 5px 15px rgba(16,38,63,.05)}.drill header{display:flex;align-items:center;gap:12px;margin-bottom:14px}.drill header span{display:grid;place-items:center;min-width:34px;height:34px;border-radius:50%;background:var(--gold);color:var(--navy);font-weight:800}.drill header h3{margin:0;color:var(--navy);font-size:18px}.drill>div{display:grid;grid-template-columns:105px 1fr;gap:10px;padding:7px 0;border-top:1px solid #eef2f5}.drill>div strong{color:var(--blue);font-size:12px;text-transform:uppercase;letter-spacing:.04em}footer{display:flex;justify-content:space-between;padding:25px 46px;background:var(--navy);color:#dbeefa}footer span{color:#9edcf1}@media(max-width:760px){.report{margin:0}.report-toolbar{padding:12px}.report-hero{padding:28px 24px;min-height:190px}.report-hero h1{font-size:36px}.report-hero img{width:145px}.student-band{grid-template-columns:1fr 1fr}.report-section{grid-template-columns:1fr;padding:28px 24px}.correction-grid{grid-template-columns:1fr}.drill>div{grid-template-columns:1fr}footer{padding:22px 24px;gap:12px;flex-direction:column}}@media print{@page{size:letter;margin:.42in}body{background:#fff;font-size:10.5pt}.report-toolbar{display:none}.report{margin:0;max-width:none;box-shadow:none}.report-hero{min-height:1.35in;padding:20px 28px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.report-hero img{width:170px;max-height:105px}.report-hero h1{font-size:30px}.student-band div{padding:11px 14px}.report-section{grid-template-columns:38px 1fr;gap:12px;padding:18px 25px}.section-number{width:32px;height:32px}.report-section h2{font-size:20px;margin:2px 0 12px}.observation,.correction,.drill{padding:11px 13px;margin-bottom:8px}.drill-grid{gap:8px}.drill header{margin-bottom:7px}.drill>div{padding:4px 0}.correction-grid{gap:7px}.correction-grid>div{padding:10px}footer{padding:14px 25px}.drill,.observation,.correction{break-inside:avoid}}
 
+.report-print-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.report-print-tip {
+  max-width: 310px;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.3;
+  text-align: right;
+}
+
 /* Phase 5.3E-P1: ink-friendly print/PDF treatment. The full-color web report is unchanged. */
 @media print {
   .report-hero {
@@ -104,23 +118,45 @@
 }
 
 .cover-summary {
-  margin: 34px 46px;
-  padding: 25px 28px;
+  margin: 20px 46px 12px;
+  padding: 15px 18px;
   border-left: 5px solid var(--gold);
   border-radius: 0 14px 14px 0;
   background: var(--wash);
 }
 
 .cover-summary h2 {
-  margin: 6px 0 10px;
+  margin: 4px 0 6px;
   color: var(--navy);
-  font-size: 28px;
+  font-size: 20px;
 }
 
 .cover-summary p {
   max-width: 760px;
   margin: 0;
   color: var(--muted);
+}
+
+.report-section.no-number {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.cover-assessment {
+  margin: 0 46px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.cover-assessment .report-section {
+  padding: 13px 0;
+}
+
+.cover-assessment .report-section h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.cover-assessment .problem-section {
+  border-top-width: 1px;
 }
 
 .observation-grid {
@@ -284,12 +320,18 @@
   }
 
   .report-page {
-    /* Keep the designed sheet comfortably inside Chrome's printable box.
-       The former 10.12in value sat on the rounding boundary for Letter paper
-       with .42in page margins and caused every report section to spill onto
-       a second sheet (six intended pages became twelve). */
-    min-height: 9.35in;
+    /* Chrome paginates flex containers inconsistently. Use ordinary block
+       flow for print so no section creates a dark overflow sheet and no
+       practice-drill page is dropped. */
+    display: block;
+    position: relative;
+    min-height: 10.05in;
+    height: auto;
     margin: 0;
+    padding-bottom: .24in;
+    overflow: visible;
+    background: #fff;
+    color: var(--ink);
     box-shadow: none;
     break-after: page;
     page-break-after: always;
@@ -323,20 +365,34 @@
   }
 
   .cover-summary {
-    margin: 22px 25px;
-    padding: 18px 20px;
+    margin: 11px 25px 6px;
+    padding: 9px 13px;
     background: #fff;
     border: 1px solid var(--line);
     border-left: 4px solid var(--gold);
   }
 
   .cover-summary h2 {
-    font-size: 22px;
+    margin: 2px 0 4px;
+    font-size: 15px;
   }
 
-  .observation-problem-page .report-section {
-    padding-top: 13px;
-    padding-bottom: 13px;
+  .cover-summary p {
+    font-size: 8.5pt;
+    line-height: 1.3;
+  }
+
+  .cover-assessment {
+    margin: 0 25px 7px;
+  }
+
+  .cover-assessment .report-section {
+    padding: 8px 0;
+  }
+
+  .cover-assessment .report-section h2 {
+    margin-bottom: 5px;
+    font-size: 15px;
   }
 
   .observation-grid {
@@ -344,13 +400,13 @@
   }
 
   .observation-grid .observation {
-    padding: 8px 10px;
+    padding: 6px 8px;
   }
 
-  .problem-section .prose {
-    padding: 12px 14px;
-    font-size: 9.7pt;
-    line-height: 1.42;
+  .cover-assessment .problem-section .prose {
+    padding: 8px 10px;
+    font-size: 8.6pt;
+    line-height: 1.34;
   }
 
   .corrections-page .report-section {
@@ -453,10 +509,40 @@
   }
 
   .report-footer {
-    flex: 0 0 auto;
-    padding: 9px 25px;
-    font-size: 8.5pt;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+    gap: 8px;
+    min-height: 0;
+    padding: 4px 18px;
+    background: #fff;
+    color: var(--navy);
+    font-size: 6.7pt;
+    line-height: 1.1;
+    white-space: nowrap;
     break-inside: avoid;
+  }
+
+  .report-footer strong,
+  .report-footer span,
+  .report-footer small {
+    margin: 0;
+    font-size: inherit;
+    line-height: 1.1;
+  }
+
+  .drill-page .drill-grid {
+    display: block;
+  }
+
+  .drill-page .drill + .drill {
+    margin-top: 10px;
   }
 }
 
@@ -502,6 +588,14 @@ footer span {
 }
 
 @media print {
+  html,
+  body,
+  .report,
+  .report-page {
+    background: #fff !important;
+    color-scheme: light;
+  }
+
   .report-hero {
     background: #fff;
     color: var(--navy);
@@ -520,7 +614,7 @@ footer span {
   }
 
   footer {
-    background: #fff;
+    background: #fff !important;
     border-top-color: var(--navy);
   }
 }

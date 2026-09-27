@@ -7,12 +7,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/session_report.css?v=5.3P1">
+  <link rel="stylesheet" href="/static/css/session_report.css?v=5.3P6">
 </head>
 <body>
   <div class="report-toolbar">
     <a href="/coach-assistant?case_id={{ case.id }}">← Back to Coaching Assistant</a>
-    <button type="button" onclick="window.print()">Print / Save as PDF</button>
+    <div class="report-print-actions">
+      <span class="report-print-tip">For a clean PDF: Letter · Portrait · turn off Headers and footers</span>
+      <button type="button" onclick="window.print()">Print / Save as PDF</button>
+    </div>
   </div>
 
   {% macro report_footer(label='Session Report') %}
@@ -63,13 +66,9 @@
         <h2>Observe. Understand. Correct. Practice.</h2>
         <p>This report connects the coach’s visual assessment with a clear correction plan, five purposeful drills, and trusted instructional resources.</p>
       </div>
-      {{ report_footer('Student & Session') }}
-    </section>
 
-    <section class="report-page observation-problem-page">
-      <header class="page-heading"><span>Coaching Assessment</span><h1>What We See and Why It Matters</h1></header>
-      <section class="report-section observation-section">
-        <span class="section-number">02</span>
+      <div class="cover-assessment">
+      <section class="report-section no-number observation-section">
         <div class="section-content">
           <h2>Visual Observation</h2>
           <div class="observation-grid">
@@ -84,20 +83,19 @@
           </div>
         </div>
       </section>
-      <section class="report-section problem-section">
-        <span class="section-number">03</span>
+      <section class="report-section no-number problem-section">
         <div class="section-content">
           <h2>Swing Problem</h2>
           <div class="prose">{{ analysis or 'No swing analysis is available yet.' }}</div>
         </div>
       </section>
-      {{ report_footer('Visual Observation & Swing Problem') }}
+      </div>
+      {{ report_footer('Student, Observation & Swing Problem') }}
     </section>
 
     <section class="report-page corrections-page">
       <header class="page-heading"><span>Coaching Plan</span><h1>Corrections</h1></header>
-      <section class="report-section">
-        <span class="section-number">04</span>
+      <section class="report-section no-number">
         <div class="section-content">
           {% if use_refined %}<span class="evidence-badge">Garmin / Onform informed</span>{% endif %}
           {% if plan.priority %}<div class="correction priority"><h3>Primary coaching priority</h3><p>{{ plan.priority }}</p></div>{% endif %}

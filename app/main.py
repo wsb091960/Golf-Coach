@@ -1,3 +1,4 @@
+from app.routers.crm_integration import router as crm_integration_router
 from __future__ import annotations
 
 from pathlib import Path
@@ -62,3 +63,5 @@ app.include_router(swing_analysis_launch_router.router)
 
 from app.routers import swing_analysis_assist as swing_analysis_assist_router
 app.include_router(swing_analysis_assist_router.router)
+
+app.include_router(crm_integration_router)

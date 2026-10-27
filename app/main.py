@@ -11,6 +11,7 @@ from app.routers.gapping import router as gapping_router
 from app.routers.analysis import router as analysis_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.public_home import router as public_home_router
+from app.routers.auth import router as auth_router, GolfOwnerAuthMiddleware
 from app.routers.importer import router as importer_router
 from app.routers.sessions import router as sessions_router
 from app.routers.students import router as students_router
@@ -27,12 +28,15 @@ app = FastAPI(
     version="5.3A",
 )
 
+app.add_middleware(GolfOwnerAuthMiddleware)
+
 app.mount(
     "/static",
     StaticFiles(directory=str(STATIC_DIR)),
     name="static",
 )
 
+app.include_router(auth_router)
 app.include_router(public_home_router)
 app.include_router(dashboard_router)
 app.include_router(coach_assistant_router)

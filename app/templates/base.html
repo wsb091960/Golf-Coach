@@ -107,7 +107,7 @@
             <nav class="sidebar-nav nav-list app-standard-navigation" aria-label="Primary">
                 {% set current_path = request.url.path if request else '' %}
                 <div class="sidebar-nav__section">
-                    <a class="sidebar-nav__link nav-item {% if current_path == '/' %}is-active active{% endif %}" href="/" {% if current_path == '/' %}aria-current="page"{% endif %}>
+                    <a class="sidebar-nav__link nav-item {% if current_path == '/dashboard' %}is-active active{% endif %}" href="/dashboard" {% if current_path == '/dashboard' %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">⌂</span><span>Dashboard</span>
                     </a>
                     <a class="sidebar-nav__link nav-item {% if current_path.startswith('/students') %}is-active active{% endif %}" href="/students" {% if current_path.startswith('/students') %}aria-current="page"{% endif %}>

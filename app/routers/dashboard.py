@@ -50,7 +50,7 @@ router = APIRouter(
 # ==========================================================
 
 @router.get(
-    "/",
+    "/dashboard",
     response_class=HTMLResponse,
     name="dashboard",
 )

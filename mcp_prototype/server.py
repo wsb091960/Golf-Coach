@@ -7,8 +7,21 @@ if os.getenv('WSBCO_MCP_DEV_ONLY') != '1':
     raise RuntimeError('Set WSBCO_MCP_DEV_ONLY=1 for isolated local development')
 if os.getenv('WSBCO_MCP_SYNTHETIC_DATA') != '1':
     raise RuntimeError('Synthetic-data confirmation required')
+# Require a real, pre-existing isolated SQLite database, not just a flag.
+from pathlib import Path
+from sqlalchemy.engine import make_url
+test_dir = Path(os.environ.get("WSBCO_MCP_TEST_DIR", "")).expanduser()
+if not test_dir.is_absolute() or not test_dir.is_dir() or not (test_dir / ".wsbco-mcp-synthetic").is_file():
+    raise RuntimeError("A marked, isolated synthetic-data directory is required")
+
 from sqlalchemy import select
-from app.database import SessionLocal
+from app.database import DATABASE_URL, engine, SessionLocal
+db_url = make_url(DATABASE_URL)
+if db_url.get_backend_name() != "sqlite" or not db_url.database or db_url.database == ":memory:":
+    raise RuntimeError("Golf MCP requires a file-backed synthetic SQLite database")
+if Path(db_url.database).resolve().parent != test_dir.resolve():
+    raise RuntimeError("Golf database must reside in the marked synthetic directory")
+
 from app.models import Student, CoachingSession, Shot
 
 mcp = FastMCP("WSBCO Golf Coach - local read-only prototype")

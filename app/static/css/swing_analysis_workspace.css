@@ -715,3 +715,62 @@
     font-weight: 750;
     color: #173e2d;
 }
+
+
+/* Integrated Laws + Principles coaching overview */
+.gc-coach-overview{display:grid!important;grid-template-columns:minmax(0,1.08fr) minmax(380px,.92fr)!important;gap:18px!important;align-items:start!important;margin:0 0 18px!important}
+.gc-coach-overview .analysis-card{min-width:0;padding:18px!important}
+.gc-overview-main,.gc-overview-side{display:grid;gap:16px;min-width:0}
+.gc-overview-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.gc-overview-card-head h2,.gc-coaching-plan-head h2{margin:3px 0 0!important;font-size:1.2rem!important}
+.gc-text-link{color:#176047;font-size:.86rem;font-weight:750;text-decoration:none;white-space:nowrap}
+.gc-text-link:hover{text-decoration:underline}
+.gc-video-frame{height:300px;display:grid;place-items:center;overflow:hidden;border-radius:14px;background:#182a23}
+.gc-video-frame video{width:100%;height:100%;object-fit:contain}
+.gc-video-empty{height:210px;display:grid;align-content:center;justify-items:center;gap:7px;border:1px dashed #b8cabe;border-radius:14px;background:#f7faf8;color:#52645a;text-align:center}
+.gc-video-empty span{font-size:.88rem}
+.gc-position-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:14px 0 12px}
+.gc-position-point{display:grid;justify-items:center;gap:4px;color:#294b3d;text-decoration:none}
+.gc-position-dot{width:12px;height:12px;border:2px solid #aab9b0;border-radius:50%;background:#fff}
+.gc-position-dot.is-recorded{border-color:#176047;background:#176047;box-shadow:0 0 0 3px #e5f1ea}
+.gc-position-point strong{font-size:.84rem}.gc-position-point small{color:#708078;font-size:.72rem}
+.gc-observation-box{padding:12px 14px;border:1px solid #dbe5df;border-radius:12px;background:#f7faf8}
+.gc-data-label{display:block;color:#527060;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.gc-observation-box p{margin:5px 0 8px;color:#243a30;font-weight:600;line-height:1.45}
+.gc-source-badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:#eaf1ed;color:#355948;font-size:.7rem;font-weight:750;white-space:nowrap}
+.gc-source-video{background:#fff5df;color:#856218}
+.gc-law-list{display:grid}
+.gc-law-list>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #e8eee9}
+.gc-law-list>div:last-child{border-bottom:0}
+.gc-law-list>div>span{display:flex;align-items:center;gap:9px;color:#34483e;font-size:.86rem;font-weight:650}
+.gc-law-list>div>span b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#edf3ef;color:#466655;font-size:.72rem}
+.gc-law-value{padding:5px 9px;border-radius:999px;background:#e9f4ec;color:#236044;font-size:.77rem;font-weight:750;text-align:right}
+.gc-law-value.is-review{background:#fff5df;color:#80601d}
+.gc-law-note,.gc-principle-intro,.gc-provenance-note{margin:10px 0 0;color:#6a7971;font-size:.78rem;line-height:1.5}
+.gc-principle-intro{margin:0 0 11px}
+.gc-principle-tags{display:flex;flex-wrap:wrap;gap:7px}
+.gc-principle-tags span{padding:6px 9px;border:1px solid #d0ddd4;border-radius:999px;background:#f3f7f4;color:#315342;font-size:.75rem;font-weight:700}
+.gc-principle-candidates{margin-top:12px;padding:10px 12px;border-radius:11px;background:#fbfaf6}
+.gc-principle-candidates summary{color:#4c5e53;font-size:.8rem;font-weight:750;cursor:pointer}
+.gc-principle-candidates p{margin:8px 0 3px;color:#294b3d;font-size:.83rem;font-weight:700}
+.gc-principle-candidates small{color:#6a7971;line-height:1.4}
+.gc-framework-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.gc-framework-panel{padding:12px;border:1px solid #dce6df;border-radius:12px;background:#f9fbf9}
+.gc-framework-panel-wide{grid-column:1/-1}
+.gc-framework-title{display:block;margin-bottom:7px;color:#176047;font-size:.78rem;font-weight:850;letter-spacing:.04em;text-transform:uppercase}
+.gc-framework-panel p{margin:0 0 8px;color:#43564b;font-size:.81rem;line-height:1.5}
+.gc-framework-panel p strong{color:#263c31}
+.gc-framework-panel small{color:#718078;font-size:.74rem}
+.gc-p-check-list{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:6px 0 9px}
+.gc-p-check-list span{display:grid;justify-items:center;gap:5px;color:#64746b;font-size:.66rem;text-align:center}
+.gc-p-check-list b{color:#2c4c3c;font-size:.79rem}
+.gc-p-check-list i{width:8px;height:8px;border:1px solid #aebbb3;border-radius:50%;background:#fff}
+.gc-p-check-list i.is-set{border-color:#176047;background:#176047}
+.gc-coaching-plan{grid-column:1/-1}
+.gc-coaching-plan-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.gc-coaching-plan-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.gc-coaching-plan-grid>div{padding:13px;border:1px solid #dce6df;border-radius:12px;background:#f8faf8}
+.gc-coaching-plan-grid p{margin:6px 0 0;color:#354a3e;font-size:.88rem;line-height:1.48}
+.gc-provenance-note{padding-top:10px;border-top:1px solid #e8eee9}
+@media(max-width:1050px){.gc-coach-overview{grid-template-columns:1fr!important}.gc-overview-main{grid-template-columns:1fr 1fr;align-items:start}.gc-overview-main>.gc-overview-video{grid-column:1/-1}}
+@media(max-width:720px){.gc-overview-main{grid-template-columns:1fr}.gc-overview-main>.gc-overview-video{grid-column:auto}.gc-framework-grid,.gc-coaching-plan-grid{grid-template-columns:1fr}.gc-framework-panel-wide,.gc-coaching-plan{grid-column:auto}.gc-video-frame{height:220px}.gc-p-check-list{grid-template-columns:repeat(5,minmax(44px,1fr))}.gc-coaching-plan-head{align-items:flex-start;flex-direction:column}.gc-law-list>div>span{font-size:.8rem}.gc-law-value{font-size:.7rem}}

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Shot, Student, SwingAnalysis
 from app.swing_analysis_store import (
+    P_POSITIONS,
     analysis_to_dict,
     get_analysis,
     link_garmin_shot,

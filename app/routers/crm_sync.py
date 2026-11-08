@@ -43,6 +43,51 @@ def create_student_from_crm(
     db: Session = Depends(get_db),
 ):
     _authorize_sync(x_golf_sync_key)
+    linked = db.get(CRMStudentLink, payload.crm_contact_id)
+    if linked:
+        return {
+            "crm_contact_id": payload.crm_contact_id,
+            "student_id": linked.student_id,
+            "already_linked": True,
+        }
+
+    normalized_email = payload.email.strip().lower()
+    if normalized_email:
+        existing = db.scalar(
+            select(Student).where(
+                func.lower(Student.email) == normalized_email,
+                Student.email != "",
+            ).limit(1)
+        )
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail="A Golf Coach student already uses this email. Review the existing student before converting.",
+            )
+
+    student = Student(
+        id=str(uuid4()),
+        first_name=payload.first_name.strip(),
+        last_name=payload.last_name.strip(),
+        email=normalized_email,
+        phone=payload.phone.strip(),
+        skill_level="New Golfer",
+        handedness="Unknown",
+        primary_goal=payload.primary_goal.strip(),
+        status="Active",
+    )
+    db.add(student)
+    db.flush()
+    db.add(
+        CRMStudentLink(
+            crm_contact_id=payload.crm_contact_id,
+            student_id=student.id,
+        )
+    )
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
         linked = db.get(CRMStudentLink, payload.crm_contact_id)
         if linked:
             return {
@@ -50,55 +95,10 @@ def create_student_from_crm(
                 "student_id": linked.student_id,
                 "already_linked": True,
             }
+        raise HTTPException(status_code=409, detail="Student conversion conflicted with another request.")
 
-        normalized_email = payload.email.strip().lower()
-        if normalized_email:
-            existing = db.scalar(
-                select(Student).where(
-                    func.lower(Student.email) == normalized_email,
-                    Student.email != "",
-                ).limit(1)
-            )
-            if existing:
-                raise HTTPException(
-                    status_code=409,
-                    detail="A Golf Coach student already uses this email. Review the existing student before converting.",
-                )
-
-        student = Student(
-            id=str(uuid4()),
-            first_name=payload.first_name.strip(),
-            last_name=payload.last_name.strip(),
-            email=normalized_email,
-            phone=payload.phone.strip(),
-            skill_level="New Golfer",
-            handedness="Unknown",
-            primary_goal=payload.primary_goal.strip(),
-            status="Active",
-        )
-        db.add(student)
-        db.flush()
-        db.add(
-            CRMStudentLink(
-                crm_contact_id=payload.crm_contact_id,
-                student_id=student.id,
-            )
-        )
-        try:
-            db.commit()
-        except IntegrityError:
-            db.rollback()
-            linked = db.get(CRMStudentLink, payload.crm_contact_id)
-            if linked:
-                return {
-                    "crm_contact_id": payload.crm_contact_id,
-                    "student_id": linked.student_id,
-                    "already_linked": True,
-                }
-            raise HTTPException(status_code=409, detail="Student conversion conflicted with another request.")
-
-        return {
-            "crm_contact_id": payload.crm_contact_id,
-            "student_id": student.id,
-            "already_linked": False,
-        }
+    return {
+        "crm_contact_id": payload.crm_contact_id,
+        "student_id": student.id,
+        "already_linked": False,
+    }

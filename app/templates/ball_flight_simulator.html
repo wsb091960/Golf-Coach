@@ -1,74 +1,116 @@
 {% extends "base.html" %}
 
 {% block page_styles %}
+<link rel="stylesheet" href="/static/css/session_performance.css?v=5.3O">
 <style>
-    .flight-page { max-width: 1180px; margin: 0 auto; }
-    .flight-intro { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:24px; }
-    .flight-intro h2 { margin:8px 0; font-size:1.55rem; }
-    .flight-intro p { margin:0; color:var(--text-muted,#64748b); max-width:680px; }
-    .flight-session { background:var(--surface,#fff); border:1px solid var(--border,#e2e8f0); border-radius:16px; margin-bottom:16px; overflow:hidden; }
-    .flight-session__head { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 20px; background:var(--surface-subtle,#f8fafc); border-bottom:1px solid var(--border,#e2e8f0); }
-    .flight-session__head h3 { margin:0 0 5px; font-size:1.05rem; }
-    .flight-session__head p { margin:0; color:var(--text-muted,#64748b); font-size:.9rem; }
-    .flight-shot-list { padding:8px 20px; }
-    .flight-shot { display:grid; grid-template-columns:minmax(110px,1fr) minmax(95px,.7fr) minmax(95px,.7fr) minmax(100px,.75fr) auto; align-items:center; gap:14px; padding:13px 0; border-bottom:1px solid var(--border,#e2e8f0); }
-    .flight-shot:last-child { border-bottom:0; }
-    .flight-shot strong,.flight-shot small { display:block; }
-    .flight-shot small { color:var(--text-muted,#64748b); margin-top:3px; }
-    .flight-label { color:var(--text-muted,#64748b); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
-    .flight-open { display:inline-flex; align-items:center; justify-content:center; padding:9px 13px; border-radius:9px; background:#d7b56d; color:#15231e; font-weight:700; text-decoration:none; white-space:nowrap; }
-    .flight-open:hover { background:#c9a554; }
-    .flight-empty { padding:22px 0; color:var(--text-muted,#64748b); }
-    .flight-count { color:var(--text-muted,#64748b); font-size:.85rem; white-space:nowrap; }
-    .flight-empty-state { padding:36px; text-align:center; border:1px dashed var(--border,#cbd5e1); border-radius:16px; background:var(--surface,#fff); }
-    @media(max-width:760px) { .flight-intro { align-items:flex-start; flex-direction:column; } .flight-shot { grid-template-columns:1fr 1fr; } .flight-open { grid-column:1/-1; } .flight-session__head { align-items:flex-start; } }
+    .standalone-simulator { max-width: 1320px; margin: 0 auto; }
+    .simulator-hero { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:26px 30px; margin-bottom:18px; border-radius:20px; color:#fff; background:linear-gradient(115deg,#0c3f32,#17654f); box-shadow:0 10px 26px rgba(12,63,50,.16); }
+    .simulator-hero h2 { margin:6px 0 8px; font-family:Georgia,serif; font-size:clamp(2rem,4vw,3rem); line-height:1; }
+    .simulator-hero p { margin:0; color:#d9e9e3; }
+    .simulator-hero .section-kicker { color:#f0c95c; }
+    .simulator-hero__badge { padding:12px 16px; border:1px solid rgba(255,255,255,.2); border-radius:12px; color:#f5d46d; font-size:2rem; }
+    .simulator-main { display:grid; gap:16px; }
+    .simulator-main .performance-card { padding:22px; }
+    .simulator-main .card-heading h2 { font-size:17px; }
+    .simulator-controls { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+    .simulator-camera,.simulator-playback { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+    .sim-control { padding:8px 12px; border:1px solid #cedbd5; border-radius:9px; color:#174b3e; background:#fff; font:inherit; font-size:13px; font-weight:750; cursor:pointer; }
+    .sim-control.is-active { border-color:#155341; color:#fff; background:#155341; }
+    .sim-control-gold { border-color:#d3a52e; background:#e0ad24; color:#193e33; }
+    .sim-speed { display:flex; align-items:center; gap:7px; padding:6px 9px; border:1px solid #cedbd5; border-radius:9px; color:#174b3e; font-size:13px; font-weight:700; }
+    .sim-speed select { border:0; color:inherit; background:transparent; font:inherit; }
+    #standalone-flight-canvas { width:100%; aspect-ratio:1000/470; display:block; border:1px solid #d7e0dc; border-radius:11px; background:#dce9df; }
+    .sim-readout { display:grid; grid-template-columns:repeat(5,minmax(100px,1fr)); gap:9px; margin-top:12px; }
+    .sim-readout div { padding:11px 13px; border:1px solid #e0e8e4; border-radius:10px; background:#f7faf8; }
+    .sim-readout span { display:block; color:#718079; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+    .sim-readout strong { display:block; margin-top:5px; color:#143b30; font-size:17px; }
+    .sim-input-card { display:grid; grid-template-columns:1.1fr 2fr; align-items:center; gap:22px; }
+    .sim-input-card h3 { margin:5px 0; }
+    .sim-input-card p { margin:0; color:#68776f; font-size:13px; }
+    .sim-input-grid { display:grid; grid-template-columns:repeat(4,minmax(110px,1fr)); gap:10px; }
+    .sim-input-grid label { display:grid; gap:5px; color:#53645c; font-size:11px; font-weight:800; }
+    .sim-input-grid input { min-width:0; padding:10px; border:1px solid #d7e1dd; border-radius:9px; font:inherit; font-size:14px; }
+    .sim-input-actions { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .sim-input-actions small { color:#718079; }
+    .simulator-disclaimer { grid-column:1/-1; margin:0; color:#718079; font-size:11px; }
+    @media(max-width:900px) { .sim-input-card { grid-template-columns:1fr; } .sim-input-grid { grid-template-columns:repeat(2,minmax(100px,1fr)); } }
+    @media(max-width:560px) { .simulator-hero { align-items:flex-start; padding:20px; } .simulator-hero__badge { display:none; } .sim-readout { grid-template-columns:repeat(2,1fr); } .sim-input-actions { align-items:flex-start; flex-direction:column; } .simulator-main .performance-card { padding:14px; } }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="workspace-shell flight-page">
-    <header class="flight-intro">
+<div class="workspace-shell standalone-simulator">
+    <header class="simulator-hero">
         <div>
-            <span class="workspace-kicker">Shot visualization</span>
-            <h2>Choose a saved shot to replay</h2>
-            <p>Select a session and shot to open the interactive ball flight simulator. Camera angles, replay speed, and shot metrics are available in the replay view.</p>
+            <span class="section-kicker">TrackMan-style performance</span>
+            <h2>Ball Flight Simulator</h2>
+            <p>Explore a shot flight on its own. No student or session is required.</p>
         </div>
-        <a class="workspace-button" href="/sessions">View Sessions</a>
+        <div class="simulator-hero__badge" aria-hidden="true">⛳</div>
     </header>
 
-    {% for session in sessions %}
-    <section class="flight-session" aria-label="{{ session.student_name }} session">
-        <div class="flight-session__head">
+    <div class="simulator-main">
+        <section class="performance-card" aria-labelledby="flight-replay-title">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Ball Flight · Interactive Replay</span>
+                    <h2 id="flight-replay-title">Demo Flight · Driver · Estimated</h2>
+                </div>
+                <div class="selected-shape">Estimated</div>
+            </div>
+
+            <div class="simulator-controls">
+                <div class="simulator-camera" role="group" aria-label="Camera angle">
+                    <button type="button" class="sim-control is-active" data-camera="behind" aria-pressed="true">Behind</button>
+                    <button type="button" class="sim-control" data-camera="side" aria-pressed="false">Side</button>
+                    <button type="button" class="sim-control" data-camera="overhead" aria-pressed="false">Overhead</button>
+                </div>
+                <div class="simulator-playback">
+                    <button type="button" class="sim-control sim-control-gold" id="flight-replay">Replay</button>
+                    <button type="button" class="sim-control" id="flight-pause" aria-pressed="true">Resume</button>
+                    <label class="sim-speed">Speed
+                        <select id="flight-speed" aria-label="Replay speed">
+                            <option value="0.5">0.5×</option>
+                            <option value="1" selected>1×</option>
+                            <option value="2">2×</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <canvas id="standalone-flight-canvas" width="1000" height="470" role="img" aria-label="Animated estimated golf ball flight"></canvas>
+
+            <div class="sim-readout" aria-live="polite">
+                <div><span>Ball speed</span><strong data-readout="speed">150 mph</strong></div>
+                <div><span>Carry</span><strong data-readout="carry">250 yd</strong></div>
+                <div><span>Total</span><strong data-readout="total">270 yd</strong></div>
+                <div><span>Apex</span><strong data-readout="apex">90 ft</strong></div>
+                <div><span>Finish</span><strong data-readout="finish">0 yd</strong></div>
+            </div>
+        </section>
+
+        <section class="performance-card sim-input-card" aria-labelledby="flight-inputs-title">
             <div>
-                <h3>{{ session.student_name }} · {{ session.session_type }}{% if session.name %} · {{ session.name }}{% endif %}</h3>
-                <p>{{ session.session_date }} · {{ session.shot_count or 0 }} saved shots</p>
+                <span class="section-kicker">Adjust the flight</span>
+                <h3 id="flight-inputs-title">Launch inputs</h3>
+                <p>Enter measured values or adjust the demo to see how the flight changes.</p>
             </div>
-            <span class="flight-count">{{ session.primary_club or 'Mixed clubs' }}</span>
-        </div>
-        <div class="flight-shot-list">
-            {% for shot in session.shots %}
-            <div class="flight-shot">
-                <div><span class="flight-label">Shot</span><strong>#{{ shot.shot_number or loop.index }} · {{ shot.club or 'Club not recorded' }}</strong></div>
-                <div><span class="flight-label">Ball flight</span><strong>{{ shot.shot_shape or 'Not classified' }}</strong></div>
-                <div><span class="flight-label">Carry</span><strong>{% if shot.carry_distance is not none %}{{ '%.1f'|format(shot.carry_distance) }} yd{% else %}—{% endif %}</strong></div>
-                <div><span class="flight-label">Ball speed</span><strong>{% if shot.ball_speed is not none %}{{ '%.1f'|format(shot.ball_speed) }} mph{% else %}—{% endif %}</strong></div>
-                <a class="flight-open" href="/sessions/{{ session.id }}?selected_shot={{ shot.id }}#ball-flight-simulator">Open replay <span aria-hidden="true">→</span></a>
-            </div>
-            {% else %}
-            <div class="flight-empty">This session has no saved shots yet. Open it to add or import shot data.</div>
-            {% endfor %}
-            {% if not session.shots %}
-            <p><a class="flight-open" href="/sessions/{{ session.id }}">Open session</a></p>
-            {% endif %}
-        </div>
-    </section>
-    {% else %}
-    <div class="flight-empty-state">
-        <span class="workspace-kicker">No saved sessions</span>
-        <h3>Start with a coaching session</h3>
-        <p>Create a session and add or import shots to use the ball flight simulator.</p>
-        <a class="workspace-button" href="/sessions">Go to Sessions</a>
+            <form id="flight-input-form" class="sim-input-grid">
+                <label>Ball speed (mph)<input name="ball_speed" type="number" min="20" max="250" step="0.1" value="150"></label>
+                <label>Launch angle (°)<input name="launch_angle" type="number" min="0" max="60" step="0.1" value="14"></label>
+                <label>Start direction (°)<input name="launch_direction" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Spin axis (°)<input name="spin_axis" type="number" min="-45" max="45" step="0.1" value="0"></label>
+                <label>Carry (yd)<input name="carry_distance" type="number" min="1" max="450" step="1" value="250"></label>
+                <label>Total (yd)<input name="total_distance" type="number" min="1" max="500" step="1" value="270"></label>
+                <label>Apex (ft)<input name="apex_height" type="number" min="1" max="250" step="1" value="90"></label>
+                <div class="sim-input-actions">
+                    <small>Flight drawing updates from these values.</small>
+                    <button class="workspace-button" type="submit">Update Flight</button>
+                </div>
+            </form>
+            <p class="simulator-disclaimer">This is an estimated visualization. It does not represent a measured shot unless you enter measured launch-monitor values.</p>
+        </section>
     </div>
-    {% endfor %}
 </div>
+<script src="/static/js/standalone_flight_simulator.js?v=1"></script>
 {% endblock %}

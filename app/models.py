@@ -829,3 +829,21 @@ class SwingCheckpoint(Base):
     analysis: Mapped["SwingAnalysis"] = relationship(
         back_populates="checkpoints",
     )
+
+class CRMStudentLink(Base):
+    """Idempotent mapping from a CRM golfer contact to one Coach student."""
+
+    __tablename__ = "crm_student_links"
+
+    crm_contact_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    student_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("students.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+    )

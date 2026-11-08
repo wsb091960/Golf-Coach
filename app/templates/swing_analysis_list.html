@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<style>
+.coaching-list { max-width: 1180px; margin: 0 auto; }
+.coaching-list__intro { margin: 0 0 24px; color: #64736e; }
+.coaching-list__grid { display: grid; gap: 14px; }
+.coaching-card { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 18px; align-items: center; padding: 20px 22px; border: 1px solid #dce7e2; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgba(19,72,57,.05); text-decoration: none; color: inherit; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.coaching-card:hover { transform: translateY(-2px); border-color: #9cc3b3; box-shadow: 0 12px 28px rgba(19,72,57,.10); }
+.coaching-card__title { margin: 0 0 7px; color: #153f33; font-size: 1.15rem; }
+.coaching-card__meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; color: #65746f; font-size: .9rem; }
+.coaching-card__summary { margin: 12px 0 0; color: #314a42; }
+.coaching-card__status { padding: 7px 11px; border-radius: 999px; color: #205b46; background: #eaf5ef; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.coaching-list__empty { padding: 44px 28px; border: 1px dashed #b8cfc4; border-radius: 18px; background: #fff; text-align: center; }
+.coaching-list__empty h2 { margin-top: 0; color: #153f33; }
+.coaching-list__empty p { color: #64736e; }
+.coaching-list__button { display: inline-flex; margin-top: 8px; padding: 11px 16px; border-radius: 10px; background: #14523f; color: white; font-weight: 700; text-decoration: none; }
+@media (max-width: 620px) { .coaching-card { grid-template-columns: 1fr; } .coaching-card__status { justify-self: start; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="coaching-list">
+    <p class="coaching-list__intro">Review swing assessments across your students, with ball-flight evidence, P-position checkpoints, TGM and TPI coaching notes.</p>
+
+    {% if analyses %}
+    <div class="coaching-list__grid">
+        {% for analysis in analyses %}
+        {% set session = analysis.session %}
+        {% set student = session.student if session and session.student else none %}
+        <a class="coaching-card" href="/swing-analysis/{{ analysis.id }}/coaching">
+            <div>
+                <h2 class="coaching-card__title">{{ (analysis.original_video.title if analysis.original_video else '') or (analysis.club ~ ' swing') if analysis.club else 'Swing analysis' }}</h2>
+                <p class="coaching-card__meta">
+                    <span>{{ student.name if student and student.name else 'Student' }}</span>
+                    {% if session and session.session_date %}<span>{{ session.session_date.strftime('%b %d, %Y') }}</span>{% endif %}
+                    {% if analysis.club %}<span>{{ analysis.club }}</span>{% endif %}
+                    {% if analysis.camera_view %}<span>{{ analysis.camera_view }}</span>{% endif %}
+                </p>
+                {% if analysis.primary_finding or analysis.primary_priority %}
+                <p class="coaching-card__summary">{{ analysis.primary_finding or analysis.primary_priority }}</p>
+                {% endif %}
+            </div>
+            <span class="coaching-card__status">{{ (analysis.status or 'draft')|replace('_', ' ')|title }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="coaching-list__empty">
+        <h2>No swing analyses yet</h2>
+        <p>Start from a coaching session: add or upload a swing video, then open its coaching analysis.</p>
+        <a class="coaching-list__button" href="/sessions">Go to Sessions</a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

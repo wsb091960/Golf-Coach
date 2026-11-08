@@ -1,18 +1,23 @@
 from __future__ import annotations
 
+import os
 from typing import Any
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Shot, Student, SwingAnalysis
+from app.models import CoachingSession, SessionVideo, Shot, Student, SwingAnalysis
 from app.swing_analysis_store import (
+    OBSERVATION_ONLY_SOURCE,
+    P_POSITIONS,
     analysis_to_dict,
     get_analysis,
+    initialize_p_checkpoints,
     link_garmin_shot,
     update_checkpoint,
 )
@@ -132,12 +137,173 @@ def _workspace_context(db: Session, analysis_id: str) -> dict[str, Any]:
         else ""
     )
 
+    available_original_videos = list(
+        db.scalars(
+            select(SessionVideo)
+            .where(
+                SessionVideo.session_id == analysis.session_id,
+                SessionVideo.video_type == "original_swing",
+                SessionVideo.source != OBSERVATION_ONLY_SOURCE,
+            )
+            .order_by(SessionVideo.created_at.desc())
+        ).all()
+    )
+    observation_only = bool(
+        analysis.original_video
+        and analysis.original_video.source == OBSERVATION_ONLY_SOURCE
+    )
+
     return {
         "analysis": analysis_to_dict(analysis),
         "shots": [_shot_dict(shot) for shot in shots],
         "latest_onform_import": latest_onform_import,
         "primary_goal": primary_goal,
+        "is_observation_only": observation_only,
+        "available_original_videos": available_original_videos,
     }
+
+
+@router.get(
+    "",
+    response_class=HTMLResponse,
+    name="swing_analysis_list",
+)
+def swing_analysis_list(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    analyses = list(
+        db.scalars(
+            select(SwingAnalysis)
+            .options(
+                selectinload(SwingAnalysis.session).selectinload(CoachingSession.student),
+                selectinload(SwingAnalysis.original_video),
+            )
+            .order_by(SwingAnalysis.updated_at.desc())
+        ).all()
+    )
+    return templates.TemplateResponse(
+        request=request,
+        name="swing_analysis_list.html",
+        context={
+            "page_title": "Coaching Analysis",
+            "analyses": analyses,
+        },
+    )
+
+
+@router.get(
+    "/new",
+    response_class=HTMLResponse,
+    name="swing_analysis_new",
+)
+def swing_analysis_new(request: Request, db: Session = Depends(get_db)):
+    sessions = list(
+        db.scalars(
+            select(CoachingSession)
+            .options(selectinload(CoachingSession.student))
+            .order_by(CoachingSession.session_date.desc(), CoachingSession.created_at.desc())
+        ).all()
+    )
+    return templates.TemplateResponse(
+        request=request,
+        name="swing_analysis_new.html",
+        context={"page_title": "Start Coaching Analysis", "sessions": sessions},
+    )
+
+
+@router.post("/observation", name="swing_analysis_observation_create")
+def swing_analysis_observation_create(
+    session_id: str = Form(...),
+    club: str = Form(""),
+    observed_pattern: str = Form(""),
+    ball_flight_summary: str = Form(""),
+    primary_priority: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    session = db.get(CoachingSession, str(session_id))
+    if session is None:
+        raise HTTPException(404, "Coaching session not found")
+
+    observation = str(observed_pattern or "").strip()
+    if not observation:
+        raise HTTPException(422, "Enter at least one observation to start the assessment.")
+
+    selected_club = str(club or "").strip()
+    placeholder = SessionVideo(
+        id=str(uuid4()),
+        session_id=session.id,
+        student_id=session.student_id,
+        title="Observation-only assessment",
+        video_type="reference",
+        source=OBSERVATION_ONLY_SOURCE,
+        camera_view="Observation only",
+        club=selected_club,
+        original_filename="",
+        stored_filename="",
+        content_type="",
+        notes="No swing video was provided. This assessment began from coach observations.",
+    )
+    db.add(placeholder)
+    db.flush()
+
+    analysis = SwingAnalysis(
+        id=str(uuid4()),
+        session_id=session.id,
+        student_id=session.student_id,
+        original_video_id=placeholder.id,
+        status="draft",
+        camera_view="Observation only",
+        club=selected_club,
+        primary_finding=observation,
+        coaching_observations=observation,
+        ball_flight_summary=str(ball_flight_summary or "").strip(),
+        primary_priority=str(primary_priority or "").strip(),
+    )
+    db.add(analysis)
+    db.flush()
+    initialize_p_checkpoints(db, analysis)
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/swing-analysis/{analysis.id}/coaching",
+        status_code=303,
+    )
+
+
+@router.post("/{analysis_id}/workspace/original-video", name="swing_analysis_original_video_link")
+def swing_analysis_original_video_link(
+    analysis_id: str,
+    video_id: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    analysis = get_analysis(db, analysis_id)
+    if analysis is None:
+        raise HTTPException(404, "Swing analysis not found")
+
+    video = db.get(SessionVideo, str(video_id))
+    if (
+        video is None
+        or video.session_id != analysis.session_id
+        or video.student_id != analysis.student_id
+        or video.video_type != "original_swing"
+        or video.source == OBSERVATION_ONLY_SOURCE
+    ):
+        raise HTTPException(400, "Choose an original swing video from this coaching session.")
+
+    previous_video = analysis.original_video
+    analysis.original_video_id = video.id
+    analysis.camera_view = video.camera_view or analysis.camera_view
+    analysis.club = analysis.club or video.club or ""
+
+    # Keep the hidden observation placeholder: original_video_id has
+    # ON DELETE CASCADE, so deleting it would also delete this assessment.
+
+    db.commit()
+    return RedirectResponse(
+        url=f"/swing-analysis/{analysis.id}/coaching",
+        status_code=303,
+    )
 
 
 @router.get(
@@ -199,6 +365,109 @@ def swing_analysis_p_position(
     )
 
 
+def _preview_analysis() -> dict[str, Any]:
+    """Synthetic, read-only data for the isolated UI preview service."""
+    checkpoints = []
+    for order, point in enumerate(P_POSITIONS, start=1):
+        checkpoints.append({
+            "id": f"preview-{point[0]}",
+            "analysis_id": "preview",
+            "position": point[0],
+            "position_order": order,
+            "time_seconds": round(0.25 + (order - 1) * 0.12, 2),
+            "frame_number": order * 14,
+            "measurement_source": "Preview example",
+            "confidence": 0.8,
+        })
+    shot = {
+        "id": "preview-shot",
+        "shot_number": 1,
+        "club": "Driver",
+        "shot_shape": "Pull",
+        "source": "Preview example",
+        "included": True,
+        "ball_speed": 121.4,
+        "club_speed": 82.0,
+        "smash_factor": 1.48,
+        "launch_angle": 13.5,
+        "launch_direction": 1.2,
+        "spin_rate": 2450,
+        "spin_axis": -1.5,
+        "carry_distance": 194.0,
+        "total_distance": 210.0,
+        "apex_height": 28.0,
+        "attack_angle": -3.0,
+        "club_path": -2.4,
+        "club_face": 1.2,
+        "face_to_path": 3.6,
+        "offline_distance": 8.0,
+    }
+    analysis = {
+        "id": "preview",
+        "session_id": "preview",
+        "student_id": "preview",
+        "original_video_id": None,
+        "onform_analysis_video_id": None,
+        "shot_id": shot["id"],
+        "status": "coach_reviewed",
+        "camera_view": "Face On",
+        "club": "Driver",
+        "original_video": {
+            "id": None,
+            "title": "Driver · Chicken-wing finish example",
+            "camera_view": "Face On",
+            "club": "Driver",
+        },
+        "shot": shot,
+        "checkpoints": checkpoints,
+        "tgm_pattern": "undetermined",
+        "tgm_stationary_head": "Review the head/C7 reference through impact.",
+        "tgm_balance": "Check whether the finish is stable and repeatable.",
+        "tgm_rhythm": "Assess rhythm across comparable swings.",
+        "tgm_club_path": "R10 path example: 2.4° left.",
+        "tgm_clubface_alignment": "R10 face example: 1.2° open.",
+        "tgm_timing": "Confirm sequence and release timing from video.",
+        "tgm_power_accumulator_1": "",
+        "tgm_power_accumulator_2": "",
+        "tgm_power_accumulator_3": "",
+        "tgm_power_accumulator_4": "",
+        "tgm_plane_notes": "",
+        "tgm_component_notes": "",
+        "tpi_swing_characteristics": "A finish observation is not a physical diagnosis.",
+        "tpi_mobility_observations": "Pending coach screen.",
+        "tpi_stability_observations": "Pending coach screen.",
+        "tpi_balance_observations": "Pending coach screen.",
+        "tpi_sequencing_observations": "Pending coach review.",
+        "tpi_physical_screen_recommended": False,
+        "tpi_screen_reason": "",
+        "max_pelvis_rotation": None,
+        "max_torso_rotation": None,
+        "max_x_factor": None,
+        "max_x_factor_stretch": None,
+        "address_spine_tilt": None,
+        "top_shoulder_tilt": None,
+        "top_hip_tilt": None,
+        "finish_balance_offset": None,
+        "head_c7_stability_score": None,
+        "rhythm_score": None,
+        "sequencing_score": None,
+        "garmin_summary": "Illustrative R10 readings; not a real student's data.",
+        "ball_flight_summary": "Start direction and curvature need confirmation across shots.",
+        "movement_to_impact_summary": "Assess the movement through impact; do not infer a cause from the finish alone.",
+        "primary_finding": "Example observation: lead elbow flexes and separates through impact.",
+        "secondary_findings": "",
+        "likely_compensations": "Working hypothesis only; verify with P-position review and ball-flight evidence.",
+        "primary_priority": "Investigate connection and release first; confirm the relevant impact conditions.",
+        "coaching_observations": "Chicken-wing finish shown as an observation, not a diagnosis.",
+        "recommended_drills": "Example drill: half swings with a towel under the arms. Coach selects after assessment.",
+        "player_feels": "Finish balanced; keep the arm structure connected through impact.",
+        "coach_notes": "Preview data only.",
+        "extra_metrics_json": "{}",
+    }
+    return {"analysis": analysis, "shots": [shot], "latest_onform_import": None,
+            "primary_goal": "Start the ball on the target line."}
+
+
 @router.get(
     "/{analysis_id}/coaching",
     response_class=HTMLResponse,
@@ -209,16 +478,28 @@ def swing_analysis_coaching(
     analysis_id: str,
     db: Session = Depends(get_db),
 ):
+    if analysis_id == "preview" and os.getenv("GOLF_PREVIEW_MODE") == "1":
+        context = _preview_analysis()
+        return templates.TemplateResponse(
+            request=request,
+            name="swing_analysis_coaching.html",
+            context={
+                "page_title": "Coaching Analysis Preview",
+                "is_preview": True,
+                **context,
+            },
+        )
+
     context = _workspace_context(db, analysis_id)
     return templates.TemplateResponse(
         request=request,
         name="swing_analysis_coaching.html",
         context={
             "page_title": "Coaching Analysis",
+            "is_preview": False,
             **context,
         },
     )
-
 
 @router.patch(
     "/{analysis_id}/workspace",

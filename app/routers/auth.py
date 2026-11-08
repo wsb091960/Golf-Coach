@@ -93,6 +93,13 @@ def digest(value):
 def service_endpoint(path, method):
     if path in {'/', '/login', '/auth/google/start', '/health'} and method in {'GET', 'HEAD'}:
         return True
+    # The isolated branch preview exposes only a read-only synthetic coaching
+    # screen. The flag is set on the preview service only; all other paths
+    # continue to require the normal owner login.
+    if (os.getenv('GOLF_PREVIEW_MODE') == '1'
+            and path == '/swing-analysis/preview/coaching'
+            and method in {'GET', 'HEAD'}):
+        return True
     if path == '/auth/google/complete' and method == 'POST':
         return True
     if path.startswith('/static/') and method in {'GET', 'HEAD'}:

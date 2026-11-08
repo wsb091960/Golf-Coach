@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<style>
+.analysis-start { max-width: 980px; margin: 0 auto; }
+.analysis-start__intro { margin: 0 0 22px; color: #65746f; line-height: 1.6; }
+.analysis-start__card { padding: 26px; border: 1px solid #dce7e2; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgba(19,72,57,.05); }
+.analysis-start__grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+.analysis-start__field { display: grid; gap: 7px; margin-bottom: 18px; color: #25473b; font-weight: 650; }
+.analysis-start__field--wide { grid-column: 1 / -1; }
+.analysis-start input,.analysis-start select,.analysis-start textarea { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid #cedbd4; border-radius:10px; color:#203a31; font:inherit; background:#fff; }
+.analysis-start textarea { min-height:110px; resize:vertical; }
+.analysis-start__help { margin:-9px 0 18px; color:#74817b; font-size:.9rem; line-height:1.5; }
+.analysis-start__actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:5px; }
+.analysis-start__button { display:inline-flex; border:0; border-radius:10px; padding:12px 17px; background:#14523f; color:white; font:inherit; font-weight:700; text-decoration:none; cursor:pointer; }
+.analysis-start__button--secondary { border:1px solid #d1ded7; background:#fff; color:#244b3b; }
+.analysis-start__empty { padding:30px; border:1px dashed #b8cfc4; border-radius:16px; text-align:center; }
+@media(max-width:650px){.analysis-start__grid{grid-template-columns:1fr}.analysis-start__field--wide{grid-column:auto}.analysis-start__card{padding:19px}}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="analysis-start">
+    <p class="analysis-start__intro">Start a coaching assessment from what you see and hear from the player. You can enter the ball-flight pattern and first coaching priority now, then work through the six laws, fourteen principles, P-positions, TGM and TPI. No video is required.</p>
+
+    {% if sessions %}
+    <form class="analysis-start__card" method="post" action="/swing-analysis/observation">
+        <div class="analysis-start__grid">
+            <label class="analysis-start__field analysis-start__field--wide">
+                Coaching session
+                <select name="session_id" required>
+                    <option value="">Select a student session</option>
+                    {% for session in sessions %}
+                    <option value="{{ session.id }}">{{ session.student.name if session.student and session.student.name else 'Student' }} · {{ session.session_date.strftime('%b %d, %Y') }} · {{ session.name or session.session_type }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label class="analysis-start__field">
+                Club (optional)
+                <input name="club" type="text" maxlength="100" placeholder="Driver, 7 iron…">
+            </label>
+
+            <label class="analysis-start__field analysis-start__field--wide">
+                What are you observing?
+                <textarea name="observed_pattern" required maxlength="4000" placeholder="Describe the visible movement or ball-flight pattern. Keep observations separate from your diagnosis."></textarea>
+            </label>
+
+            <label class="analysis-start__field">
+                Ball-flight notes (optional)
+                <textarea name="ball_flight_summary" maxlength="4000" placeholder="Start direction, curvature, strike, or launch-monitor findings"></textarea>
+            </label>
+
+            <label class="analysis-start__field">
+                First coaching priority (optional)
+                <textarea name="primary_priority" maxlength="4000" placeholder="What would you like to investigate first?"></textarea>
+            </label>
+        </div>
+
+        <p class="analysis-start__help">This creates an observation-only assessment. Launch data and movement measures can be added later; the starting observation is not treated as a confirmed cause.</p>
+
+        <div class="analysis-start__actions">
+            <button class="analysis-start__button" type="submit">Start Coaching Analysis</button>
+            <a class="analysis-start__button analysis-start__button--secondary" href="/swing-analysis">Cancel</a>
+        </div>
+    </form>
+    {% else %}
+    <div class="analysis-start__empty">
+        <h2>Create a coaching session first</h2>
+        <p>Observation-only assessments are organized under a student session.</p>
+        <a class="analysis-start__button" href="/sessions">Go to Sessions</a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

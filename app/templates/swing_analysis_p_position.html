@@ -37,8 +37,11 @@
                     <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
                     </a>
-                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">⇧</span><span>Garmin and Onform Import</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="{% if current_path.startswith('/swing-analysis/preview') %}/swing-analysis/preview/coaching{% else %}/swing-analysis{% endif %}" {% if current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⚒</span><span>Coaching Analysis</span>
                     </a>
                     <a class="sidebar-nav__link nav-item {% if current_path.startswith('/coach-assistant') %}is-active active{% endif %}" href="/coach-assistant" {% if current_path.startswith('/coach-assistant') %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">✦</span><span>Coaching Assistant</span>
@@ -113,10 +116,16 @@
                 <div>
                     <span class="section-kicker">Step 2 · Manual P-Position Analysis</span>
                     <h2>{{ analysis.original_video.title or "Swing Video" }}</h2>
-                    <p>After the Onform screenshot import, use this swing video only when you want manual P1-P10 timing and coach-verified shoulder/hip landmarks for Golf Coach calculations.</p>
+                    <p>{% if is_observation_only %}This assessment started from coach observations. You can still record checkpoint notes below; attach a swing video from Coaching Analysis when it becomes available.{% else %}After the Onform screenshot import, use this swing video only when you want manual P1-P10 timing and coach-verified shoulder/hip landmarks for Golf Coach calculations.{% endif %}</p>
                 </div>
             </div>
 
+            {% if is_observation_only %}
+            <div class="manual-p-video-empty" style="padding:28px;border:1px dashed #b8cfc4;border-radius:14px;background:#f8fbf9;color:#52665d">
+                <strong>No swing video attached</strong>
+                <p>Checkpoint observations can still be entered in the P1–P10 tab. Attach a video later from the Coaching Analysis overview to measure frames and landmarks.</p>
+            </div>
+            {% else %}
             <div class="manual-p-video-stage" id="manual-p-video-stage">
                 <video
                     id="original-swing-video"
@@ -126,10 +135,11 @@
                 ></video>
                 <canvas id="p-position-landmark-canvas" aria-label="P-position landmark overlay"></canvas>
             </div>
+            {% endif %}
 
             <div class="landmark-toolbar">
-                <button type="button" class="button button-secondary" id="landmark-start">Measure 4 Landmarks</button>
-                <button type="button" class="button button-secondary" id="landmark-clear">Clear Landmarks</button>
+                <button type="button" class="button button-secondary" id="landmark-start" {% if is_observation_only %}disabled title="Attach a swing video first"{% endif %}>Measure 4 Landmarks</button>
+                <button type="button" class="button button-secondary" id="landmark-clear" {% if is_observation_only %}disabled title="Attach a swing video first"{% endif %}>Clear Landmarks</button>
                 <strong id="landmark-status">Select a P-position, then measure left shoulder, right shoulder, left hip, right hip.</strong>
             </div>
         </section>

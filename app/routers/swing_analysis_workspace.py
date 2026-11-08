@@ -7,10 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Shot, Student, SwingAnalysis
+from app.models import CoachingSession, Shot, Student, SwingAnalysis
 from app.swing_analysis_store import (
     P_POSITIONS,
     analysis_to_dict,
@@ -140,6 +140,35 @@ def _workspace_context(db: Session, analysis_id: str) -> dict[str, Any]:
         "latest_onform_import": latest_onform_import,
         "primary_goal": primary_goal,
     }
+
+
+@router.get(
+    "",
+    response_class=HTMLResponse,
+    name="swing_analysis_list",
+)
+def swing_analysis_list(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    analyses = list(
+        db.scalars(
+            select(SwingAnalysis)
+            .options(
+                selectinload(SwingAnalysis.session).selectinload(CoachingSession.student),
+                selectinload(SwingAnalysis.original_video),
+            )
+            .order_by(SwingAnalysis.updated_at.desc())
+        ).all()
+    )
+    return templates.TemplateResponse(
+        request=request,
+        name="swing_analysis_list.html",
+        context={
+            "page_title": "Coaching Analysis",
+            "analyses": analyses,
+        },
+    )
 
 
 @router.get(

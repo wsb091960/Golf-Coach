@@ -774,3 +774,9 @@
 .gc-provenance-note{padding-top:10px;border-top:1px solid #e8eee9}
 @media(max-width:1050px){.gc-coach-overview{grid-template-columns:1fr!important}.gc-overview-main{grid-template-columns:1fr 1fr;align-items:start}.gc-overview-main>.gc-overview-video{grid-column:1/-1}}
 @media(max-width:720px){.gc-overview-main{grid-template-columns:1fr}.gc-overview-main>.gc-overview-video{grid-column:auto}.gc-framework-grid,.gc-coaching-plan-grid{grid-template-columns:1fr}.gc-framework-panel-wide,.gc-coaching-plan{grid-column:auto}.gc-video-frame{height:220px}.gc-p-check-list{grid-template-columns:repeat(5,minmax(44px,1fr))}.gc-coaching-plan-head{align-items:flex-start;flex-direction:column}.gc-law-list>div>span{font-size:.8rem}.gc-law-value{font-size:.7rem}}
+
+.gc-preview-banner{display:flex;align-items:center;gap:12px;margin:0 0 16px;padding:11px 14px;border:1px solid #e3ce8b;border-radius:12px;background:#fff8e7;color:#654f18;font-size:.83rem}
+.gc-preview-banner strong{font-size:.72rem;letter-spacing:.08em}
+.gc-preview-video{height:300px;overflow:hidden;border-radius:14px;background:#dce9e1}
+.gc-preview-video svg{display:block;width:100%;height:100%;object-fit:cover}
+@media(max-width:720px){.gc-preview-banner{align-items:flex-start;flex-direction:column;gap:4px}.gc-preview-video{height:220px}}

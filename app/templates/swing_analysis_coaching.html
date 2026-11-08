@@ -117,12 +117,30 @@
     <div class="gc-overview-main">
         <article class="analysis-card gc-overview-video">
             <div class="gc-overview-card-head">
-                <div><span class="section-kicker">Swing video · Coach reviewed</span><h2>Movement through impact</h2></div>
+                <div><span class="section-kicker">{% if is_observation_only %}Coach observation · No video{% else %}Swing video · Coach reviewed{% endif %}</span><h2>{% if is_observation_only %}Observation-led assessment{% else %}Movement through impact{% endif %}</h2></div>
                 <a class="gc-text-link" href="/swing-analysis/{{ analysis.id }}/p-position">Review P1–P10 ↗</a>
             </div>
-            {% if analysis.original_video and analysis.original_video.id %}
+            {% if not is_observation_only and analysis.original_video and analysis.original_video.id %}
             <div class="gc-video-frame">
                 <video controls preload="metadata" src="/sessions/{{ analysis.session_id }}/videos/{{ analysis.original_video.id }}/stream"></video>
+            </div>
+            {% elif is_observation_only %}
+            <div class="gc-video-empty">
+                <strong>No swing video attached · observation-only assessment</strong>
+                <span>Your assessment can proceed from coach observations, available launch data and manual P-position notes.</span>
+                {% if available_original_videos %}
+                <form method="post" action="/swing-analysis/{{ analysis.id }}/workspace/original-video" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px">
+                    <label for="attach-original-video" class="gc-data-label">Attach a session video later</label>
+                    <select id="attach-original-video" name="video_id" required>
+                        {% for video in available_original_videos %}
+                        <option value="{{ video.id }}">{{ video.title }}{% if video.camera_view %} · {{ video.camera_view }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="button button-secondary">Attach Video</button>
+                </form>
+                {% else %}
+                <span>Upload a swing video to this session, then return here to attach it.</span>
+                {% endif %}
             </div>
             {% else %}
             {% if is_preview %}

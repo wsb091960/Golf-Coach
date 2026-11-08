@@ -37,8 +37,11 @@
                     <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
                     </a>
-                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">⇧</span><span>Garmin and Onform Import</span>
+                    </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="{% if current_path.startswith('/swing-analysis/preview') %}/swing-analysis/preview/coaching{% else %}/swing-analysis{% endif %}" {% if current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">⚒</span><span>Coaching Analysis</span>
                     </a>
                     <a class="sidebar-nav__link nav-item {% if current_path.startswith('/coach-assistant') %}is-active active{% endif %}" href="/coach-assistant" {% if current_path.startswith('/coach-assistant') %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">✦</span><span>Coaching Assistant</span>

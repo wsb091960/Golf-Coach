@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -204,21 +205,136 @@ def swing_analysis_p_position(
     response_class=HTMLResponse,
     name="swing_analysis_coaching",
 )
+def _preview_analysis() -> dict[str, Any]:
+    """Synthetic, read-only data for the isolated UI preview service."""
+    checkpoints = []
+    for order, point in enumerate(P_POSITIONS, start=1):
+        checkpoints.append({
+            "id": f"preview-{point[0]}",
+            "analysis_id": "preview",
+            "position": point[0],
+            "position_order": order,
+            "time_seconds": round(0.25 + (order - 1) * 0.12, 2),
+            "frame_number": order * 14,
+            "measurement_source": "Preview example",
+            "confidence": 0.8,
+        })
+    shot = {
+        "id": "preview-shot",
+        "shot_number": 1,
+        "club": "Driver",
+        "shot_shape": "Pull",
+        "source": "Preview example",
+        "included": True,
+        "ball_speed": 121.4,
+        "club_speed": 82.0,
+        "smash_factor": 1.48,
+        "launch_angle": 13.5,
+        "launch_direction": 1.2,
+        "spin_rate": 2450,
+        "spin_axis": -1.5,
+        "carry_distance": 194.0,
+        "total_distance": 210.0,
+        "apex_height": 28.0,
+        "attack_angle": -3.0,
+        "club_path": -2.4,
+        "club_face": 1.2,
+        "face_to_path": 3.6,
+        "offline_distance": 8.0,
+    }
+    analysis = {
+        "id": "preview",
+        "session_id": "preview",
+        "student_id": "preview",
+        "original_video_id": None,
+        "onform_analysis_video_id": None,
+        "shot_id": shot["id"],
+        "status": "coach_reviewed",
+        "camera_view": "Face On",
+        "club": "Driver",
+        "original_video": {
+            "id": None,
+            "title": "Driver · Chicken-wing finish example",
+            "camera_view": "Face On",
+            "club": "Driver",
+        },
+        "shot": shot,
+        "checkpoints": checkpoints,
+        "tgm_pattern": "undetermined",
+        "tgm_stationary_head": "Review the head/C7 reference through impact.",
+        "tgm_balance": "Check whether the finish is stable and repeatable.",
+        "tgm_rhythm": "Assess rhythm across comparable swings.",
+        "tgm_club_path": "R10 path example: 2.4° left.",
+        "tgm_clubface_alignment": "R10 face example: 1.2° open.",
+        "tgm_timing": "Confirm sequence and release timing from video.",
+        "tgm_power_accumulator_1": "",
+        "tgm_power_accumulator_2": "",
+        "tgm_power_accumulator_3": "",
+        "tgm_power_accumulator_4": "",
+        "tgm_plane_notes": "",
+        "tgm_component_notes": "",
+        "tpi_swing_characteristics": "A finish observation is not a physical diagnosis.",
+        "tpi_mobility_observations": "Pending coach screen.",
+        "tpi_stability_observations": "Pending coach screen.",
+        "tpi_balance_observations": "Pending coach screen.",
+        "tpi_sequencing_observations": "Pending coach review.",
+        "tpi_physical_screen_recommended": False,
+        "tpi_screen_reason": "",
+        "max_pelvis_rotation": None,
+        "max_torso_rotation": None,
+        "max_x_factor": None,
+        "max_x_factor_stretch": None,
+        "address_spine_tilt": None,
+        "top_shoulder_tilt": None,
+        "top_hip_tilt": None,
+        "finish_balance_offset": None,
+        "head_c7_stability_score": None,
+        "rhythm_score": None,
+        "sequencing_score": None,
+        "garmin_summary": "Illustrative R10 readings; not a real student's data.",
+        "ball_flight_summary": "Start direction and curvature need confirmation across shots.",
+        "movement_to_impact_summary": "Assess the movement through impact; do not infer a cause from the finish alone.",
+        "primary_finding": "Example observation: lead elbow flexes and separates through impact.",
+        "secondary_findings": "",
+        "likely_compensations": "Working hypothesis only; verify with P-position review and ball-flight evidence.",
+        "primary_priority": "Investigate connection and release first; confirm the relevant impact conditions.",
+        "coaching_observations": "Chicken-wing finish shown as an observation, not a diagnosis.",
+        "recommended_drills": "Example drill: half swings with a towel under the arms. Coach selects after assessment.",
+        "player_feels": "Finish balanced; keep the arm structure connected through impact.",
+        "coach_notes": "Preview data only.",
+        "extra_metrics_json": "{}",
+    }
+    return {"analysis": analysis, "shots": [shot], "latest_onform_import": None,
+            "primary_goal": "Start the ball on the target line."}
+
+
 def swing_analysis_coaching(
     request: Request,
     analysis_id: str,
     db: Session = Depends(get_db),
 ):
+    if analysis_id == "preview" and os.getenv("GOLF_PREVIEW_MODE") == "1":
+        context = _preview_analysis()
+        return templates.TemplateResponse(
+            request=request,
+            name="swing_analysis_coaching.html",
+            context={
+                "page_title": "Coaching Analysis Preview",
+                "is_preview": True,
+                **context,
+            },
+        )
+
     context = _workspace_context(db, analysis_id)
     return templates.TemplateResponse(
         request=request,
         name="swing_analysis_coaching.html",
         context={
             "page_title": "Coaching Analysis",
+            "is_preview": False,
             **context,
         },
     )
-
 
 @router.patch(
     "/{analysis_id}/workspace",

@@ -5,6 +5,7 @@ from uuid import uuid4
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.models import SessionVideo
+from app.swing_analysis_store import OBSERVATION_ONLY_SOURCE
 
 APP_DIR = Path(__file__).resolve().parent
 VIDEO_ROOT = APP_DIR / "media" / "session_videos"
@@ -53,7 +54,10 @@ def list_session_videos(
 
     stmt = (
         select(SessionVideo)
-        .where(SessionVideo.session_id == str(session_id))
+        .where(
+            SessionVideo.session_id == str(session_id),
+            SessionVideo.source != OBSERVATION_ONLY_SOURCE,
+        )
         .order_by(SessionVideo.created_at.desc())
     )
 

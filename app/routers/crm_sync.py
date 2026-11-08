@@ -4,10 +4,11 @@ import os
 import secrets
 from uuid import uuid4
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import CRMStudentLink, Student
@@ -39,10 +40,9 @@ def _authorize_sync(value: str | None) -> None:
 def create_student_from_crm(
     payload: CRMStudentPayload,
     x_golf_sync_key: str | None = Header(default=None),
+    db: Session = Depends(get_db),
 ):
     _authorize_sync(x_golf_sync_key)
-    db = next(get_db())
-    try:
         linked = db.get(CRMStudentLink, payload.crm_contact_id)
         if linked:
             return {
@@ -102,5 +102,3 @@ def create_student_from_crm(
             "student_id": student.id,
             "already_linked": False,
         }
-    finally:
-        db.close()

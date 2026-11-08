@@ -35,7 +35,7 @@
         {% set student = session.student if session and session.student else none %}
         <a class="coaching-card" href="/swing-analysis/{{ analysis.id }}/coaching">
             <div>
-                <h2 class="coaching-card__title">{{ (analysis.original_video.title if analysis.original_video else '') or (analysis.club ~ ' swing') if analysis.club else 'Swing analysis' }}</h2>
+                <h2 class="coaching-card__title">{% if analysis.original_video and analysis.original_video.title %}{{ analysis.original_video.title }}{% elif analysis.club %}{{ analysis.club }} swing{% else %}Swing analysis{% endif %}</h2>
                 <p class="coaching-card__meta">
                     <span>{{ student.name if student and student.name else 'Student' }}</span>
                     {% if session and session.session_date %}<span>{{ session.session_date.strftime('%b %d, %Y') }}</span>{% endif %}

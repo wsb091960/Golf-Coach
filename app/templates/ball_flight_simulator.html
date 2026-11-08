@@ -32,7 +32,7 @@
     .sim-input-grid input { min-width:0; padding:10px; border:1px solid #d7e1dd; border-radius:9px; font:inherit; font-size:14px; }
     .sim-input-actions { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .sim-input-actions small { color:#718079; }
-    .simulator-disclaimer { margin:0; color:#718079; font-size:11px; }
+    .simulator-disclaimer { grid-column:1/-1; margin:0; color:#718079; font-size:11px; }
     @media(max-width:900px) { .sim-input-card { grid-template-columns:1fr; } .sim-input-grid { grid-template-columns:repeat(2,minmax(100px,1fr)); } }
     @media(max-width:560px) { .simulator-hero { align-items:flex-start; padding:20px; } .simulator-hero__badge { display:none; } .sim-readout { grid-template-columns:repeat(2,1fr); } .sim-input-actions { align-items:flex-start; flex-direction:column; } .simulator-main .performance-card { padding:14px; } }
 </style>
@@ -49,7 +49,7 @@
         <div class="simulator-hero__badge" aria-hidden="true">⛳</div>
     </header>
 
-    <main class="simulator-main">
+    <div class="simulator-main">
         <section class="performance-card" aria-labelledby="flight-replay-title">
             <div class="card-heading">
                 <div>
@@ -67,7 +67,7 @@
                 </div>
                 <div class="simulator-playback">
                     <button type="button" class="sim-control sim-control-gold" id="flight-replay">Replay</button>
-                    <button type="button" class="sim-control" id="flight-pause" aria-pressed="false">Pause</button>
+                    <button type="button" class="sim-control" id="flight-pause" aria-pressed="true">Resume</button>
                     <label class="sim-speed">Speed
                         <select id="flight-speed" aria-label="Replay speed">
                             <option value="0.5">0.5×</option>
@@ -110,7 +110,7 @@
             </form>
             <p class="simulator-disclaimer">This is an estimated visualization. It does not represent a measured shot unless you enter measured launch-monitor values.</p>
         </section>
-    </main>
+    </div>
 </div>
 <script src="/static/js/standalone_flight_simulator.js?v=1"></script>
 {% endblock %}

@@ -3,7 +3,7 @@
 {% block page_styles %}
 <style>
 .coaching-list { max-width: 1180px; margin: 0 auto; }
-.coaching-list__intro { margin: 0 0 24px; color: #64736e; }
+.coaching-list__intro { margin: 0; color: #64736e; }\n.coaching-list__heading { display:flex; justify-content:space-between; align-items:center; gap:16px; margin:0 0 24px; }\n@media (max-width:620px) { .coaching-list__heading { align-items:flex-start; flex-direction:column; } }
 .coaching-list__grid { display: grid; gap: 14px; }
 .coaching-card { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 18px; align-items: center; padding: 20px 22px; border: 1px solid #dce7e2; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgba(19,72,57,.05); text-decoration: none; color: inherit; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
 .coaching-card:hover { transform: translateY(-2px); border-color: #9cc3b3; box-shadow: 0 12px 28px rgba(19,72,57,.10); }
@@ -21,7 +21,12 @@
 
 {% block content %}
 <section class="coaching-list">
-    <p class="coaching-list__intro">Review swing assessments across your students, with ball-flight evidence, P-position checkpoints, TGM and TPI coaching notes.</p>
+    <div class="coaching-list__heading">
+        <div>
+            <p class="coaching-list__intro">Review assessments across your students, with ball-flight evidence, P-position checkpoints, TGM and TPI coaching notes.</p>
+        </div>
+        <a class="coaching-list__button" href="/swing-analysis/new">Start without video</a>
+    </div>
 
     {% if analyses %}
     <div class="coaching-list__grid">
@@ -48,8 +53,8 @@
     {% else %}
     <div class="coaching-list__empty">
         <h2>No swing analyses yet</h2>
-        <p>Start from a coaching session: add or upload a swing video, then open its coaching analysis.</p>
-        <a class="coaching-list__button" href="/sessions">Go to Sessions</a>
+        <p>Start an assessment from a session using your observations. Add a swing video later if one becomes available.</p>
+        <a class="coaching-list__button" href="/swing-analysis/new">Start without video</a> <a class="coaching-list__button" href="/sessions">Go to Sessions</a>
     </div>
     {% endif %}
 </section>

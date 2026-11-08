@@ -17,6 +17,7 @@ from app.routers.sessions import router as sessions_router
 from app.routers.students import router as students_router
 from app.routers.videos import router as videos_router
 from app.routers.biomechanics import router as biomechanics_router
+from app.routers import crm_sync as crm_sync_router
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
@@ -71,5 +72,4 @@ app.include_router(swing_analysis_launch_router.router)
 from app.routers import swing_analysis_assist as swing_analysis_assist_router
 app.include_router(swing_analysis_assist_router.router)
 
-from app.routers import crm_sync as crm_sync_router
 app.include_router(crm_sync_router.router)

@@ -9,6 +9,9 @@ from sqlalchemy.orm import Session, selectinload
 from app.models import SessionVideo, Shot, SwingAnalysis, SwingCheckpoint
 
 
+OBSERVATION_ONLY_SOURCE = "Coach observation · no video"
+
+
 P_POSITIONS: tuple[tuple[str, int], ...] = (
     ("P1", 1),
     ("P2", 2),

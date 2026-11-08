@@ -70,3 +70,6 @@ app.include_router(swing_analysis_launch_router.router)
 
 from app.routers import swing_analysis_assist as swing_analysis_assist_router
 app.include_router(swing_analysis_assist_router.router)
+
+from app.routers import crm_sync as crm_sync_router
+app.include_router(crm_sync_router.router)

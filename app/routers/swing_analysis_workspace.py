@@ -201,11 +201,6 @@ def swing_analysis_p_position(
     )
 
 
-@router.get(
-    "/{analysis_id}/coaching",
-    response_class=HTMLResponse,
-    name="swing_analysis_coaching",
-)
 def _preview_analysis() -> dict[str, Any]:
     """Synthetic, read-only data for the isolated UI preview service."""
     checkpoints = []
@@ -309,6 +304,11 @@ def _preview_analysis() -> dict[str, Any]:
             "primary_goal": "Start the ball on the target line."}
 
 
+@router.get(
+    "/{analysis_id}/coaching",
+    response_class=HTMLResponse,
+    name="swing_analysis_coaching",
+)
 def swing_analysis_coaching(
     request: Request,
     analysis_id: str,

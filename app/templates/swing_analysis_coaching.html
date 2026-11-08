@@ -91,6 +91,7 @@
                     type="button"
                     class="button button-primary"
                     id="save-analysis"
+                    {% if is_preview %}disabled title="Read-only demo preview"{% endif %}
                 >
                     Save Analysis
                 </button>
@@ -105,6 +106,7 @@
             <a class="analysis-step-link active" href="/swing-analysis/{{ analysis.id }}/coaching">Coaching Analysis</a>
         </nav>
         </div>
+        {% if is_preview %}<div class="gc-preview-banner" role="status"><strong>READ-ONLY PREVIEW</strong><span>Demo golfer and launch readings are synthetic. Changes are disabled and nothing is saved.</span></div>{% endif %}
 
 <nav class="workspace-tabs" role="tablist" data-workspace-tabs="coaching-analysis" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="flight">Ball Flight</button><button type="button" role="tab" data-workspace-tab="tgm">TGM</button><button type="button" role="tab" data-workspace-tab="tpi">TPI</button><button type="button" role="tab" data-workspace-tab="measurements">Measurements</button><button type="button" role="tab" data-workspace-tab="priorities">Priorities</button></nav>
 
@@ -120,7 +122,21 @@
                 <video controls preload="metadata" src="/sessions/{{ analysis.session_id }}/videos/{{ analysis.original_video.id }}/stream"></video>
             </div>
             {% else %}
-            <div class="gc-video-empty"><strong>No swing video attached</strong><span>Use P-Position Analysis to add or review swing video.</span></div>
+            {% if is_preview %}
+            <div class="gc-preview-video" aria-label="Illustrative swing-video frame">
+                <svg viewBox="0 0 520 280" role="img" aria-label="Illustrative golfer at finish with lead elbow highlighted">
+                    <defs><linearGradient id="preview-course" x2="0" y2="1"><stop stop-color="#dce9e1"/><stop offset="1" stop-color="#a9c2b0"/></linearGradient></defs>
+                    <rect width="520" height="280" fill="url(#preview-course)"/><path d="M0 198 Q110 168 245 199 T520 187 V280 H0Z" fill="#78977e"/><path d="M0 232 Q130 208 260 232 T520 216 V280 H0Z" fill="#5f8067"/>
+                    <circle cx="270" cy="58" r="20" fill="#202a25"/><path d="M249 81 Q268 70 292 84 L314 149 L283 178 L244 158 L230 111Z" fill="#25332c"/>
+                    <path d="M246 93 L200 80 L171 104 L151 93" fill="none" stroke="#25332c" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M230 112 L278 121 L317 100 L350 83" fill="none" stroke="#25332c" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M350 83 L427 48" stroke="#29312d" stroke-width="5" stroke-linecap="round"/><path d="M420 42 Q451 37 468 50 Q449 62 424 57Z" fill="#29312d"/>
+                    <path d="M246 157 L225 226 L203 249 M282 173 L311 224 L334 247" fill="none" stroke="#25332c" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M151 93 L171 104 L200 80" fill="none" stroke="#d2a83e" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <text x="20" y="26" fill="#244735" font-family="Arial,sans-serif" font-size="13" font-weight="700">ILLUSTRATIVE FINISH FRAME · NOT VIDEO TRACKING</text>
+                </svg>
+            </div>
+            {% else %}<div class="gc-video-empty"><strong>No swing video attached</strong><span>Use P-Position Analysis to add or review swing video.</span></div>{% endif %}
             {% endif %}
             <div class="gc-position-track" aria-label="P-position review points">
                 {% for point in ["P6", "P7", "P8", "P9", "P10"] %}
@@ -705,6 +721,7 @@
                     type="button"
                     class="button button-primary"
                     id="save-analysis-bottom"
+                    {% if is_preview %}disabled title="Read-only demo preview"{% endif %}
                 >
                     Save Analysis
                 </button>

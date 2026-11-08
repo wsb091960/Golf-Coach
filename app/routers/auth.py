@@ -100,6 +100,9 @@ def service_endpoint(path, method):
             and path == '/swing-analysis/preview/coaching'
             and method in {'GET', 'HEAD'}):
         return True
+    # Machine-to-machine CRM student creation is authenticated by its own shared key.
+    if path == '/integrations/crm/students' and method == 'POST':
+        return True
     if path == '/auth/google/complete' and method == 'POST':
         return True
     if path.startswith('/static/') and method in {'GET', 'HEAD'}:

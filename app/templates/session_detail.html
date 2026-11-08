@@ -36,6 +36,9 @@
                     <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
                     </a>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/ball-flight-simulator') %}is-active active{% endif %}" href="/ball-flight-simulator" {% if current_path.startswith('/ball-flight-simulator') %}aria-current="page"{% endif %}>
+                        <span class="sidebar-nav__icon" aria-hidden="true">◌</span><span>Ball Flight Simulator</span>
+                    </a>
                     <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">⇧</span><span>Garmin and Onform Import</span>
                     </a>
@@ -170,7 +173,7 @@
             </nav>
 
             <div class="chart-view-panel is-active" id="chart-view-flight" role="tabpanel" data-chart-panel="flight">
-            <article class="performance-card shot-simulator-card">
+            <article class="performance-card shot-simulator-card" id="ball-flight-simulator">
                 <div class="card-heading">
                     <div>
                         <span class="section-kicker">Ball Flight · Interactive Replay</span>
@@ -1184,5 +1187,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    if (window.location.hash !== "#ball-flight-simulator") return;
+    const chartsTab = document.querySelector('[data-workspace-tab="charts"]');
+    if (chartsTab) chartsTab.click();
+    window.setTimeout(function () {
+        const simulator = document.getElementById("ball-flight-simulator");
+        if (simulator) simulator.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+});
+</script>
 </body>
 </html>

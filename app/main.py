@@ -57,11 +57,13 @@ def health() -> dict[str, str]:
         "database": "sqlite",
     }
 
-from app.routers import swing_analysis as swing_analysis_router
-app.include_router(swing_analysis_router.router)
-
+# Register the static workspace routes before the legacy /{analysis_id} route,
+# so paths such as /swing-analysis/new are not treated as analysis IDs.
 from app.routers import swing_analysis_workspace as swing_analysis_workspace_router
 app.include_router(swing_analysis_workspace_router.router)
+
+from app.routers import swing_analysis as swing_analysis_router
+app.include_router(swing_analysis_router.router)
 
 from app.routers import swing_analysis_launch as swing_analysis_launch_router
 app.include_router(swing_analysis_launch_router.router)

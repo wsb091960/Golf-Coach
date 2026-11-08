@@ -296,8 +296,8 @@ def swing_analysis_original_video_link(
     analysis.camera_view = video.camera_view or analysis.camera_view
     analysis.club = analysis.club or video.club or ""
 
-    if previous_video and previous_video.source == OBSERVATION_ONLY_SOURCE:
-        db.delete(previous_video)
+    # Keep the hidden observation placeholder: original_video_id has
+    # ON DELETE CASCADE, so deleting it would also delete this assessment.
 
     db.commit()
     return RedirectResponse(

@@ -2,19 +2,22 @@ from __future__ import annotations
 
 import os
 from typing import Any
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import CoachingSession, Shot, Student, SwingAnalysis
+from app.models import CoachingSession, SessionVideo, Shot, Student, SwingAnalysis
 from app.swing_analysis_store import (
+    OBSERVATION_ONLY_SOURCE,
     P_POSITIONS,
     analysis_to_dict,
     get_analysis,
+    initialize_p_checkpoints,
     link_garmin_shot,
     update_checkpoint,
 )
@@ -134,11 +137,29 @@ def _workspace_context(db: Session, analysis_id: str) -> dict[str, Any]:
         else ""
     )
 
+    available_original_videos = list(
+        db.scalars(
+            select(SessionVideo)
+            .where(
+                SessionVideo.session_id == analysis.session_id,
+                SessionVideo.video_type == "original_swing",
+                SessionVideo.source != OBSERVATION_ONLY_SOURCE,
+            )
+            .order_by(SessionVideo.created_at.desc())
+        ).all()
+    )
+    observation_only = bool(
+        analysis.original_video
+        and analysis.original_video.source == OBSERVATION_ONLY_SOURCE
+    )
+
     return {
         "analysis": analysis_to_dict(analysis),
         "shots": [_shot_dict(shot) for shot in shots],
         "latest_onform_import": latest_onform_import,
         "primary_goal": primary_goal,
+        "is_observation_only": observation_only,
+        "available_original_videos": available_original_videos,
     }
 
 
@@ -168,6 +189,120 @@ def swing_analysis_list(
             "page_title": "Coaching Analysis",
             "analyses": analyses,
         },
+    )
+
+
+@router.get(
+    "/new",
+    response_class=HTMLResponse,
+    name="swing_analysis_new",
+)
+def swing_analysis_new(request: Request, db: Session = Depends(get_db)):
+    sessions = list(
+        db.scalars(
+            select(CoachingSession)
+            .options(selectinload(CoachingSession.student))
+            .order_by(CoachingSession.session_date.desc(), CoachingSession.created_at.desc())
+        ).all()
+    )
+    return templates.TemplateResponse(
+        request=request,
+        name="swing_analysis_new.html",
+        context={"page_title": "Start Coaching Analysis", "sessions": sessions},
+    )
+
+
+@router.post("/observation", name="swing_analysis_observation_create")
+def swing_analysis_observation_create(
+    session_id: str = Form(...),
+    club: str = Form(""),
+    observed_pattern: str = Form(""),
+    ball_flight_summary: str = Form(""),
+    primary_priority: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    session = db.get(CoachingSession, str(session_id))
+    if session is None:
+        raise HTTPException(404, "Coaching session not found")
+
+    observation = str(observed_pattern or "").strip()
+    if not observation:
+        raise HTTPException(422, "Enter at least one observation to start the assessment.")
+
+    selected_club = str(club or "").strip()
+    placeholder = SessionVideo(
+        id=str(uuid4()),
+        session_id=session.id,
+        student_id=session.student_id,
+        title="Observation-only assessment",
+        video_type="reference",
+        source=OBSERVATION_ONLY_SOURCE,
+        camera_view="Observation only",
+        club=selected_club,
+        original_filename="",
+        stored_filename="",
+        content_type="",
+        notes="No swing video was provided. This assessment began from coach observations.",
+    )
+    db.add(placeholder)
+    db.flush()
+
+    analysis = SwingAnalysis(
+        id=str(uuid4()),
+        session_id=session.id,
+        student_id=session.student_id,
+        original_video_id=placeholder.id,
+        status="draft",
+        camera_view="Observation only",
+        club=selected_club,
+        primary_finding=observation,
+        coaching_observations=observation,
+        ball_flight_summary=str(ball_flight_summary or "").strip(),
+        primary_priority=str(primary_priority or "").strip(),
+    )
+    db.add(analysis)
+    db.flush()
+    initialize_p_checkpoints(db, analysis)
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/swing-analysis/{analysis.id}/coaching",
+        status_code=303,
+    )
+
+
+@router.post("/{analysis_id}/workspace/original-video", name="swing_analysis_original_video_link")
+def swing_analysis_original_video_link(
+    analysis_id: str,
+    video_id: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    analysis = get_analysis(db, analysis_id)
+    if analysis is None:
+        raise HTTPException(404, "Swing analysis not found")
+
+    video = db.get(SessionVideo, str(video_id))
+    if (
+        video is None
+        or video.session_id != analysis.session_id
+        or video.student_id != analysis.student_id
+        or video.video_type != "original_swing"
+        or video.source == OBSERVATION_ONLY_SOURCE
+    ):
+        raise HTTPException(400, "Choose an original swing video from this coaching session.")
+
+    previous_video = analysis.original_video
+    analysis.original_video_id = video.id
+    analysis.camera_view = video.camera_view or analysis.camera_view
+    analysis.club = analysis.club or video.club or ""
+
+    if previous_video and previous_video.source == OBSERVATION_ONLY_SOURCE:
+        db.delete(previous_video)
+
+    db.commit()
+    return RedirectResponse(
+        url=f"/swing-analysis/{analysis.id}/coaching",
+        status_code=303,
     )
 
 

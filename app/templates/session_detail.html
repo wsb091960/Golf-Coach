@@ -33,10 +33,10 @@
                     <a class="sidebar-nav__link nav-item {% if current_path.startswith('/students') %}is-active active{% endif %}" href="/students" {% if current_path.startswith('/students') %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">◉</span><span>Students</span>
                     </a>
-                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') %}aria-current="page"{% endif %}>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/sessions') and not request.query_params.get('selected_shot') %}is-active active{% endif %}" href="/sessions" {% if current_path.startswith('/sessions') and not request.query_params.get('selected_shot') %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">◷</span><span>Sessions</span>
                     </a>
-                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/ball-flight-simulator') %}is-active active{% endif %}" href="/ball-flight-simulator" {% if current_path.startswith('/ball-flight-simulator') %}aria-current="page"{% endif %}>
+                    <a class="sidebar-nav__link nav-item {% if current_path.startswith('/ball-flight-simulator') or (current_path.startswith('/sessions') and request.query_params.get('selected_shot')) %}is-active active{% endif %}" href="/ball-flight-simulator" {% if current_path.startswith('/ball-flight-simulator') or (current_path.startswith('/sessions') and request.query_params.get('selected_shot')) %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">◌</span><span>Ball Flight Simulator</span>
                     </a>
                     <a class="sidebar-nav__link nav-item {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}is-active active{% endif %}" href="/imports/garmin" {% if current_path.startswith('/imports') or current_path.startswith('/swing-analysis') %}aria-current="page"{% endif %}>

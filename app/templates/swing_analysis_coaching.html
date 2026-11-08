@@ -97,7 +97,7 @@
             </div>
         </header>
 
-        <div class="analysis-workflow-shell">
+        <div class="analysis-workflow-shell" id="analysis-workflow">
             <div class="analysis-workflow-label">Analysis Workflow</div>
             <nav class="analysis-step-nav" aria-label="Analysis workflow">
             <a class="analysis-step-link" href="/swing-analysis/{{ analysis.id }}/onform-import">Onform Import</a>
@@ -106,7 +106,112 @@
         </nav>
         </div>
 
-<nav class="workspace-tabs" role="tablist" data-workspace-tabs="coaching-analysis" data-default-tab="flight"><button type="button" role="tab" data-workspace-tab="flight">Ball Flight</button><button type="button" role="tab" data-workspace-tab="tgm">TGM</button><button type="button" role="tab" data-workspace-tab="tpi">TPI</button><button type="button" role="tab" data-workspace-tab="measurements">Measurements</button><button type="button" role="tab" data-workspace-tab="priorities">Priorities</button></nav>
+<nav class="workspace-tabs" role="tablist" data-workspace-tabs="coaching-analysis" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="flight">Ball Flight</button><button type="button" role="tab" data-workspace-tab="tgm">TGM</button><button type="button" role="tab" data-workspace-tab="tpi">TPI</button><button type="button" role="tab" data-workspace-tab="measurements">Measurements</button><button type="button" role="tab" data-workspace-tab="priorities">Priorities</button></nav>
+
+<section class="analysis-layout gc-coach-overview" data-workspace-panel="overview" data-workspace-group="coaching-analysis">
+    <div class="gc-overview-main">
+        <article class="analysis-card gc-overview-video">
+            <div class="gc-overview-card-head">
+                <div><span class="section-kicker">Swing video · Coach reviewed</span><h2>Movement through impact</h2></div>
+                <a class="gc-text-link" href="/swing-analysis/{{ analysis.id }}/p-position">Review P1–P10 ↗</a>
+            </div>
+            {% if analysis.original_video and analysis.original_video.id %}
+            <div class="gc-video-frame">
+                <video controls preload="metadata" src="/sessions/{{ analysis.session_id }}/videos/{{ analysis.original_video.id }}/stream"></video>
+            </div>
+            {% else %}
+            <div class="gc-video-empty"><strong>No swing video attached</strong><span>Use P-Position Analysis to add or review swing video.</span></div>
+            {% endif %}
+            <div class="gc-position-track" aria-label="P-position review points">
+                {% for point in ["P6", "P7", "P8", "P9", "P10"] %}
+                <a href="/swing-analysis/{{ analysis.id }}/p-position" class="gc-position-point">
+                    <span class="gc-position-dot {% if analysis.checkpoints and (analysis.checkpoints | selectattr('position', 'equalto', point) | list | length) %}is-recorded{% endif %}"></span>
+                    <strong>{{ point }}</strong>
+                    <small>{% set cp = (analysis.checkpoints | selectattr('position', 'equalto', point) | list | first) if analysis.checkpoints else none %}{% if cp and cp.time_seconds is not none %}{{ "%.2f"|format(cp.time_seconds) }}s{% else %}Review{% endif %}</small>
+                </a>
+                {% endfor %}
+            </div>
+            <div class="gc-observation-box">
+                <span class="gc-data-label">Observed pattern</span>
+                <p>{% if analysis.primary_finding %}{{ analysis.primary_finding }}{% elif analysis.coaching_observations %}{{ analysis.coaching_observations }}{% else %}Add the swing observation in Priorities. An observation is not a diagnosis by itself.{% endif %}</p>
+                <span class="gc-source-badge gc-source-video">Video / coach observation</span>
+            </div>
+        </article>
+
+        <article class="analysis-card gc-integrated-card">
+            <div class="gc-overview-card-head">
+                <div><span class="section-kicker">Connected assessment</span><h2>TGM · TPI · P-system</h2></div>
+            </div>
+            <div class="gc-framework-grid">
+                <section class="gc-framework-panel">
+                    <span class="gc-framework-title">TGM</span>
+                    <p><strong>Imperatives</strong><br>Clubpath control · Clubface alignment · Timing</p>
+                    <p><strong>Essentials</strong><br>Head / C7 reference · Balance · Rhythm</p>
+                    <small>{% if analysis.tgm_pattern and analysis.tgm_pattern != "undetermined" %}{{ analysis.tgm_pattern|title }} pattern recorded{% else %}Pattern not recorded{% endif %}</small>
+                </section>
+                <section class="gc-framework-panel">
+                    <span class="gc-framework-title">TPI</span>
+                    <p>Check mobility, stability, balance, and sequencing where the swing evidence points.</p>
+                    <small>{% if analysis.tpi_physical_screen_recommended %}Physical screen recommended{% else %}Screen findings inform a hypothesis{% endif %}</small>
+                </section>
+                <section class="gc-framework-panel gc-framework-panel-wide">
+                    <span class="gc-framework-title">P1–P10 checkpoints</span>
+                    <div class="gc-p-check-list">
+                        {% for point in ["P6", "P7", "P8", "P9", "P10"] %}
+                        {% set cp = (analysis.checkpoints | selectattr('position', 'equalto', point) | list | first) if analysis.checkpoints else none %}
+                        <span><b>{{ point }}</b><i class="{% if cp and cp.time_seconds is not none %}is-set{% endif %}"></i>{% if cp and cp.time_seconds is not none %}{{ "%.2f"|format(cp.time_seconds) }}s{% else %}Coach review{% endif %}</span>
+                        {% endfor %}
+                    </div>
+                    <a class="gc-text-link" href="/swing-analysis/{{ analysis.id }}/p-position">Open checkpoint review →</a>
+                </section>
+            </div>
+        </article>
+    </div>
+
+    <div class="gc-overview-side">
+        <article class="analysis-card gc-laws-card">
+            <div class="gc-overview-card-head">
+                <div><span class="section-kicker">Ball-flight outcomes</span><h2>Six laws</h2></div>
+                {% if analysis.shot %}<span class="gc-source-badge">Garmin R10</span>{% endif %}
+            </div>
+            <div class="gc-law-list">
+                <div><span><b>1</b> Centeredness of contact</span><strong class="gc-law-value is-review">Not directly measured</strong></div>
+                <div><span><b>2</b> Clubface angle</span><strong class="gc-law-value">{% if analysis.shot and analysis.shot.club_face is not none %}{{ "%.1f"|format(analysis.shot.club_face) }}°{% else %}Not recorded{% endif %}</strong></div>
+                <div><span><b>3</b> Clubhead path</span><strong class="gc-law-value">{% if analysis.shot and analysis.shot.club_path is not none %}{{ "%.1f"|format(analysis.shot.club_path) }}°{% else %}Not recorded{% endif %}</strong></div>
+                <div><span><b>4</b> Clubhead speed</span><strong class="gc-law-value">{% if analysis.shot and analysis.shot.club_speed is not none %}{{ "%.1f"|format(analysis.shot.club_speed) }} mph{% else %}Not recorded{% endif %}</strong></div>
+                <div><span><b>5</b> Angle of approach</span><strong class="gc-law-value">{% if analysis.shot and analysis.shot.attack_angle is not none %}{{ "%.1f"|format(analysis.shot.attack_angle) }}°{% else %}Not recorded{% endif %}</strong></div>
+                <div><span><b>6</b> Dynamic loft</span><strong class="gc-law-value">{% if analysis.get("dynamic_loft") is not none %}{{ "%.1f"|format(analysis.get("dynamic_loft")) }}°{% else %}Not recorded{% endif %}</strong></div>
+            </div>
+            <p class="gc-law-note">Values come from the linked shot when available. Contact centeredness needs strike evidence; smash factor is supporting context, not a direct measurement.</p>
+        </article>
+
+        <article class="analysis-card gc-principles-card">
+            <div class="gc-overview-card-head">
+                <div><span class="section-kicker">Movement factors</span><h2>14 principles</h2></div>
+            </div>
+            <p class="gc-principle-intro">Candidate principles are prompts for assessment, not diagnoses from a finish position alone.</p>
+            <div class="gc-principle-tags"><span>Setup</span><span>Swing plane</span><span>Arc width</span><span>Arc length</span><span>Lever system</span><span>Release</span><span>Dynamic balance</span><span>Swing center</span><span>Clubhead lag</span><span>Connection</span><span>Lead wrist at impact</span><span>Tempo</span><span>Timing</span><span>Rhythm</span></div>
+            <details class="gc-principle-candidates">
+                <summary>Common chicken-wing candidates to check</summary>
+                <p>Connection · Release · Swing center · Dynamic balance · Arc width · Timing · Setup</p>
+                <small>Confirm the cause with impact data, P-position review, and relevant TPI screening before prescribing a change.</small>
+            </details>
+        </article>
+    </div>
+
+    <article class="analysis-card gc-coaching-plan">
+        <div class="gc-coaching-plan-head">
+            <div><span class="section-kicker">Coach’s next step</span><h2>Working hypothesis &amp; retest</h2></div>
+            <a class="button button-secondary" href="#analysis-workflow">Edit coaching notes</a>
+        </div>
+        <div class="gc-coaching-plan-grid">
+            <div><span class="gc-data-label">Primary priority</span><p>{% if analysis.primary_priority %}{{ analysis.primary_priority }}{% else %}Choose one evidence-backed principle to work on.{% endif %}</p></div>
+            <div><span class="gc-data-label">Practice plan</span><p>{% if analysis.recommended_drills %}{{ analysis.recommended_drills }}{% else %}Add a drill or cue in Priorities after reviewing the evidence.{% endif %}</p></div>
+            <div><span class="gc-data-label">Retest</span><p>Compare the same shot type and target. Review the linked R10 outcomes and whether the movement change is repeatable.</p></div>
+        </div>
+        <p class="gc-provenance-note">Measured launch data, video observations, and coaching hypotheses are kept distinct. No cause is inferred from the finish alone.</p>
+    </article>
+</section>
 
 <section class="analysis-layout">
 

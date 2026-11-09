@@ -4,7 +4,24 @@ from mcp.server.transport_security import TransportSecuritySettings
 
 from app.services.simulator_mcp_coaching import analyze_simulator_swing
 
-mcp = FastMCP("WSBCO Golf Coach Simulator")
+mcp = FastMCP(
+    "WSBCO Golf Coach Simulator",
+    streamable_http_path="/",
+    stateless_http=True,
+    json_response=True,
+    transport_security=TransportSecuritySettings(
+        allowed_hosts=[
+            "wsbco-golf-coach.onrender.com",
+            "busterball.com",
+            "www.busterball.com",
+        ],
+        allowed_origins=[
+            "https://wsbco-golf-coach.onrender.com",
+            "https://busterball.com",
+            "https://www.busterball.com",
+        ],
+    ),
+)
 
 
 @mcp.tool()
@@ -68,20 +85,4 @@ def analyze_simulator_shot(
 
 # The endpoint accepts only explicitly supplied shot values and coaching notes.
 # It has no database access and is deliberately independent of owner/session auth.
-http_app = mcp.streamable_http_app(
-    streamable_http_path="/",
-    stateless_http=True,
-    json_response=True,
-    transport_security=TransportSecuritySettings(
-        allowed_hosts=[
-            "wsbco-golf-coach.onrender.com",
-            "busterball.com",
-            "www.busterball.com",
-        ],
-        allowed_origins=[
-            "https://wsbco-golf-coach.onrender.com",
-            "https://busterball.com",
-            "https://www.busterball.com",
-        ],
-    ),
-)
+http_app = mcp.streamable_http_app()

@@ -22,6 +22,7 @@ from app.routers.ball_flight_simulator import router as ball_flight_simulator_ro
 from app.routers.students import router as students_router
 from app.routers.videos import router as videos_router
 from app.routers.biomechanics import router as biomechanics_router
+from app.routers.swing_contact_sheet import router as swing_contact_sheet_router
 from app.routers import crm_sync as crm_sync_router
 from app.mcp.simulator_server import mcp as simulator_mcp, http_app as simulator_mcp_http_app
 
@@ -64,6 +65,7 @@ app.include_router(importer_router)
 app.include_router(analysis_router)
 app.include_router(videos_router)
 app.include_router(biomechanics_router)
+app.include_router(swing_contact_sheet_router)
 app.include_router(gapping_router)
 
 @app.get("/health", name="health")

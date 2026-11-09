@@ -109,6 +109,8 @@
             </div>
             <form id="flight-input-form" class="sim-input-grid" data-local-submit>
                 <label>Ball speed (mph)<input name="ball_speed" type="number" min="20" max="250" step="0.1" value="150"></label>
+                <label>Smash factor (assumed)<input name="smash_factor" type="number" min="1.0" max="1.6" step="0.01" value="1.50"></label>
+                <label>Club speed (estimated mph)<input name="club_speed_estimate" type="number" value="100.0" readonly aria-readonly="true"></label>
                 <label>Launch angle (°)<input name="launch_angle" type="number" min="0" max="60" step="0.1" value="14"></label>
                 <label>Start direction (°)<input name="launch_direction" type="number" min="-30" max="30" step="0.1" value="0"></label>
                 <label>Club face to target (°)<input name="club_face" type="number" min="-30" max="30" step="0.1" value="0"></label>
@@ -121,7 +123,7 @@
                 <label>Total (yd)<input name="total_distance" type="number" min="1" max="500" step="1" value="270"></label>
                 <label>Apex (ft)<input name="apex_height" type="number" min="1" max="250" step="1" value="90"></label>
                 <div class="sim-input-actions">
-                    <small>Ball speed, launch angle, and spin rate recalculate estimated carry, total, and apex. F2P = face − path; spin axis is estimated from F2P and typical driver spin loft. Enter a measured spin axis as an override. You can still edit distances directly.</small>
+                    <small>Club speed is estimated as ball speed ÷ assumed smash factor. Ball speed, launch angle, and spin rate recalculate estimated carry, total, and apex. F2P = face − path; spin axis is estimated from F2P and typical driver spin loft. Enter a measured spin axis as an override. You can still edit distances directly.</small>
                     <button class="workspace-button" type="submit">Update Flight</button>
                 </div>
             </form>
@@ -146,5 +148,5 @@
         </section>
     </div>
 </div>
-<script src="/static/js/standalone_flight_simulator.js?v=5"></script>
+<script src="/static/js/standalone_flight_simulator.js?v=6"></script>
 {% endblock %}

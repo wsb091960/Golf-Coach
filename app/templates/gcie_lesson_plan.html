@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GCIE Lesson Plan | WSBCO Golf Coach</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f3f5f1;color:#17332c}
+header{background:#153b30;color:white;padding:20px max(20px,calc((100vw - 1040px)/2))}
+main{max-width:1040px;margin:24px auto;padding:0 20px}
+.card{background:white;border:1px solid #d9e2d9;border-radius:12px;padding:24px;margin:18px 0}
+h1{margin:6px 0}h2{color:#20513d}
+a{color:#175b46}header a{color:#e5c36a}
+button,.button{display:inline-block;border:0;border-radius:7px;background:#175b46;color:white;padding:11px 16px;cursor:pointer;text-decoration:none}
+.secondary{background:#e4eae4;color:#153b30}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:block;font-weight:600;margin:10px 0 4px}
+input,select,textarea{box-sizing:border-box;width:100%;border:1px solid #aebdb1;border-radius:6px;padding:9px;font:inherit}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;line-height:1.6}
+small{color:#637168}.notice{background:#e7f2e7;padding:12px;border-radius:8px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+@media print{header,.no-print,form{display:none!important}body{background:white}main{margin:0;max-width:none}.card{border:0;padding:0;break-inside:avoid}pre{font-size:10pt}}
+</style></head><body>
+<header><a href="/sessions/{{ session.id }}">← Back to session</a><h1>GCIE Lesson Plan 001</h1><div>{{ student.name if student else 'Student' }} · {{ session.session_date }} · Driver pull fade</div></header>
+<main>
+{% if saved %}<p class="notice" role="status">Lesson results saved as a draft GCIE case. They are not automatically approved.</p>{% endif %}
+<section class="card"><div class="no-print"><button onclick="window.print()">Print / Save as PDF</button> <a class="button secondary" href="/gcie/lesson-plans/straight-pull-to-pull-fade">Open reference text</a></div>
+<h2>Straight Pull → Controlled Pull Fade</h2><p><strong>Teaching reference only:</strong> Target values and drills are proposed, not measured student results. The earlier correction produced a straighter shot; the pull fade remains unverified.</p>
+<pre>{{ plan }}</pre></section>
+<section class="card no-print"><h2>Record before-and-after lesson results</h2>
+<p>Use actual Garmin R10 readings where available. Saving creates a draft case; approval remains a separate coach action.</p>
+<form method="post" action="/gcie/sessions/{{ session.id }}/lesson-plan/outcome">
+<label for="problem">Coaching problem / objective</label><input id="problem" name="problem" value="Straight pull to controlled pull fade" required>
+<div class="grid">
+{% for key, label in [('club_path','Club path (°)'),('club_face','Clubface (°)'),('face_to_path','Face-to-path (°)'),('launch_direction','Launch direction (°)'),('offline_distance','Offline distance (yards)')] %}
+<div><label for="{{ key }}_before">{{ label }} — Before</label><input id="{{ key }}_before" name="{{ key }}_before" type="number" step="any"></div>
+<div><label for="{{ key }}_after">{{ label }} — After</label><input id="{{ key }}_after" name="{{ key }}_after" type="number" step="any"></div>
+{% endfor %}
+</div>
+<label for="outcome_status">Coach assessment</label><select name="outcome_status" id="outcome_status" required>
+<option value="not_tested">Not yet tested</option><option value="achieved">Controlled pull fade achieved</option>
+<option value="partial">Partial improvement</option><option value="no_improvement">No improvement</option></select>
+<label for="coach_notes">Coach observations / drill response / follow-up</label>
+<textarea id="coach_notes" name="coach_notes" rows="5"></textarea>
+<p><button type="submit">Save draft GCIE case</button></p>
+</form></section>
+{% if cases %}<section class="card no-print"><h2>Recorded cases for this session</h2>
+{% for case in cases %}<p><strong>{{ case.created_at.strftime('%Y-%m-%d %H:%M') }}</strong> · {{ case.status }} · {{ case.outcome or 'Outcome pending' }} · <a href="/gcie/cases/{{ case.id }}">View case JSON</a></p>{% endfor %}
+</section>{% endif %}
+</main></body></html>

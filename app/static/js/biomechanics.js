@@ -71,7 +71,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   Object.keys(phaseConfig).forEach(phase=>{const b=document.createElement('button');b.type='button';b.className='frame-button';b.dataset.phase=phase;b.innerHTML=`<strong>${phaseLabels[phase].split(' · ')[0]}</strong><span>${phaseLabels[phase].split(' · ')[1]}</span><small>${measuredPhases.has(phase)?'Measured':'Visual'}</small>`;b.title=measuredPhases.has(phase)?'Included in numerical biomechanics':'Coach-verified visual checkpoint';b.addEventListener('click',()=>{activePhase=phase;updatePhase()});frameStrip.appendChild(b)});
 
-  function loadVideo(src){empty.style.display='grid';empty.querySelector('strong').textContent='Loading video…';video.src=src;video.load()}
+  const clubReviewFrame=document.querySelector('#clubKeyframeFrame');
+  let reviewSource=null;
+  function sendReviewSource(){
+    if(!clubReviewFrame?.contentWindow||!reviewSource)return;
+    clubReviewFrame.contentWindow.postMessage({type:'wsbco-club-video',...reviewSource},window.location.origin);
+  }
+  clubReviewFrame?.addEventListener('load',sendReviewSource);
+  function loadVideo(src){if(src.startsWith('/sessions/')){reviewSource={src};sendReviewSource()}empty.style.display='grid';empty.querySelector('strong').textContent='Loading video…';video.src=src;video.load()}
   video.addEventListener('loadedmetadata',()=>{resizeCanvas();empty.style.display='none';message(`Pause at ${phaseLabels[activePhase]}, then click Capture current position.`)});
   video.addEventListener('error',()=>{empty.style.display='grid';empty.querySelector('strong').textContent='Video could not be loaded';emptyDetail.textContent='Return to the session and confirm the video still plays.';message('The selected video stream could not be opened.',true)});
   window.addEventListener('resize',drawPoints);
@@ -102,7 +109,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadSessionShots();
 
 
-  document.querySelector('#videoInput').addEventListener('change',event=>{const file=event.target.files[0];if(file)loadVideo(URL.createObjectURL(file))});
+  document.querySelector('#videoInput').addEventListener('change',event=>{const file=event.target.files[0];if(file){reviewSource={file};sendReviewSource();loadVideo(URL.createObjectURL(file))}});
   document.querySelector('#captureFrame').addEventListener('click',()=>{
     if(!video.src||video.readyState<1){message('Load a video first.',true);return}
     video.pause();frames[activePhase]={time:video.currentTime,points:{}};marking=true;canvas.classList.add('is-marking');phaseButton(activePhase).classList.remove('complete');drawPoints();message(`Click the ${pointLabels[nextPoint()]}.`);

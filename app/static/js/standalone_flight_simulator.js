@@ -10,26 +10,54 @@
     const sim = { camera: "behind", progress: 1, speed: 1, playing: false, frame: null, last: 0 };
     let shot = readInputs();
 
+    function optionalNumber(name) {
+        const field = fields.namedItem(name);
+        if (!field || field.value.trim() === "") return null;
+        const value = Number(field.value);
+        return Number.isFinite(value) ? value : null;
+    }
+
     function number(name, fallback = 0) {
-        const value = Number(fields.namedItem(name)?.value);
-        return Number.isFinite(value) ? value : fallback;
+        return optionalNumber(name) ?? fallback;
     }
 
     function readInputs() {
+        const clubFace = number("club_face", 0);
+        const clubPath = number("club_path", 0);
+        const carry = number("carry_distance", 250);
         return {
             ball_speed: number("ball_speed", 150),
             launch_angle: number("launch_angle", 14),
             launch_direction: number("launch_direction", 0),
-            spin_axis: number("spin_axis", 0),
-            carry_distance: number("carry_distance", 250),
-            total_distance: Math.max(number("total_distance", 270), number("carry_distance", 250)),
+            club_face: clubFace,
+            club_path: clubPath,
+            face_to_path: clubFace - clubPath,
+            spin_axis: optionalNumber("spin_axis"),
+            carry_distance: carry,
+            total_distance: Math.max(number("total_distance", 270), carry),
             apex_height: number("apex_height", 90),
         };
     }
 
+    function refreshFaceToPath() {
+        const face = optionalNumber("club_face") ?? 0;
+        const path = optionalNumber("club_path") ?? 0;
+        const derived = face - path;
+        const field = fields.namedItem("face_to_path");
+        if (field) field.value = derived.toFixed(1);
+        shot.club_face = face;
+        shot.club_path = path;
+        shot.face_to_path = derived;
+    }
+
+    fields.namedItem("club_face").addEventListener("input", refreshFaceToPath);
+    fields.namedItem("club_path").addEventListener("input", refreshFaceToPath);
+    refreshFaceToPath();
+
     function finishYards() {
         const start = Math.tan(shot.launch_direction * Math.PI / 180) * shot.carry_distance;
-        const curve = shot.spin_axis * shot.carry_distance / 125;
+        const curveAngle = shot.spin_axis ?? shot.face_to_path;
+        const curve = curveAngle * shot.carry_distance / 125;
         return start + curve;
     }
 
@@ -155,7 +183,8 @@
         const carry = shot.carry_distance;
         const distance = carry * t;
         const startOffset = Math.tan(shot.launch_direction * Math.PI / 180) * distance;
-        const curveOffset = shot.spin_axis * carry / 125 * t * t;
+        const curveAngle = shot.spin_axis ?? shot.face_to_path;
+        const curveOffset = curveAngle * carry / 125 * t * t;
         const lateral = startOffset + curveOffset;
         if (sim.camera === "side") {
             const x = 54 + distance / bounds.max * (w - 94);

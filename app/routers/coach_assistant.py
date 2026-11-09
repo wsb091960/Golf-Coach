@@ -297,7 +297,7 @@ async def run_standalone_coaching_analysis(request: Request):
     values = {key: str(form.get(key, "") or "").strip() for key, _, _ in SIMULATOR_FIELDS}
     for key in ("handedness", "coaching_question", "swing_observations", "p_positions", "sequencing", "mobility", "stability", "balance"):
         values[key] = str(form.get(key, "") or "").strip()
-    metrics_text = "\\n".join(
+    metrics_text = "\n".join(
         f"{label}: {values[key]}{(' ' + unit) if unit else ''}"
         for key, label, unit in SIMULATOR_FIELDS
         if values.get(key)

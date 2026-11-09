@@ -36,14 +36,24 @@ button.addEventListener('click',async()=>{
   if(!/^\\d+(\\s*,\\s*\\d+){9}$/.test(indices)){status.textContent='Enter exactly ten frame numbers, separated by commas.';return}
   button.disabled=true;button.textContent='Processing…';
   status.textContent='Uploading '+file.files[0].name+' and decoding frames. Please wait…';
-  try{
-    const response=await fetch('/api/biomechanics/contact-sheet',{method:'POST',body:new FormData(document.querySelector('#form'))});
-    if(!response.ok){status.textContent='Server error ('+response.status+'): '+(await response.text()).slice(0,450);return}
-    const blob=await response.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');
+  const request=new XMLHttpRequest();
+  request.open('POST','/api/biomechanics/contact-sheet');
+  request.responseType='blob';request.timeout=90000;
+  let uploaded=false;
+  request.upload.onprogress=e=>{status.textContent=e.lengthComputable?'Uploading: '+Math.round(e.loaded/e.total*100)+'%':'Uploading video…'};
+  request.upload.onload=()=>{uploaded=true;status.textContent='Upload complete. Server is decoding frames…'};
+  const reset=()=>{button.disabled=false;button.textContent='Generate ten-frame sheet'};
+  request.onload=()=>{reset();if(request.status!==200){status.textContent='Server error '+request.status+'. Try a shorter MP4.';return}
+    const url=URL.createObjectURL(request.response),a=document.createElement('a');
     a.href=url;a.download='WSBCO_P1-P10.zip';document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),30000);
-    status.textContent='Completed: ten-frame ZIP download started. Check Downloads on your device.';
-  }catch(err){status.textContent='Connection or upload error: '+err.message}
-  finally{button.disabled=false;button.textContent='Generate ten-frame sheet'}
+    status.textContent='Finished. If no download appeared, tap this link: ';
+    const link=document.createElement('a');link.href=url;link.download='WSBCO_P1-P10.zip';link.textContent='Download ZIP';link.style.color='#ffe49c';status.appendChild(link);
+    setTimeout(()=>URL.revokeObjectURL(url),120000);
+  };
+  request.onerror=()=>{reset();status.textContent='Network error while '+(uploaded?'processing':'uploading')};
+  request.ontimeout=()=>{reset();status.textContent='Timed out after 90 seconds. Try a shorter MP4.'};
+  request.onabort=()=>{reset();status.textContent='Request cancelled'};
+  request.send(new FormData(document.querySelector('#form')));
+
 });
 </script></html>"""

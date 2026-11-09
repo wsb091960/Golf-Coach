@@ -7,14 +7,14 @@
 <input id="file" type="file" accept="video/*"><video id="video" playsinline preload="metadata" style="display:none"></video>
 <div><label>Frame <input id="frame" type="number" min="0" value="0" step="1"></label><button id="seek">Go to frame</button><label>FPS <input id="fps" type="number" value="60" min="1" step=".001"></label><button id="prev">−1 frame</button><button id="next">+1 frame</button></div>
 <div id="wrap"><canvas id="canvas" width="1280" height="720" aria-label="Video frame for marking club grip and clubhead"></canvas></div>
-<div><button id="reset">Clear current marks</button><button id="save">Save keyframe</button><button id="export">Export keyframes JSON</button></div>
+<div><button id="reset">Clear current marks</button><button id="save">Save keyframe</button><button id="export">Export keyframes JSON</button></div>\n<div><label><input type="checkbox" id="coachVerified"> I have reviewed and verified the grip and clubhead positions for every saved keyframe</label></div>
 <div id="status" role="status">Load a video to begin.</div><pre id="summary"></pre></main>
 <script>
 (()=>{
 const video=document.querySelector('#video'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d');
-const status=document.querySelector('#status'),frame=document.querySelector('#frame'),fps=document.querySelector('#fps'),summary=document.querySelector('#summary');
+const status=document.querySelector('#status'),frame=document.querySelector('#frame'),fps=document.querySelector('#fps'),summary=document.querySelector('#summary'),verified=document.querySelector('#coachVerified');
 let points=[],saved=new Map(),url=null,loaded=false;
-function setSource(src, ownsUrl=false){if(url)URL.revokeObjectURL(url);url=ownsUrl?src:null;saved.clear();points=[];loaded=false;video.src=src;video.load();summary.textContent='';}
+function setSource(src, ownsUrl=false){if(url)URL.revokeObjectURL(url);url=ownsUrl?src:null;saved.clear();points=[];loaded=false;verified.checked=false;video.src=src;video.load();summary.textContent='';}
 window.addEventListener('message',e=>{if(e.origin!==window.location.origin)return;const data=e.data;if(!data||data.type!=='wsbco-club-video')return;if(typeof data.src==='string'&&data.src.startsWith('/sessions/'))setSource(data.src);else if(data.file instanceof Blob)setSource(URL.createObjectURL(data.file),true);});
 const say=s=>status.textContent=s;
 const frameNumber=()=>Math.max(0,Math.round(Number(frame.value)||0));
@@ -49,16 +49,16 @@ document.querySelector('#next').onclick=()=>{frame.value=frameNumber()+1;seek()}
 document.querySelector('#reset').onclick=()=>{points=[];draw();say('Marks cleared.')};
 document.querySelector('#save').onclick=()=>{
  if(points.length!==2)return say('Mark both grip and clubhead first.');
- const f=frameNumber();saved.set(f,points.map(p=>[...p]));
+ const f=frameNumber();saved.set(f,points.map(p=>[...p]));verified.checked=false;
  summary.textContent=[...saved.keys()].sort((a,b)=>a-b).join(', ');
  say('Saved frame '+f+'. '+saved.size+' keyframes ready.');
 };
 document.querySelector('#export').onclick=()=>{
  if(saved.size<2)return say('At least two marked keyframes required.');
  const data=[...saved].sort((a,b)=>a[0]-b[0]).map(([frame_index,p])=>({frame_index,club_grip:p[0],club_head:p[1]}));
- const blob=new Blob([JSON.stringify({fps:Number(fps.value),seeds:data,verified:false},null,2)],{type:'application/json'});
+ const blob=new Blob([JSON.stringify({fps:Number(fps.value),seeds:data,verified:verified.checked},null,2)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='club_keyframes.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
- say('Exported '+data.length+' provisional keyframes. Coach verification still required.');
+ say('Exported '+data.length+(verified.checked?' coach-verified':' provisional')+' keyframes.');
 };
 })();
 </script></body></html>

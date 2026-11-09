@@ -1,5 +1,6 @@
 """Owner-authenticated GCIE JSON endpoints. No LLM-generated case is auto-approved."""
 from datetime import datetime
+from urllib.parse import quote_plus
 from pathlib import Path
 from fastapi.responses import PlainTextResponse, HTMLResponse, RedirectResponse
 from fastapi import Form, Request
@@ -207,4 +208,5 @@ def generated_lesson_plan(request: Request, plan_id: str, db: Session = Depends(
     if record is None:
         raise HTTPException(404, "Lesson plan not found")
     return templates.TemplateResponse(request=request, name="gcie_generated_lesson.html",
-                                      context={"plan": record, "active_page": "lesson-plans"})
+                                      context={"plan": record, "active_page": "lesson-plans",
+                                               "video_links": [(name, "https://www.youtube.com/results?search_query=" + quote_plus(name + " golf " + record.pattern.replace("-", " ") + " " + record.club)) for name in ("Clay Ballard", "Eric Cogorno")]})

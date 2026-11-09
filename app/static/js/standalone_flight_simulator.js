@@ -51,6 +51,7 @@
         const carry = number("carry_distance", 250);
         return {
             ball_speed: number("ball_speed", 150),
+            smash_factor: number("smash_factor", 1.50),
             spin_rate: number("spin_rate", 2600),
             launch_angle: number("launch_angle", 14),
             launch_direction: number("launch_direction", 0),
@@ -63,6 +64,16 @@
             total_distance: Math.max(number("total_distance", 270), carry),
             apex_height: number("apex_height", 90),
         };
+    }
+
+    function refreshEstimatedClubSpeed() {
+        const ballSpeed = optionalNumber("ball_speed");
+        const smashFactor = optionalNumber("smash_factor");
+        const output = fields.namedItem("club_speed_estimate");
+        if (!output) return;
+        output.value = ballSpeed !== null && smashFactor !== null && smashFactor > 0
+            ? (ballSpeed / smashFactor).toFixed(1)
+            : "";
     }
 
     function estimateKey(input) {
@@ -99,10 +110,13 @@
 
     fields.namedItem("club_face").addEventListener("input", refreshFaceToPath);
     fields.namedItem("club_path").addEventListener("input", refreshFaceToPath);
+    fields.namedItem("ball_speed").addEventListener("input", refreshEstimatedClubSpeed);
+    fields.namedItem("smash_factor").addEventListener("input", refreshEstimatedClubSpeed);
     ["ball_speed", "launch_angle", "spin_rate"].forEach(name => {
         fields.namedItem(name).addEventListener("change", () => updateFlight(true));
     });
     refreshFaceToPath();
+    refreshEstimatedClubSpeed();
 
     function finishYards() {
         const start = Math.tan(shot.launch_direction * Math.PI / 180) * shot.carry_distance;
@@ -348,6 +362,7 @@
     }
 
     function updateFlight(recalculateOutcomes = false) {
+        refreshEstimatedClubSpeed();
         const nextShot = readInputs();
         refreshFaceToPath();
         nextShot.spin_axis_estimate = shot.spin_axis_estimate;
@@ -487,7 +502,7 @@
             ["1. Centeredness of Contact", "Not entered. Check face strike with spray or impact tape; off-center contact can alter speed and curve."],
             ["2. Clubface Angle at Impact", `Face ${angleLabel(input.club_face)} to target. ${startNote}`],
             ["3. Clubpath at Impact", `Path ${angleLabel(input.club_path)} to target. F2P is ${angleLabel(f2p)} (face minus path). ${pathNote}`],
-            ["4. Clubhead Speed at Impact", `Ball speed is ${input.ball_speed.toFixed(1)} mph; clubhead speed is not entered, so smash efficiency cannot be checked.`],
+            ["4. Clubhead Speed at Impact", `Estimated at ${fields.namedItem("club_speed_estimate").value} mph using a ${input.smash_factor.toFixed(2)} assumed smash factor; verify with measured club speed and strike quality.`],
             ["5. Angle of Approach at Impact", "Not entered. Measure attack angle; do not infer it from the shot curve."],
             ["6. Dynamic Loft at Impact", `Launch is ${input.launch_angle.toFixed(1)}° and spin is ${input.spin_rate.toFixed(0)} rpm. Dynamic loft is not entered, so verify it before making a loft or attack-angle change.`],
         ];

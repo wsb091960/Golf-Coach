@@ -233,7 +233,7 @@
         const carry = shot.carry_distance;
         const distance = carry * t;
         const startOffset = Math.tan(shot.launch_direction * Math.PI / 180) * distance;
-        const curveAngle = shot.spin_axis ?? shot.face_to_path;
+        const curveAngle = shot.spin_axis ?? shot.spin_axis_estimate;
         const curveOffset = curveAngle * carry / 125 * t * t;
         const lateral = startOffset + curveOffset;
         if (sim.camera === "side") {
@@ -428,6 +428,117 @@
     document.getElementById("flight-speed").addEventListener("change", event => {
         sim.speed = Number(event.target.value) || 1;
     });
+
+    function angleLabel(value) {
+        return \`${value >= 0 ? "+" : ""}${value.toFixed(1)}°\`;
+    }
+
+    function shotPattern(startDirection, spinAxis) {
+        const start = startDirection < -0.5 ? "left" : startDirection > 0.5 ? "right" : "near target";
+        const curve = spinAxis < -1 ? "left" : spinAxis > 1 ? "right" : "mostly straight";
+        if (start === "left" && curve === "right") return "Pull-fade";
+        if (start === "left" && curve === "left") return "Pull / pull-hook";
+        if (start === "right" && curve === "left") return "Push-draw";
+        if (start === "right" && curve === "right") return "Push-fade";
+        if (start === "near target" && curve === "right") return "Fade";
+        if (start === "near target" && curve === "left") return "Draw";
+        return "Mostly straight";
+    }
+
+    function analyzeLawsAndPrinciples() {
+        const latest = readInputs();
+        updateFlight(estimateKey(latest) !== lastEstimateKey);
+        const input = readInputs();
+        input.spin_axis_estimate = shot.spin_axis_estimate;
+        const axis = input.spin_axis ?? input.spin_axis_estimate;
+        const pattern = shotPattern(input.launch_direction, axis);
+        const f2p = input.face_to_path;
+
+        const focus = new Set([1, 12, 14]);
+        if (Math.abs(input.launch_direction) > 1.5 || Math.abs(input.club_face) > 1.5) focus.add(1);
+        if (Math.abs(input.club_path) > 2.5) {
+            focus.add(2);
+            focus.add(8);
+            focus.add(10);
+        }
+        if (Math.abs(f2p) > 1.5) {
+            focus.add(6);
+            focus.add(11);
+            focus.add(13);
+        }
+        focus.add(7);
+
+        const faceNote = f2p > 1.5
+            ? "Face is open relative to path; expect curvature to the right with centered contact."
+            : f2p < -1.5
+                ? "Face is closed relative to path; expect curvature to the left with centered contact."
+                : "Face and path are close; use start direction and strike pattern to refine the shot.";
+        const pathNote = input.club_path < -2.5
+            ? "Path is left of target; assess setup alignment, swing plane, transition, and rotation."
+            : input.club_path > 2.5
+                ? "Path is right of target; assess setup alignment, swing plane, transition, and rotation."
+                : "Path is relatively close to target line; keep it repeatable while controlling face.";
+        const startNote = input.launch_direction < -1.5
+            ? "Ball starts left; check face direction and verify the target line before changing motion."
+            : input.launch_direction > 1.5
+                ? "Ball starts right; check face direction and verify the target line before changing motion."
+                : "Ball starts near target; use face-to-path to shape the curve.";
+        const laws = [
+            ["1. Centeredness of Contact", "Not entered. Check face strike with spray or impact tape; off-center contact can alter speed and curve."],
+            ["2. Clubface Angle at Impact", \`Face ${angleLabel(input.club_face)} to target. ${startNote}\`],
+            ["3. Clubpath at Impact", \`Path ${angleLabel(input.club_path)} to target. F2P is ${angleLabel(f2p)} (face minus path). ${pathNote}\`],
+            ["4. Clubhead Speed at Impact", \`Ball speed is ${input.ball_speed.toFixed(1)} mph; clubhead speed is not entered, so smash efficiency cannot be checked.\`],
+            ["5. Angle of Approach at Impact", "Not entered. Measure attack angle; do not infer it from the shot curve."],
+            ["6. Dynamic Loft at Impact", \`Launch is ${input.launch_angle.toFixed(1)}° and spin is ${input.spin_rate.toFixed(0)} rpm. Dynamic loft is not entered, so verify it before making a loft or attack-angle change.\`],
+        ];
+        const principles = [
+            ["1. Setup", "Check grip, aim, body alignment, posture, and ball position so the target line and start direction are understood."],
+            ["2. Swing Plane", "Primary when path is substantially left or right; work toward the path needed for the intended curve."],
+            ["3. Arc Width", "Use as a support for centered contact and consistent delivery; not the first curve correction."],
+            ["4. Arc Length", "Influences speed and distance potential more than the face-to-path relationship."],
+            ["5. Lever System", "Supports speed and impact delivery; assess if speed or low point is also a goal."],
+            ["6. Release", "Coach how the face is delivered relative to the path; avoid forcing a hand roll without evidence."],
+            ["7. Dynamic Balance", "Support a stable, repeatable center and low point through impact."],
+            ["8. Swing Center", "Body rotation, arm swing, and transition/slotting can influence path direction and repeatability."],
+            ["9. Clubhead Lag", "Relates to delivery and speed; it is not by itself the cause of a particular curve."],
+            ["10. Connection", "Use to coordinate body and arms if the observed motion disrupts path or face delivery."],
+            ["11. Left Wrist Position at Impact", "For a right-handed golfer, assess lead-wrist condition as one part of face control."],
+            ["12. Tempo", "Keep the delivery repeatable while adjusting face or path."],
+            ["13. Timing", "Coordinate face and path at impact; the gap between them determines the intended curve."],
+            ["14. Rhythm", "Support a repeatable sequence; reassess the measured start line and curve after each change."],
+        ];
+        const statusFor = number => focus.has(number) ? "Primary focus" : "Supporting check";
+        const lawHTML = laws.map(([title, detail]) =>
+            \`<div class="sim-analysis-item"><strong>${title}</strong><p>${detail}</p></div>\`).join("");
+        const principleHTML = principles.map(([title, detail], index) => {
+            const number = index + 1;
+            return \`<div class="sim-analysis-item ${focus.has(number) ? "is-primary" : ""}"><strong>${title}</strong><small>${statusFor(number)}</small><p>${detail}</p></div>\`;
+        }).join("");
+        const results = document.getElementById("laws-principles-results");
+        results.innerHTML = \`
+            <div class="sim-analysis-note">
+                <h3>${pattern} · right-handed interpretation</h3>
+                <p>Start: ${angleLabel(input.launch_direction)} · Face-to-path: ${angleLabel(f2p)} · ${input.spin_axis === null ? "Estimated" : "Entered"} spin axis: ${angleLabel(axis)}. This pattern starts ${input.launch_direction < -0.5 ? "left" : input.launch_direction > 0.5 ? "right" : "near target"} and is expected to curve ${axis < -1 ? "left" : axis > 1 ? "right" : "very little"}.</p>
+                <p><strong>Coaching priority:</strong> ${faceNote} ${pathNote}</p>
+            </div>
+            <div><h3>The six laws</h3><div class="sim-analysis-grid">${lawHTML}</div></div>
+            <div><h3>The fourteen principles</h3><div class="sim-analysis-grid">${principleHTML}</div></div>
+            <p class="simulator-disclaimer">This is an estimated ball-flight interpretation, not a diagnosis of swing faults. Contact location, attack angle, and dynamic loft are not supplied here. Confirm a change with video and measured shots.</p>\`;
+        document.getElementById("laws-analysis-title").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    document.getElementById("analyze-laws-principles").addEventListener("click", analyzeLawsAndPrinciples);
+    document.getElementById("clear-flight-metrics").addEventListener("click", () => {
+        form.reset();
+        carryNeedsSync = false;
+        rolloutAllowance = 20;
+        lastEstimateKey = estimateKey(readInputs());
+        refreshFaceToPath();
+        updateFlight(false);
+        document.getElementById("laws-principles-results").innerHTML =
+            "<p>Metrics reset to the demo starting values. Enter a shot and select <strong>Analyze Laws &amp; Principles</strong> to see the coaching interpretation.</p>";
+    });
+
     form.addEventListener("submit", event => {
         event.preventDefault();
         syncTotalFromCarry();

@@ -226,7 +226,7 @@ function initializeCards() {
 function initializeForms() {
 
     const forms =
-        document.querySelectorAll("form");
+        document.querySelectorAll("form:not([data-local-submit])");
 
     forms.forEach(form => {
 

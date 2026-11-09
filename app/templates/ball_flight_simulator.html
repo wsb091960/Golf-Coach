@@ -20,7 +20,7 @@
     .sim-speed { display:flex; align-items:center; gap:7px; padding:6px 9px; border:1px solid #cedbd5; border-radius:9px; color:#174b3e; font-size:13px; font-weight:700; }
     .sim-speed select { border:0; color:inherit; background:transparent; font:inherit; }
     #standalone-flight-canvas { width:100%; aspect-ratio:1000/470; display:block; border:1px solid #d7e0dc; border-radius:11px; background:#dce9df; }
-    .sim-readout { display:grid; grid-template-columns:repeat(5,minmax(100px,1fr)); gap:9px; margin-top:12px; }
+    .sim-readout { display:grid; grid-template-columns:repeat(6,minmax(100px,1fr)); gap:9px; margin-top:12px; }
     .sim-readout div { padding:11px 13px; border:1px solid #e0e8e4; border-radius:10px; background:#f7faf8; }
     .sim-readout span { display:block; color:#718079; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
     .sim-readout strong { display:block; margin-top:5px; color:#143b30; font-size:17px; }
@@ -30,6 +30,7 @@
     .sim-input-grid { display:grid; grid-template-columns:repeat(4,minmax(110px,1fr)); gap:10px; }
     .sim-input-grid label { display:grid; gap:5px; color:#53645c; font-size:11px; font-weight:800; }
     .sim-input-grid input { min-width:0; padding:10px; border:1px solid #d7e1dd; border-radius:9px; font:inherit; font-size:14px; }
+    .sim-input-grid input[readonly] { background:#edf3f0; color:#174b3e; font-weight:800; }
     .sim-input-actions { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .sim-input-actions small { color:#718079; }
     .simulator-disclaimer { grid-column:1/-1; margin:0; color:#718079; font-size:11px; }
@@ -85,6 +86,7 @@
                 <div><span>Carry</span><strong data-readout="carry">250 yd</strong></div>
                 <div><span>Total</span><strong data-readout="total">270 yd</strong></div>
                 <div><span>Apex</span><strong data-readout="apex">90 ft</strong></div>
+                <div><span>Face-to-path</span><strong data-readout="facePath">0.0°</strong></div>
                 <div><span>Finish</span><strong data-readout="finish">0 yd</strong></div>
             </div>
         </section>
@@ -95,20 +97,23 @@
                 <h3 id="flight-inputs-title">Launch inputs</h3>
                 <p>Enter measured values or adjust the demo to see how the flight changes.</p>
             </div>
-            <form id="flight-input-form" class="sim-input-grid">
+            <form id="flight-input-form" class="sim-input-grid" data-local-submit>
                 <label>Ball speed (mph)<input name="ball_speed" type="number" min="20" max="250" step="0.1" value="150"></label>
                 <label>Launch angle (°)<input name="launch_angle" type="number" min="0" max="60" step="0.1" value="14"></label>
                 <label>Start direction (°)<input name="launch_direction" type="number" min="-30" max="30" step="0.1" value="0"></label>
-                <label>Spin axis (°)<input name="spin_axis" type="number" min="-45" max="45" step="0.1" value="0"></label>
+                <label>Club face to target (°)<input name="club_face" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Club path (°)<input name="club_path" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Face-to-path (° · auto)<input name="face_to_path" type="number" value="0" readonly aria-readonly="true"></label>
+                <label>Spin axis (optional °)<input name="spin_axis" type="number" min="-45" max="45" step="0.1" value=""></label>
                 <label>Carry (yd)<input name="carry_distance" type="number" min="1" max="450" step="1" value="250"></label>
                 <label>Total (yd)<input name="total_distance" type="number" min="1" max="500" step="1" value="270"></label>
                 <label>Apex (ft)<input name="apex_height" type="number" min="1" max="250" step="1" value="90"></label>
                 <div class="sim-input-actions">
-                    <small>Flight drawing updates from these values.</small>
+                    <small>F2P = club face − club path. If spin axis is entered, it controls the estimated curve; otherwise F2P is used as a curve estimate.</small>
                     <button class="workspace-button" type="submit">Update Flight</button>
                 </div>
             </form>
-            <p class="simulator-disclaimer">This is an estimated visualization. It does not represent a measured shot unless you enter measured launch-monitor values.</p>
+            <p class="simulator-disclaimer">The flight drawing is an estimate; values you enter can be measured launch-monitor readings.</p>
         </section>
     </div>
 </div>

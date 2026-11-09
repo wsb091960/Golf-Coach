@@ -114,10 +114,10 @@
 
     fields.namedItem("club_face").addEventListener("input", refreshFaceToPath);
     fields.namedItem("club_path").addEventListener("input", refreshFaceToPath);
-    fields.namedItem("ball_speed").addEventListener("input", () => refreshSpeedPair("ball_speed"));
-    fields.namedItem("club_speed_estimate").addEventListener("input", () => refreshSpeedPair("club_speed"));
-    fields.namedItem("smash_factor").addEventListener("input", () => refreshSpeedPair("ball_speed"));
-    ["ball_speed", "club_speed_estimate", "launch_angle", "spin_rate"].forEach(name => {
+    fields.namedItem("ball_speed").addEventListener("input", () => updateFlight(true, "ball_speed"));
+    fields.namedItem("club_speed_estimate").addEventListener("input", () => updateFlight(true, "club_speed"));
+    fields.namedItem("smash_factor").addEventListener("input", () => updateFlight(false, "ball_speed"));
+    ["launch_angle", "spin_rate"].forEach(name => {
         fields.namedItem(name).addEventListener("change", () => updateFlight(true));
     });
     refreshFaceToPath();
@@ -366,8 +366,10 @@
         });
     }
 
-    function updateFlight(recalculateOutcomes = false) {
-        refreshSpeedPair("ball_speed");
+    function updateFlight(recalculateOutcomes = false, changedSpeedField = "ball_speed") {
+        const speedField = changedSpeedField === "club_speed" ? "club_speed_estimate" : "ball_speed";
+        if (optionalNumber(speedField) === null || optionalNumber("smash_factor") === null) return;
+        refreshSpeedPair(changedSpeedField);
         const nextShot = readInputs();
         refreshFaceToPath();
         nextShot.spin_axis_estimate = shot.spin_axis_estimate;

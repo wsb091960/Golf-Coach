@@ -95,16 +95,19 @@
                 <h3 id="flight-inputs-title">Launch inputs</h3>
                 <p>Enter measured values or adjust the demo to see how the flight changes.</p>
             </div>
-            <form id="flight-input-form" class="sim-input-grid">
+            <form id="flight-input-form" class="sim-input-grid" data-local-submit>
                 <label>Ball speed (mph)<input name="ball_speed" type="number" min="20" max="250" step="0.1" value="150"></label>
                 <label>Launch angle (°)<input name="launch_angle" type="number" min="0" max="60" step="0.1" value="14"></label>
                 <label>Start direction (°)<input name="launch_direction" type="number" min="-30" max="30" step="0.1" value="0"></label>
-                <label>Spin axis (°)<input name="spin_axis" type="number" min="-45" max="45" step="0.1" value="0"></label>
+                <label>Club face to target (°)<input name="club_face" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Club path (°)<input name="club_path" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Face-to-path (° · auto)<input name="face_to_path" type="number" value="0" readonly aria-readonly="true"></label>
+                <label>Spin axis (optional °)<input name="spin_axis" type="number" min="-45" max="45" step="0.1" value=""></label>
                 <label>Carry (yd)<input name="carry_distance" type="number" min="1" max="450" step="1" value="250"></label>
                 <label>Total (yd)<input name="total_distance" type="number" min="1" max="500" step="1" value="270"></label>
                 <label>Apex (ft)<input name="apex_height" type="number" min="1" max="250" step="1" value="90"></label>
                 <div class="sim-input-actions">
-                    <small>Flight drawing updates from these values.</small>
+                    <small>F2P = club face − club path. If spin axis is entered, it controls the estimated curve; otherwise F2P is used as a curve estimate.</small>
                     <button class="workspace-button" type="submit">Update Flight</button>
                 </div>
             </form>

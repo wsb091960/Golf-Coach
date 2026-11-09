@@ -26,7 +26,10 @@ async def create_contact_sheet(
     video: UploadFile = File(...),
     frame_indices: str = Form('auto'),
     camera_angle: str = Form(...),
+    output_format: str = Form('zip'),
 ):
+    if output_format not in ("zip", "png"):
+        raise HTTPException(422, "output_format must be zip or png")
     if camera_angle not in ("fo", "dtl"):
         raise HTTPException(422, "camera_angle must be fo or dtl")
     if Path(video.filename or "").suffix.lower() not in (".mp4", ".mov", ".m4v"):
@@ -64,6 +67,8 @@ async def create_contact_sheet(
                 await run_in_threadpool(render, video_path, indices, output)
             except (ValueError, RuntimeError) as exc:
                 raise HTTPException(422, str(exc))
+            if output_format == "png":
+                return Response(output.read_bytes(), media_type="image/png", headers={"Cache-Control": "no-store"})
             manifest = json.loads(output.with_suffix(".json").read_text())
             manifest["camera_angle"] = camera_angle
             manifest["selection_method"] = "motion_window_provisional" if automatic else "manual_indices"

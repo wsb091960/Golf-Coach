@@ -1,5 +1,7 @@
 """Owner-authenticated GCIE JSON endpoints. No LLM-generated case is auto-approved."""
 from datetime import datetime
+from pathlib import Path
+from fastapi.responses import PlainTextResponse
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select, or_
@@ -105,3 +107,10 @@ def search_knowledge(q: str, limit: int = 20, db: Session = Depends(get_db)):
         ).limit(limit)
     ).all()
     return [serialize(c) for c in matches]
+
+
+@router.get("/lesson-plans/straight-pull-to-pull-fade", response_class=PlainTextResponse)
+def straight_pull_to_pull_fade_plan():
+    """Read-only permanent reference lesson plan, separate from approved case evidence."""
+    plan = Path(__file__).resolve().parent / "lesson_plans" / "001_straight_pull_to_pull_fade.md"
+    return PlainTextResponse(plan.read_text(encoding="utf-8"), media_type="text/markdown; charset=utf-8")

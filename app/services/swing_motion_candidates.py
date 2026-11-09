@@ -19,10 +19,15 @@ def propose_frames(video_path: Path) -> list[int]:
         indices=[]
         scores=[]
         previous=None
-        for index in range(0,count,stride):
-            cap.set(cv2.CAP_PROP_POS_FRAMES,index)
+        # Sequential decoding avoids expensive repeated keyframe seeks on mobile MP4.
+        index=0
+        while index<count:
+            if index % stride:
+                if not cap.grab(): break
+                index+=1
+                continue
             ok,frame=cap.read()
-            if not ok: continue
+            if not ok: break
             gray=cv2.cvtColor(cv2.resize(frame,(160,90)),cv2.COLOR_BGR2GRAY)
             gray=cv2.GaussianBlur(gray,(5,5),0)
             if previous is not None:
@@ -31,6 +36,7 @@ def propose_frames(video_path: Path) -> list[int]:
                 scores.append(float(np.mean(np.maximum(diff.astype(np.float32)-12,0))))
                 indices.append(index)
             previous=gray
+            index+=1
         if len(scores)<12: raise ValueError("Insufficient decodable video frames")
         smooth=np.convolve(np.asarray(scores),np.ones(5)/5,mode="same")
         peak=float(np.max(smooth))

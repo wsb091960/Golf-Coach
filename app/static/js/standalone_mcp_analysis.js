@@ -91,7 +91,7 @@
             const text = await callTool(args);
             output.textContent = text;
             result.classList.add("is-visible");
-            status.textContent = "Analysis complete. The recommendation is based on the values and notes submitted above.";
+            status.textContent = "Analysis complete. The coaching recommendation is based on the simulator metrics submitted.";
             result.scrollIntoView({ behavior: "smooth", block: "start" });
         } catch (error) {
             status.textContent = `Could not reach the simulator MCP tool: ${error.message}`;

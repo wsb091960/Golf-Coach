@@ -28,6 +28,19 @@
     .standalone-coach .drill h3 { margin:0 0 8px; color:#174b3e; }
     .standalone-coach .drill p { margin:5px 0; }
     .standalone-coach .back-link { color:#155341; font-weight:800; text-decoration:none; }
+
+    .standalone-coach .flight-showcase { overflow:hidden; padding:0; }
+    .standalone-coach .flight-art { position:relative; min-height:390px; border-radius:15px; overflow:hidden; background:#071b2a; }
+    .standalone-coach #lesson-flight-scene { display:block; width:100%; height:390px; }
+    .standalone-coach .flight-art-copy { position:absolute; inset:22px auto auto 24px; max-width:360px; color:#fff; pointer-events:none; text-shadow:0 2px 14px #061521; }
+    .standalone-coach .flight-art-copy h2 { margin:6px 0; color:#fff; font-size:clamp(1.55rem,3vw,2.3rem); }
+    .standalone-coach .flight-art-copy p { max-width:320px; color:#e1eee8; }
+    .standalone-coach .flight-cta { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; background:#f7faf8; }
+    .standalone-coach .flight-cta p { margin:0; }
+    .standalone-coach .primary { justify-self:auto; padding:14px 22px; background:#c89519; color:#142c23; box-shadow:0 5px 16px rgba(200,149,25,.25); }
+    .standalone-coach .primary:hover { background:#e1b43b; }
+    @media(max-width:650px) { .standalone-coach .flight-art,#lesson-flight-scene { min-height:330px; height:330px; } .standalone-coach .flight-cta { align-items:stretch; flex-direction:column; } .standalone-coach .flight-cta .primary { width:100%; } }
+
     @media (max-width:700px) { .standalone-coach .two-col,.standalone-coach .three-col { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
@@ -49,43 +62,24 @@
         {% endif %}
     </section>
 
-    <section class="coach-card">
-        <span class="eyebrow">Refine the question</span>
-        <h2>What would you like to understand?</h2>
+    <section class="coach-card flight-showcase" aria-labelledby="showcase-title">
         {% if error %}<p class="error">{{ error }}</p>{% endif %}
-        <form id="standalone-analysis-form">
-            {% for key, value in metric_values.items() %}{% if key != 'handedness' %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}
-            <div class="two-col">
-                <label>Golfer handedness
-                    <select name="handedness">
-                        <option value="unknown" {% if handedness == 'unknown' %}selected{% endif %}>Not specified</option>
-                        <option value="right-handed" {% if handedness == 'right-handed' %}selected{% endif %}>Right-handed</option>
-                        <option value="left-handed" {% if handedness == 'left-handed' %}selected{% endif %}>Left-handed</option>
-                    </select>
-                </label>
-                <label>Coaching question or goal
-                    <input name="coaching_question" value="{{ coaching_question }}" placeholder="Example: What change would help create a controlled push-draw?">
-                </label>
+        <div class="flight-art">
+            <canvas id="lesson-flight-scene" role="img" aria-label="Three-dimensional style animation of a golf club striking a ball into flight"></canvas>
+            <div class="flight-art-copy">
+                <span class="eyebrow">Your shot · Your next step</span>
+                <h2 id="showcase-title">See the shot. Learn the change.</h2>
+                <p>Watch a better ball flight take shape, then reveal the coaching moves that can help create it.</p>
             </div>
-            <label>Observed swing pattern
-                <textarea name="swing_observations" placeholder="Example: finishes with a chicken wing, loses balance, or starts the ball left">{{ swing_observations }}</textarea>
-            </label>
-            <div class="two-col">
-                <label>P-position observations
-                    <textarea name="p_positions" placeholder="Optional P1–P10 observations">{{ p_positions }}</textarea>
-                </label>
-                <label>Sequencing
-                    <textarea name="sequencing" placeholder="Optional transition, timing, or sequencing notes">{{ sequencing }}</textarea>
-                </label>
-            </div>
-            <div class="three-col">
-                <label>Mobility<textarea name="mobility" placeholder="Optional TPI mobility notes">{{ mobility }}</textarea></label>
-                <label>Stability<textarea name="stability" placeholder="Optional TPI stability notes">{{ stability }}</textarea></label>
-                <label>Balance<textarea name="balance" placeholder="Optional balance notes">{{ balance }}</textarea></label>
-            </div>
-            <button class="primary" type="submit">Generate MCP Coaching Analysis</button>
-            <p id="mcp-analysis-status" class="notice mcp-status" aria-live="polite">MCP uses the displayed shot metrics and your optional notes. It does not call the OpenAI API or access student/session records.</p>
-        </form>
+        </div>
+        <div class="flight-cta">
+            <p id="mcp-analysis-status" class="notice mcp-status" aria-live="polite">Show how the current simulator numbers can translate into a coached change.</p>
+            <form id="standalone-analysis-form">
+                {% for key, value in metric_values.items() %}{% if key != 'handedness' %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}
+                <input type="hidden" name="handedness" value="{{ handedness or 'unknown' }}">
+                <button class="primary" type="submit">Show Me How</button>
+            </form>
+        </div>
     </section>
 
     <section id="mcp-analysis-result" class="coach-card analysis-result" aria-live="polite">
@@ -95,5 +89,30 @@
     </section>
     <p><a class="back-link" href="/ball-flight-simulator">← Back to Ball Flight Simulator</a></p>
 </div>
-<script src="/static/js/standalone_mcp_analysis.js?v=1"></script>
+<script>
+(() => {
+  const canvas=document.getElementById("lesson-flight-scene"); if(!canvas) return;
+  const ctx=canvas.getContext("2d"); let frame=0, width=0, height=0, dpr=1;
+  function resize(){const r=canvas.getBoundingClientRect(); dpr=Math.min(window.devicePixelRatio||1,2); width=r.width; height=r.height; canvas.width=Math.round(width*dpr); canvas.height=Math.round(height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0);}
+  function path(points){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));}
+  function draw(){frame+=1;const t=(frame%260)/260,w=width,h=height;if(!w||!h){requestAnimationFrame(draw);return;}ctx.clearRect(0,0,w,h);
+    const sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,"#071727");sky.addColorStop(.48,"#174461");sky.addColorStop(1,"#7bb1b0");ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
+    const glow=ctx.createRadialGradient(w*.78,h*.26,5,w*.78,h*.26,h*.7);glow.addColorStop(0,"rgba(255,210,113,.5)");glow.addColorStop(1,"rgba(255,210,113,0)");ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
+    for(let i=0;i<36;i++){const x=(i*83+21)%w,y=(i*47+29)%(h*.48);ctx.fillStyle="rgba(255,255,255,"+(.2+(i%3)*.12)+")";ctx.fillRect(x,y,1.2,1.2);}
+    ctx.fillStyle="#183c38";ctx.beginPath();ctx.moveTo(0,h*.69);ctx.quadraticCurveTo(w*.45,h*.57,w,h*.62);ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.fill();
+    const ground=ctx.createLinearGradient(0,h*.67,0,h);ground.addColorStop(0,"#4d8861");ground.addColorStop(1,"#0a362e");ctx.fillStyle=ground;ctx.beginPath();ctx.moveTo(0,h*.72);ctx.quadraticCurveTo(w*.48,h*.62,w,h*.68);ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.fill();
+    for(let i=0;i<8;i++){ctx.strokeStyle="rgba(220,242,214,"+(0.12-i*.01)+")";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(w*.04,h*(.75+i*.025));ctx.quadraticCurveTo(w*.5,h*(.67+i*.027),w*.98,h*(.72+i*.02));ctx.stroke();}
+    const startX=w*.3,startY=h*.65,endX=w*.82,endY=h*.22,phase=(t*1.5)%1,ballT=Math.max(0,Math.min(1,(phase-.22)/.78)), bx=startX+(endX-startX)*ballT, by=startY+(endY-startY)*ballT-Math.sin(ballT*Math.PI)*h*.28;
+    ctx.save();ctx.setLineDash([7,8]);ctx.strokeStyle="rgba(255,215,104,.86)";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(startX,startY);ctx.quadraticCurveTo(w*.56,h*.08,endX,endY);ctx.stroke();ctx.restore();
+    const swing=Math.min(1,phase/.22), clubX=startX+Math.sin(swing*Math.PI)*w*.08, clubY=startY-Math.sin(swing*Math.PI)*h*.1;
+    ctx.save();ctx.translate(clubX,clubY);ctx.rotate(-.55+swing*1.9);ctx.lineCap="round";ctx.strokeStyle="#d9e1de";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(0,10);ctx.lineTo(w*.14,-h*.12);ctx.stroke();ctx.fillStyle="#d5b14f";ctx.beginPath();ctx.ellipse(-2,9,13,6,-.25,0,Math.PI*2);ctx.fill();ctx.restore();
+    const radius=Math.max(8,Math.min(17,w*.018));ctx.save();ctx.shadowColor="#ffe78a";ctx.shadowBlur=24;const ballGrad=ctx.createRadialGradient(bx-radius*.35,by-radius*.4,1,bx,by,radius);ballGrad.addColorStop(0,"#fff");ballGrad.addColorStop(.58,"#f2f2e9");ballGrad.addColorStop(1,"#adb9bd");ctx.fillStyle=ballGrad;ctx.beginPath();ctx.arc(bx,by,radius,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.fillStyle="rgba(3,20,18,.4)";ctx.beginPath();ctx.ellipse(startX,h*.7,26,6,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="rgba(246,216,123,.9)";ctx.font="700 11px system-ui";ctx.fillText("SIMULATED FLIGHT",w-145,h-20);
+    requestAnimationFrame(draw);
+  }
+  new ResizeObserver(resize).observe(canvas);resize();draw();
+})();
+</script>
+<script src="/static/js/standalone_mcp_analysis.js?v=2"></script>
 {% endblock %}

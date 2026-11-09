@@ -65,3 +65,11 @@ def test_reference_plan_exists():
     path = Path(__file__).resolve().parents[1] / "app/gcie/lesson_plans/001_straight_pull_to_pull_fade.md"
     assert "P1" in path.read_text()
     assert "Garmin R10" in path.read_text()
+
+
+def test_lesson_library_template_and_links():
+    from app.gcie.router import templates
+    template = templates.env.get_template("gcie_lesson_library.html")
+    html = template.render(request={"url": {"path": "/gcie/lesson-plans"}}, page_title="Lesson Plans", active_page="lesson-plans")
+    assert "/gcie/lesson-plans/straight-pull-to-pull-fade" in html
+    assert "Lesson Plans" in html

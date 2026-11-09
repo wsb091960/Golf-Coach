@@ -79,7 +79,7 @@ def synchronize_tracks(pose: dict[str, Any], club: dict[str, Any],
             if name in points:
                 points[dest] = points[name]
         result = {"frame_index": idx, "time": round(idx / pose_fps, 6),
-                  "pose_status": "tracked" if pr and pr.get("pose_detected") and points else "missing",
+                  "pose_status": "tracked" if pr and pr.get("pose_detected") and (pr.get("landmarks") or {}) else "missing",
                   "club_status": club_status, **points}
         if club_status == "provisional":
             g, h = points["club_grip"], points["club_head"]

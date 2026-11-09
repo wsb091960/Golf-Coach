@@ -356,6 +356,8 @@
             fields.namedItem("carry_distance").value = String(Math.round(nextShot.carry_distance));
             fields.namedItem("total_distance").value = String(Math.round(nextShot.total_distance));
             fields.namedItem("apex_height").value = String(Math.round(nextShot.apex_height));
+            rolloutAllowance = Math.max(0, nextShot.total_distance - nextShot.carry_distance);
+            carryNeedsSync = false;
             lastEstimateKey = estimateKey(nextShot);
         }
         shot = nextShot;

@@ -9,6 +9,29 @@
     const fields = form.elements;
     const sim = { camera: "behind", progress: 1, speed: 1, playing: false, frame: null, last: 0 };
     let shot = readInputs();
+    const carryField = fields.namedItem("carry_distance");
+    const totalField = fields.namedItem("total_distance");
+    let rolloutAllowance = Math.max(0, shot.total_distance - shot.carry_distance);
+    let carryNeedsSync = false;
+
+    function syncTotalFromCarry() {
+        if (!carryNeedsSync) return;
+        const carry = optionalNumber("carry_distance");
+        if (carry === null) return;
+        totalField.value = String(Math.round(carry + rolloutAllowance));
+        carryNeedsSync = false;
+    }
+
+    carryField.addEventListener("input", () => { carryNeedsSync = true; });
+    carryField.addEventListener("change", syncTotalFromCarry);
+    totalField.addEventListener("change", () => {
+        const carry = optionalNumber("carry_distance");
+        const total = optionalNumber("total_distance");
+        if (carry === null || total === null) return;
+        if (total < carry) totalField.value = String(Math.round(carry));
+        rolloutAllowance = Math.max(0, Number(totalField.value) - carry);
+        carryNeedsSync = false;
+    });
 
     function optionalNumber(name) {
         const field = fields.namedItem(name);
@@ -357,6 +380,7 @@
     });
     form.addEventListener("submit", event => {
         event.preventDefault();
+        syncTotalFromCarry();
         shot = readInputs();
         if (shot.total_distance < shot.carry_distance) {
             shot.total_distance = shot.carry_distance;

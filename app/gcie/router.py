@@ -171,3 +171,11 @@ def record_lesson_outcome(session_id: str, problem: str = Form("Straight pull to
     db.add(case)
     db.commit()
     return RedirectResponse(f"/gcie/sessions/{session_id}/lesson-plan?saved=1", status_code=303)
+
+
+@router.get("/lesson-plans", response_class=HTMLResponse)
+def lesson_plan_library(request: Request):
+    """Permanent lesson plan library, available without selecting a student."""
+    return templates.TemplateResponse(request=request, name="gcie_lesson_library.html", context={
+        "page_title": "Lesson Plans", "active_page": "lesson-plans"
+    })

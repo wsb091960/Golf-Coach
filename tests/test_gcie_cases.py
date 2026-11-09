@@ -65,3 +65,12 @@ def test_reference_plan_exists():
     path = Path(__file__).resolve().parents[1] / "app/gcie/lesson_plans/001_straight_pull_to_pull_fade.md"
     assert "P1" in path.read_text()
     assert "Garmin R10" in path.read_text()
+
+
+
+def test_lesson_library_template_and_links():
+    root = Path(__file__).resolve().parents[1]
+    html = (root / "app/templates/gcie_lesson_library.html").read_text()
+    base = (root / "app/templates/base.html").read_text()
+    assert "/gcie/lesson-plans/straight-pull-to-pull-fade" in html
+    assert 'href="/gcie/lesson-plans"' in base

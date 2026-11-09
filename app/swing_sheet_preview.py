@@ -18,10 +18,10 @@ def health():
 def index():
     return """<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WSBCO Server Swing Sheet Test</title><style>body{font:17px system-ui;background:#132528;color:white;max-width:680px;margin:25px auto;padding:16px}input,select,button{font:inherit;padding:9px;max-width:100%}label{display:block;margin:18px 0}button{background:#e3c46c;border:0;border-radius:7px}small{color:#d3d9d6}</style>
-<h1>WSBCO Server-Decoded Swing Sheet</h1><p>Test-only preview. Upload one video. The server can propose ten motion-based candidate frames; these are <b>not verified P-positions</b>. Frames are extracted on the server, not by browser seeking.</p>
+<h1>WSBCO Server-Decoded Swing Sheet</h1><p>Test-only preview. Upload one video. Automatic selection is temporarily disabled while we validate it against real swings. Manual extraction remains available. Frames are extracted on the server, not by browser seeking.</p>
 <form id="form"><label>Video <input type="file" name="video" accept="video/mp4,video/quicktime,video/x-m4v,video/*" id="videoFile"></label>
 <label>Camera angle <select name="camera_angle" id="angle"><option value="dtl">Down the line</option><option value="fo">Face on</option></select></label>
-<label><input type="checkbox" id="automatic" checked> Propose ten frames automatically (experimental)</label>\n<label>Manual frame indices (uncheck automatic to use) <input style="width:95%" name="frame_indices" id="frames" value="235,255,270,288,304,310,313,318,325,340" required></label>
+<label><input type="checkbox" id="automatic" disabled> Automatic selection (paused: failed real-video validation)</label>\n<label>Ten manual frame indices (verified extraction method) <input style="width:95%" name="frame_indices" id="frames" value="235,255,270,288,304,310,313,318,325,340" required></label>
 <button type="button" id="generate">Generate ten-frame sheet</button></form><p id="status" role="status" aria-live="polite" style="min-height:2em;color:#ffe49c;font-weight:700"></p>
 <small>Automatic mode selects frames from the motion interval, not actual P1–P10 landmarks. Manual values are only test candidates for the two previously reviewed recordings. They are not automatic detections. No footage is persisted by this endpoint; uploads are processed in temporary files. Avoid uploading sensitive student footage to this unauthenticated test preview.</small>
 <script>

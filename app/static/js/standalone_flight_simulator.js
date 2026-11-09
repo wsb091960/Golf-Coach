@@ -430,7 +430,7 @@
     });
 
     function angleLabel(value) {
-        return \`${value >= 0 ? "+" : ""}${value.toFixed(1)}°\`;
+        return `${value >= 0 ? "+" : ""}${value.toFixed(1)}°`;
     }
 
     function shotPattern(startDirection, spinAxis) {
@@ -485,11 +485,11 @@
                 : "Ball starts near target; use face-to-path to shape the curve.";
         const laws = [
             ["1. Centeredness of Contact", "Not entered. Check face strike with spray or impact tape; off-center contact can alter speed and curve."],
-            ["2. Clubface Angle at Impact", \`Face ${angleLabel(input.club_face)} to target. ${startNote}\`],
-            ["3. Clubpath at Impact", \`Path ${angleLabel(input.club_path)} to target. F2P is ${angleLabel(f2p)} (face minus path). ${pathNote}\`],
-            ["4. Clubhead Speed at Impact", \`Ball speed is ${input.ball_speed.toFixed(1)} mph; clubhead speed is not entered, so smash efficiency cannot be checked.\`],
+            ["2. Clubface Angle at Impact", `Face ${angleLabel(input.club_face)} to target. ${startNote}`],
+            ["3. Clubpath at Impact", `Path ${angleLabel(input.club_path)} to target. F2P is ${angleLabel(f2p)} (face minus path). ${pathNote}`],
+            ["4. Clubhead Speed at Impact", `Ball speed is ${input.ball_speed.toFixed(1)} mph; clubhead speed is not entered, so smash efficiency cannot be checked.`],
             ["5. Angle of Approach at Impact", "Not entered. Measure attack angle; do not infer it from the shot curve."],
-            ["6. Dynamic Loft at Impact", \`Launch is ${input.launch_angle.toFixed(1)}° and spin is ${input.spin_rate.toFixed(0)} rpm. Dynamic loft is not entered, so verify it before making a loft or attack-angle change.\`],
+            ["6. Dynamic Loft at Impact", `Launch is ${input.launch_angle.toFixed(1)}° and spin is ${input.spin_rate.toFixed(0)} rpm. Dynamic loft is not entered, so verify it before making a loft or attack-angle change.`],
         ];
         const principles = [
             ["1. Setup", "Check grip, aim, body alignment, posture, and ball position so the target line and start direction are understood."],
@@ -509,13 +509,13 @@
         ];
         const statusFor = number => focus.has(number) ? "Primary focus" : "Supporting check";
         const lawHTML = laws.map(([title, detail]) =>
-            \`<div class="sim-analysis-item"><strong>${title}</strong><p>${detail}</p></div>\`).join("");
+            `<div class="sim-analysis-item"><strong>${title}</strong><p>${detail}</p></div>`).join("");
         const principleHTML = principles.map(([title, detail], index) => {
             const number = index + 1;
-            return \`<div class="sim-analysis-item ${focus.has(number) ? "is-primary" : ""}"><strong>${title}</strong><small>${statusFor(number)}</small><p>${detail}</p></div>\`;
+            return `<div class="sim-analysis-item ${focus.has(number) ? "is-primary" : ""}"><strong>${title}</strong><small>${statusFor(number)}</small><p>${detail}</p></div>`;
         }).join("");
         const results = document.getElementById("laws-principles-results");
-        results.innerHTML = \`
+        results.innerHTML = `
             <div class="sim-analysis-note">
                 <h3>${pattern} · right-handed interpretation</h3>
                 <p>Start: ${angleLabel(input.launch_direction)} · Face-to-path: ${angleLabel(f2p)} · ${input.spin_axis === null ? "Estimated" : "Entered"} spin axis: ${angleLabel(axis)}. This pattern starts ${input.launch_direction < -0.5 ? "left" : input.launch_direction > 0.5 ? "right" : "near target"} and is expected to curve ${axis < -1 ? "left" : axis > 1 ? "right" : "very little"}.</p>
@@ -523,7 +523,7 @@
             </div>
             <div><h3>The six laws</h3><div class="sim-analysis-grid">${lawHTML}</div></div>
             <div><h3>The fourteen principles</h3><div class="sim-analysis-grid">${principleHTML}</div></div>
-            <p class="simulator-disclaimer">This is an estimated ball-flight interpretation, not a diagnosis of swing faults. Contact location, attack angle, and dynamic loft are not supplied here. Confirm a change with video and measured shots.</p>\`;
+            <p class="simulator-disclaimer">This is an estimated ball-flight interpretation, not a diagnosis of swing faults. Contact location, attack angle, and dynamic loft are not supplied here. Confirm a change with video and measured shots.</p>`;
         document.getElementById("laws-analysis-title").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 

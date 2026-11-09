@@ -18,12 +18,12 @@ def health():
 def index():
     return """<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WSBCO Server Swing Sheet Test</title><style>body{font:17px system-ui;background:#132528;color:white;max-width:680px;margin:25px auto;padding:16px}input,select,button{font:inherit;padding:9px;max-width:100%}label{display:block;margin:18px 0}button{background:#e3c46c;border:0;border-radius:7px}small{color:#d3d9d6}</style>
-<h1>WSBCO Server-Decoded Swing Sheet</h1><p>Test-only preview. Upload one video and ten <b>decoded frame indices</b> in P1–P10 order. Frames are extracted on the server, not by browser seeking.</p>
+<h1>WSBCO Server-Decoded Swing Sheet</h1><p>Test-only preview. Upload one video. The server can propose ten motion-based candidate frames; these are <b>not verified P-positions</b>. Frames are extracted on the server, not by browser seeking.</p>
 <form id="form"><label>Video <input type="file" name="video" accept="video/mp4,video/quicktime,video/x-m4v,video/*" id="videoFile"></label>
 <label>Camera angle <select name="camera_angle" id="angle"><option value="dtl">Down the line</option><option value="fo">Face on</option></select></label>
-<label>Ten frame indices <input style="width:95%" name="frame_indices" id="frames" value="235,255,270,288,304,310,313,318,325,340" required></label>
+<label><input type="checkbox" id="automatic" checked> Propose ten frames automatically (experimental)</label>\n<label>Manual frame indices (uncheck automatic to use) <input style="width:95%" name="frame_indices" id="frames" value="235,255,270,288,304,310,313,318,325,340" required></label>
 <button type="button" id="generate">Generate ten-frame sheet</button></form><p id="status" role="status" aria-live="polite" style="min-height:2em;color:#ffe49c;font-weight:700"></p>
-<small>Initial values are only test candidates for the two previously reviewed recordings. They are not automatic detections. No footage is persisted by this endpoint; uploads are processed in temporary files. Avoid uploading sensitive student footage to this unauthenticated test preview.</small>
+<small>Automatic mode selects frames from the motion interval, not actual P1–P10 landmarks. Manual values are only test candidates for the two previously reviewed recordings. They are not automatic detections. No footage is persisted by this endpoint; uploads are processed in temporary files. Avoid uploading sensitive student footage to this unauthenticated test preview.</small>
 <script>
 const samples={dtl:'235,255,270,288,304,310,313,318,325,340',fo:'250,264,270,285,295,300,304,310,315,325'};
 document.querySelector('#angle').addEventListener('change',e=>document.querySelector('#frames').value=samples[e.target.value]);
@@ -32,8 +32,8 @@ file.addEventListener('change',()=>{status.textContent=file.files.length?'Select
 button.addEventListener('click',async()=>{
   status.textContent='Button pressed. Checking video…';
   if(!file.files.length){status.textContent='Please choose a video above, then press the yellow button again.';file.focus();return}
-  const indices=document.querySelector('#frames').value.trim();
-  if(!/^\\d+(\\s*,\\s*\\d+){9}$/.test(indices)){status.textContent='Enter exactly ten frame numbers, separated by commas.';return}
+  const automatic=document.querySelector('#automatic').checked;\n  const indices=document.querySelector('#frames').value.trim();
+  if(!automatic && !/^\\d+(\\s*,\\s*\\d+){9}$/.test(indices)){status.textContent='Enter exactly ten frame numbers, separated by commas.';return}
   button.disabled=true;button.textContent='Processing…';
   status.textContent='Uploading '+file.files[0].name+' and decoding frames. Please wait…';
   const request=new XMLHttpRequest();
@@ -53,7 +53,7 @@ button.addEventListener('click',async()=>{
   request.onerror=()=>{reset();status.textContent='Network error while '+(uploaded?'processing':'uploading')};
   request.ontimeout=()=>{reset();status.textContent='Timed out after 90 seconds. Try a shorter MP4.'};
   request.onabort=()=>{reset();status.textContent='Request cancelled'};
-  request.send(new FormData(document.querySelector('#form')));
+  const data=new FormData(document.querySelector('#form'));\n  if(automatic)data.set('frame_indices','auto');\n  request.send(data);
 
 });
 </script></html>"""

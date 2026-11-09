@@ -549,6 +549,21 @@
         document.getElementById("laws-analysis-title").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
+    document.getElementById("start-coaching-analysis").addEventListener("click", () => {
+        const metricNames = [
+            "ball_speed", "club_speed_estimate", "smash_factor", "launch_angle",
+            "launch_direction", "club_face", "club_path", "face_to_path",
+            "spin_rate", "spin_axis", "spin_axis_estimate", "carry_distance",
+            "total_distance", "apex_height"
+        ];
+        const params = new URLSearchParams();
+        metricNames.forEach(name => {
+            const value = fields.namedItem(name)?.value?.trim();
+            if (value) params.set(name, value);
+        });
+        window.location.href = `/coach-assistant/standalone?${params.toString()}`;
+    });
+
     document.getElementById("analyze-laws-principles").addEventListener("click", analyzeLawsAndPrinciples);
     document.getElementById("clear-flight-metrics").addEventListener("click", () => {
         form.reset();

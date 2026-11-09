@@ -34,6 +34,16 @@
     .sim-input-actions { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .sim-input-actions small { color:#718079; }
     .simulator-disclaimer { grid-column:1/-1; margin:0; color:#718079; font-size:11px; }
+    .sim-analysis-actions { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0 16px; }
+    .sim-analysis-results { display:grid; gap:14px; }
+    .sim-analysis-results h3 { margin:0 0 8px; color:#143b30; font-size:16px; }
+    .sim-analysis-results p { margin:0; color:#56675f; font-size:13px; }
+    .sim-analysis-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+    .sim-analysis-item { padding:12px; border:1px solid #e0e8e4; border-radius:10px; background:#f7faf8; }
+    .sim-analysis-item.is-primary { border-color:#d9b34b; background:#fffaf0; }
+    .sim-analysis-item strong { display:block; margin-bottom:4px; color:#174b3e; font-size:13px; }
+    .sim-analysis-item small { color:#718079; font-size:11px; font-weight:750; }
+    .sim-analysis-note { padding:12px; border-left:4px solid #d6aa35; border-radius:6px; background:#fffaf0; }
     @media(max-width:900px) { .sim-input-card { grid-template-columns:1fr; } .sim-input-grid { grid-template-columns:repeat(2,minmax(100px,1fr)); } }
     @media(max-width:560px) { .simulator-hero { align-items:flex-start; padding:20px; } .simulator-hero__badge { display:none; } .sim-readout { grid-template-columns:repeat(2,1fr); } .sim-input-actions { align-items:flex-start; flex-direction:column; } .simulator-main .performance-card { padding:14px; } }
 </style>
@@ -117,7 +127,24 @@
             </form>
             <p class="simulator-disclaimer">The flight drawing is an estimate; values you enter can be measured launch-monitor readings.</p>
         </section>
+
+        <section class="performance-card sim-analysis-card" aria-labelledby="laws-analysis-title">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Coaching interpretation</span>
+                    <h2 id="laws-analysis-title">Laws &amp; Principles</h2>
+                    <p>Analyze the current flight inputs and identify which laws and swing principles to coach.</p>
+                </div>
+            </div>
+            <div class="sim-analysis-actions">
+                <button type="button" class="workspace-button" id="analyze-laws-principles">Analyze Laws &amp; Principles</button>
+                <button type="button" class="sim-control" id="clear-flight-metrics">Clear Metrics</button>
+            </div>
+            <div id="laws-principles-results" class="sim-analysis-results" aria-live="polite">
+                <p>Enter the shot metrics, then select <strong>Analyze Laws &amp; Principles</strong>. Clear Metrics restores the demo starting values.</p>
+            </div>
+        </section>
     </div>
 </div>
-<script src="/static/js/standalone_flight_simulator.js?v=4"></script>
+<script src="/static/js/standalone_flight_simulator.js?v=5"></script>
 {% endblock %}

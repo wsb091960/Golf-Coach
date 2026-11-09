@@ -14,6 +14,8 @@
 const video=document.querySelector('#video'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d');
 const status=document.querySelector('#status'),frame=document.querySelector('#frame'),fps=document.querySelector('#fps'),summary=document.querySelector('#summary');
 let points=[],saved=new Map(),url=null,loaded=false;
+function setSource(src, ownsUrl=false){if(url)URL.revokeObjectURL(url);url=ownsUrl?src:null;saved.clear();points=[];loaded=false;video.src=src;video.load();summary.textContent='';}
+window.addEventListener('message',e=>{if(e.origin!==window.location.origin)return;const data=e.data;if(!data||data.type!=='wsbco-club-video')return;if(typeof data.src==='string'&&data.src.startsWith('/sessions/'))setSource(data.src);else if(data.file instanceof Blob)setSource(URL.createObjectURL(data.file),true);});
 const say=s=>status.textContent=s;
 const frameNumber=()=>Math.max(0,Math.round(Number(frame.value)||0));
 function draw(){
@@ -27,14 +29,14 @@ function seek(){
  if(!loaded)return say('Load a video first.');
  const f=frameNumber(),rate=Number(fps.value);
  if(!(rate>0))return say('Enter a positive FPS.');
- const time=f/rate;
- if(time>video.duration)return say('Frame exceeds video duration.');
+ const time=(f+0.5)/rate;
+ if(time>=video.duration)return say('Frame exceeds video duration.');
  points=saved.has(f)?[...saved.get(f)]:[];
  video.currentTime=time;
 }
 video.addEventListener('seeked',()=>{draw();say('Frame '+frameNumber()+': click '+(points.length===0?'grip':points.length===1?'clubhead':'Clear to replace marks')+'.');});
-video.addEventListener('loadedmetadata',()=>{loaded=true;frame.value='0';video.currentTime=0;draw();say('Video loaded. Set FPS to the original video stream frame rate before marking.');});
-document.querySelector('#file').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(f);saved.clear();points=[];video.src=url;video.load();});
+video.addEventListener('loadedmetadata',()=>{loaded=true;frame.value='0';video.currentTime=0;draw();say('Video loaded. Confirm original stream FPS before marking; HTML video metadata does not expose exact FPS.');});
+document.querySelector('#file').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;setSource(URL.createObjectURL(f),true);});
 canvas.addEventListener('click',e=>{
  if(!loaded||points.length>=2)return;
  const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*canvas.width/r.width,y=(e.clientY-r.top)*canvas.height/r.height;

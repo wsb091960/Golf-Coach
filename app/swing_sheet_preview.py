@@ -22,19 +22,21 @@ def index():
 <form id="form"><label>Video <input type="file" name="video" accept="video/mp4,video/quicktime,video/x-m4v,video/*" id="videoFile"></label>
 <label>Camera angle <select name="camera_angle" id="angle"><option value="dtl">Down the line</option><option value="fo">Face on</option></select></label>
 <label><input type="checkbox" id="automatic" disabled> Automatic selection (paused: failed real-video validation)</label>\n<label>Ten manual frame indices (verified extraction method) <input style="width:95%" name="frame_indices" id="frames" value="235,255,270,288,304,310,313,318,325,340" required></label>
-<button type="button" id="generate">Generate ten-frame sheet</button></form><p id="status" role="status" aria-live="polite" style="min-height:2em;color:#ffe49c;font-weight:700"></p>
+<button type="button" id="generate">View ten frames on screen</button> <button type="button" id="download">Download ZIP</button></form><div id="sheetArea" style="margin-top:16px"></div><p id="status" role="status" aria-live="polite" style="min-height:2em;color:#ffe49c;font-weight:700"></p>
 <small>Automatic mode selects frames from the motion interval, not actual P1–P10 landmarks. Manual values are only test candidates for the two previously reviewed recordings. They are not automatic detections. No footage is persisted by this endpoint; uploads are processed in temporary files. Avoid uploading sensitive student footage to this unauthenticated test preview.</small>
 <script>
 const samples={dtl:'235,255,270,288,304,310,313,318,325,340',fo:'250,264,270,285,295,300,304,310,315,325'};
 document.querySelector('#angle').addEventListener('change',e=>document.querySelector('#frames').value=samples[e.target.value]);
-const status=document.querySelector('#status'),button=document.querySelector('#generate'),file=document.querySelector('#videoFile');
+const status=document.querySelector('#status'),button=document.querySelector('#generate'),file=document.querySelector('#videoFile'),download=document.querySelector('#download');
+let zipMode=false;
+download.addEventListener('click',()=>{zipMode=true;button.click()});
 file.addEventListener('change',()=>{status.textContent=file.files.length?'Selected: '+file.files[0].name:'Choose a video first.'});
 button.addEventListener('click',async()=>{
   status.textContent='Button pressed. Checking video…';
   if(!file.files.length){status.textContent='Please choose a video above, then press the yellow button again.';file.focus();return}
   const automatic=document.querySelector('#automatic').checked;\n  const indices=document.querySelector('#frames').value.trim();
   if(!automatic && !/^\\d+(\\s*,\\s*\\d+){9}$/.test(indices)){status.textContent='Enter exactly ten frame numbers, separated by commas.';return}
-  button.disabled=true;button.textContent='Processing…';
+  button.disabled=true;download.disabled=true;button.textContent='Processing…';
   status.textContent='Uploading '+file.files[0].name+' and decoding frames. Please wait…';
   const request=new XMLHttpRequest();
   request.open('POST','/api/biomechanics/contact-sheet');
@@ -42,9 +44,11 @@ button.addEventListener('click',async()=>{
   let uploaded=false;
   request.upload.onprogress=e=>{status.textContent=e.lengthComputable?'Uploading: '+Math.round(e.loaded/e.total*100)+'%':'Uploading video…'};
   request.upload.onload=()=>{uploaded=true;status.textContent='Upload complete. Server is decoding frames…'};
-  const reset=()=>{button.disabled=false;button.textContent='Generate ten-frame sheet'};
+  const reset=()=>{button.disabled=false;download.disabled=false;button.textContent='View ten frames on screen'};
   request.onload=()=>{reset();if(request.status!==200){status.textContent='Server error '+request.status+'. Try a shorter MP4.';return}
-    const url=URL.createObjectURL(request.response),a=document.createElement('a');
+    const url=URL.createObjectURL(request.response);
+    if(!zipMode){const area=document.querySelector('#sheetArea');area.replaceChildren();const img=document.createElement('img');img.src=url;img.alt='Ten-frame swing contact sheet, candidates requiring coach review';img.style.cssText='width:100%;height:auto;border:2px solid #e3c46c';area.appendChild(img);status.textContent='Sheet displayed below. Review each frame; P-position labels are not automatically verified.';return}
+    const a=document.createElement('a');
     a.href=url;a.download='WSBCO_P1-P10.zip';document.body.appendChild(a);a.click();a.remove();
     status.textContent='Finished. If no download appeared, tap this link: ';
     const link=document.createElement('a');link.href=url;link.download='WSBCO_P1-P10.zip';link.textContent='Download ZIP';link.style.color='#ffe49c';status.appendChild(link);
@@ -53,7 +57,7 @@ button.addEventListener('click',async()=>{
   request.onerror=()=>{reset();status.textContent='Network error while '+(uploaded?'processing':'uploading')};
   request.ontimeout=()=>{reset();status.textContent='Timed out after 90 seconds. Try a shorter MP4.'};
   request.onabort=()=>{reset();status.textContent='Request cancelled'};
-  const data=new FormData(document.querySelector('#form'));\n  if(automatic)data.set('frame_indices','auto');\n  request.send(data);
+  const data=new FormData(document.querySelector('#form'));data.set('output_format',zipMode?'zip':'png');zipMode=false;\n  if(automatic)data.set('frame_indices','auto');\n  request.send(data);
 
 });
 </script></html>"""

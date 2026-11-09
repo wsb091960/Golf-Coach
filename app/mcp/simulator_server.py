@@ -12,11 +12,13 @@ mcp = FastMCP(
     transport_security=TransportSecuritySettings(
         allowed_hosts=[
             "wsbco-golf-coach.onrender.com",
+            "golf.busterball.com",
             "busterball.com",
             "www.busterball.com",
         ],
         allowed_origins=[
             "https://wsbco-golf-coach.onrender.com",
+            "https://golf.busterball.com",
             "https://busterball.com",
             "https://www.busterball.com",
         ],

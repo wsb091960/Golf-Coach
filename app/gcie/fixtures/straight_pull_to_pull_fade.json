@@ -1,0 +1,34 @@
+{
+  "case_key": "straight-pull-to-pull-fade-001",
+  "title": "Driver: straight pull to controlled pull fade",
+  "case_type": "development_fixture",
+  "student_profile": {"handedness": "right", "club": "driver", "grip": "10-finger"},
+  "initial_problem": "Straight pull left of intended target",
+  "observed": {
+    "alignment": "Coach observed student aimed left",
+    "ball_position": "Coach observed ball position too far toward trail foot relative to intended setup",
+    "intervention": ["Move lead foot forward to reduce open stance", "Adjust ball position toward center from its previous position"],
+    "reported_outcome": "Coach reported ball flight straightened after setup corrections",
+    "measurement_status": "No verified pre/post Garmin R10 metrics supplied"
+  },
+  "next_goal": "Controlled pull fade",
+  "hypotheses_to_test": [
+    "Confirm target line and setup alignment before changing swing mechanics",
+    "For a right-handed pull fade, verify start direction left of target and curvature to the right",
+    "Use measured face-to-path and launch direction to distinguish controlled fade from straight pull"
+  ],
+  "coaching_plan": {
+    "tgm": "Evaluate club path control, clubface alignment and timing; prioritize ball-flight laws and simplest correction",
+    "tpi": "Screen mobility/stability only if observed movement limitations warrant it",
+    "p_positions": "Document P1 setup, P6 delivery, P7 impact, and other P positions only where video supports observation",
+    "test": "Capture baseline shot dispersion and launch monitor data, apply one intervention, repeat under comparable conditions"
+  },
+  "outcome": {
+    "straight_pull_correction": "Reported straightening, not quantified",
+    "pull_fade_result": null,
+    "status": "not_yet_tested"
+  },
+  "approval_status": "draft",
+  "knowledge_library_eligible": false,
+  "notes": "Fixture is anonymized and must not be promoted to validated knowledge without coach review and documented outcomes."
+}

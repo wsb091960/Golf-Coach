@@ -9,6 +9,7 @@
     const fields = form.elements;
     const sim = { camera: "behind", progress: 1, speed: 1, playing: false, frame: null, last: 0 };
     let shot = readInputs();
+    let lastEstimateKey = estimateKey(shot);
     const carryField = fields.namedItem("carry_distance");
     const totalField = fields.namedItem("total_distance");
     let rolloutAllowance = Math.max(0, shot.total_distance - shot.carry_distance);
@@ -50,16 +51,36 @@
         const carry = number("carry_distance", 250);
         return {
             ball_speed: number("ball_speed", 150),
+            spin_rate: number("spin_rate", 2600),
             launch_angle: number("launch_angle", 14),
             launch_direction: number("launch_direction", 0),
             club_face: clubFace,
             club_path: clubPath,
             face_to_path: clubFace - clubPath,
             spin_axis: optionalNumber("spin_axis"),
+            spin_axis_estimate: 0,
             carry_distance: carry,
             total_distance: Math.max(number("total_distance", 270), carry),
             apex_height: number("apex_height", 90),
         };
+    }
+
+    function estimateKey(input) {
+        return [input.ball_speed, input.launch_angle, input.spin_rate].join("|");
+    }
+
+    function estimateOutcomes(input) {
+        const idealLaunch = 13;
+        const idealSpin = 2600;
+        const launchFactor = Math.max(.82, Math.min(1.04, 1 - Math.abs(input.launch_angle - idealLaunch) * .008));
+        const spinFactor = Math.max(.86, Math.min(1.02, 1 - Math.abs(input.spin_rate - idealSpin) / idealSpin * .10));
+        const carry = input.ball_speed * 1.65 * launchFactor * spinFactor;
+        const roll = .10
+            * Math.max(.35, Math.min(1.45, 1 - (input.launch_angle - idealLaunch) * .035))
+            * Math.max(.35, Math.min(1.35, 1 - (input.spin_rate - idealSpin) / idealSpin * .45));
+        input.carry_distance = carry;
+        input.total_distance = carry * (1 + roll);
+        input.apex_height = Math.max(12, carry * Math.tan(Math.max(3, input.launch_angle) * Math.PI / 180) * .84);
     }
 
     function refreshFaceToPath() {
@@ -71,15 +92,21 @@
         shot.club_face = face;
         shot.club_path = path;
         shot.face_to_path = derived;
+        // Estimated axis uses a typical driver spin loft (14.7°); gear effect and strike location are not known.
+        shot.spin_axis_estimate = Math.atan(Math.tan(derived * Math.PI / 180) / Math.sin(14.7 * Math.PI / 180)) * 180 / Math.PI;
+        fields.namedItem("spin_axis_estimate").value = shot.spin_axis_estimate.toFixed(1);
     }
 
     fields.namedItem("club_face").addEventListener("input", refreshFaceToPath);
     fields.namedItem("club_path").addEventListener("input", refreshFaceToPath);
+    ["ball_speed", "launch_angle", "spin_rate"].forEach(name => {
+        fields.namedItem(name).addEventListener("change", () => updateFlight(true));
+    });
     refreshFaceToPath();
 
     function finishYards() {
         const start = Math.tan(shot.launch_direction * Math.PI / 180) * shot.carry_distance;
-        const curveAngle = shot.spin_axis ?? shot.face_to_path;
+        const curveAngle = shot.spin_axis ?? shot.spin_axis_estimate;
         const curve = curveAngle * shot.carry_distance / 125;
         return start + curve;
     }
@@ -320,6 +347,27 @@
         });
     }
 
+    function updateFlight(recalculateOutcomes = false) {
+        const nextShot = readInputs();
+        refreshFaceToPath();
+        nextShot.spin_axis_estimate = shot.spin_axis_estimate;
+        if (recalculateOutcomes) {
+            estimateOutcomes(nextShot);
+            fields.namedItem("carry_distance").value = String(Math.round(nextShot.carry_distance));
+            fields.namedItem("total_distance").value = String(Math.round(nextShot.total_distance));
+            fields.namedItem("apex_height").value = String(Math.round(nextShot.apex_height));
+            lastEstimateKey = estimateKey(nextShot);
+        }
+        shot = nextShot;
+        if (shot.total_distance < shot.carry_distance) {
+            shot.total_distance = shot.carry_distance;
+            fields.namedItem("total_distance").value = String(Math.round(shot.total_distance));
+        }
+        stop();
+        sim.progress = 1;
+        draw();
+    }
+
     function stop() {
         sim.playing = false;
         if (sim.frame) cancelAnimationFrame(sim.frame);
@@ -381,14 +429,8 @@
     form.addEventListener("submit", event => {
         event.preventDefault();
         syncTotalFromCarry();
-        shot = readInputs();
-        if (shot.total_distance < shot.carry_distance) {
-            shot.total_distance = shot.carry_distance;
-            fields.namedItem("total_distance").value = String(shot.total_distance);
-        }
-        stop();
-        sim.progress = 1;
-        draw();
+        const current = readInputs();
+        updateFlight(estimateKey(current) !== lastEstimateKey);
     });
     window.addEventListener("resize", draw);
     draw();

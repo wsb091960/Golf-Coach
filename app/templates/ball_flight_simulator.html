@@ -103,13 +103,15 @@
                 <label>Start direction (°)<input name="launch_direction" type="number" min="-30" max="30" step="0.1" value="0"></label>
                 <label>Club face to target (°)<input name="club_face" type="number" min="-30" max="30" step="0.1" value="0"></label>
                 <label>Club path (°)<input name="club_path" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Spin rate (rpm)<input name="spin_rate" type="number" min="0" max="15000" step="100" value="2600"></label>
                 <label>Face-to-path (° · auto)<input name="face_to_path" type="number" value="0" readonly aria-readonly="true"></label>
-                <label>Spin axis (optional °)<input name="spin_axis" type="number" min="-45" max="45" step="0.1" value=""></label>
+                <label>Estimated spin axis (°)<input name="spin_axis_estimate" type="number" value="0" readonly aria-readonly="true"></label>
+                <label>Spin axis override (optional °)<input name="spin_axis" type="number" min="-45" max="45" step="0.1" value="" placeholder="Use estimate"></label>
                 <label>Carry (yd)<input name="carry_distance" type="number" min="1" max="450" step="1" value="250"></label>
                 <label>Total (yd)<input name="total_distance" type="number" min="1" max="500" step="1" value="270"></label>
                 <label>Apex (ft)<input name="apex_height" type="number" min="1" max="250" step="1" value="90"></label>
                 <div class="sim-input-actions">
-                    <small>F2P = club face − club path. Total follows Carry by its current roll gap; edit Total for a different rollout. If Spin Axis is entered, it controls the estimated curve; otherwise F2P is used as a curve estimate.</small>
+                    <small>Ball speed, launch angle, and spin rate recalculate estimated carry, total, and apex. F2P = face − path; spin axis is estimated from F2P and typical driver spin loft. Enter a measured spin axis as an override. You can still edit distances directly.</small>
                     <button class="workspace-button" type="submit">Update Flight</button>
                 </div>
             </form>
@@ -117,5 +119,5 @@
         </section>
     </div>
 </div>
-<script src="/static/js/standalone_flight_simulator.js?v=2"></script>
+<script src="/static/js/standalone_flight_simulator.js?v=3"></script>
 {% endblock %}

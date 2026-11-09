@@ -21,6 +21,9 @@
     .standalone-coach .notice { padding:12px 14px; border-radius:10px; background:#eff5f1; color:#315849; }
     .standalone-coach .error { padding:12px 14px; border-radius:10px; background:#fff2ef; color:#8d3425; }
     .standalone-coach .analysis-copy { white-space:pre-wrap; line-height:1.65; }
+    .standalone-coach .mcp-status { min-height:1.4em; }
+    .standalone-coach .analysis-result { display:none; }
+    .standalone-coach .analysis-result.is-visible { display:block; }
     .standalone-coach .drill { padding:14px; margin:10px 0; border:1px solid #d9e3de; border-radius:12px; background:#fbfcfb; }
     .standalone-coach .drill h3 { margin:0 0 8px; color:#174b3e; }
     .standalone-coach .drill p { margin:5px 0; }
@@ -34,7 +37,7 @@
     <section class="coach-card">
         <span class="eyebrow">Manual simulator analysis · no student or session</span>
         <h1>Coaching Analysis</h1>
-        <p>The simulator metrics have been carried into this independent analysis. Add a question or swing observations to focus the coaching response. This standalone analysis is not attached to a student or coaching session.</p>
+        <p>The displayed simulator metrics will be sent to the standalone MCP coaching tool. It returns a metric-led lesson plan in the reference guide format. This analysis is not attached to a student or coaching session.</p>
         {% if metric_cards %}
         <div class="metric-grid">
             {% for metric in metric_cards %}
@@ -50,8 +53,8 @@
         <span class="eyebrow">Refine the question</span>
         <h2>What would you like to understand?</h2>
         {% if error %}<p class="error">{{ error }}</p>{% endif %}
-        <form method="post" action="/coach-assistant/standalone/analyze">
-            {% for key, value in metric_values.items() %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
+        <form id="standalone-analysis-form">
+            {% for key, value in metric_values.items() %}{% if key != 'handedness' %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}
             <div class="two-col">
                 <label>Golfer handedness
                     <select name="handedness">
@@ -80,37 +83,17 @@
                 <label>Stability<textarea name="stability" placeholder="Optional TPI stability notes">{{ stability }}</textarea></label>
                 <label>Balance<textarea name="balance" placeholder="Optional balance notes">{{ balance }}</textarea></label>
             </div>
-            <button class="primary" type="submit">Generate Coaching Analysis</button>
+            <button class="primary" type="submit">Generate MCP Coaching Analysis</button>
+            <p id="mcp-analysis-status" class="notice mcp-status" aria-live="polite">MCP uses the displayed shot metrics and your optional notes. It does not call the OpenAI API or access student/session records.</p>
         </form>
     </section>
 
-    {% if analyzed and analysis %}
-    <section class="coach-card">
-        <span class="eyebrow">Swing and ball-flight interpretation</span>
-        <h2>Analysis</h2>
-        <div class="analysis-copy">{{ analysis }}</div>
+    <section id="mcp-analysis-result" class="coach-card analysis-result" aria-live="polite">
+        <span class="eyebrow">Metric-led swing lesson · MCP</span>
+        <h2>Coaching Recommendation</h2>
+        <div id="mcp-analysis-copy" class="analysis-copy"></div>
     </section>
-    {% if plan %}
-    <section class="coach-card">
-        <span class="eyebrow">Practice plan</span>
-        <h2>{{ plan.priority }}</h2>
-        {% if plan.explanation %}<p>{{ plan.explanation }}</p>{% endif %}
-        {% for drill in plan.drills %}
-        <article class="drill">
-            <h3>{{ loop.index }}. {{ drill.name }}</h3>
-            <p><strong>Setup:</strong> {{ drill.setup }}</p>
-            <p><strong>Action:</strong> {{ drill.action }}</p>
-            <p><strong>Feel:</strong> {{ drill.feel }}</p>
-            <p><strong>Dosage:</strong> {{ drill.dosage }}</p>
-            <p><strong>Success check:</strong> {{ drill.success_check }}</p>
-        </article>
-        {% endfor %}
-        {% if plan.ball_flight_cue %}<p><strong>Ball-flight cue:</strong> {{ plan.ball_flight_cue }}</p>{% endif %}
-        {% if plan.pass_fail_test %}<p><strong>Pass/fail:</strong> {{ plan.pass_fail_test }}</p>{% endif %}
-        {% if plan.reassessment %}<p><strong>Reassessment:</strong> {{ plan.reassessment }}</p>{% endif %}
-    </section>
-    {% endif %}
-    {% endif %}
     <p><a class="back-link" href="/ball-flight-simulator">← Back to Ball Flight Simulator</a></p>
 </div>
+<script src="/static/js/standalone_mcp_analysis.js?v=1"></script>
 {% endblock %}

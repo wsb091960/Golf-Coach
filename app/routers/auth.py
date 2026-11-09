@@ -105,6 +105,10 @@ def service_endpoint(path, method):
         return True
     if path == '/auth/google/complete' and method == 'POST':
         return True
+    # The standalone MCP accepts only user-supplied launch metrics and notes;
+    # it has no student/session/database tools and must be reachable to MCP clients.
+    if path in {'/mcp', '/mcp/'} and method == 'POST':
+        return True
     if path.startswith('/static/') and method in {'GET', 'HEAD'}:
         return True
     return False

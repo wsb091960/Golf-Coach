@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -19,15 +20,25 @@ from app.routers.students import router as students_router
 from app.routers.videos import router as videos_router
 from app.routers.biomechanics import router as biomechanics_router
 from app.routers import crm_sync as crm_sync_router
+from app.mcp.simulator_server import mcp as simulator_mcp, http_app as simulator_mcp_http_app
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
 
 Base.metadata.create_all(bind=engine)
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Mounted MCP applications do not start their own lifespan, so the host
+    # must own the SDK session manager explicitly.
+    async with simulator_mcp.session_manager.run():
+        yield
+
+
 app = FastAPI(
     title="WSBCO Golf Coach",
     version="5.3A",
+    lifespan=lifespan,
 )
 
 app.add_middleware(GolfOwnerAuthMiddleware)
@@ -75,3 +86,7 @@ from app.routers import swing_analysis_assist as swing_analysis_assist_router
 app.include_router(swing_analysis_assist_router.router)
 
 app.include_router(crm_sync_router.router)
+
+# Stateless, metric-only MCP endpoint used by the standalone simulator.
+# It has no connection to the student/session or CRM data workflows.
+app.mount("/mcp", simulator_mcp_http_app, name="simulator_mcp")

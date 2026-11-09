@@ -268,7 +268,7 @@ def _standalone_context(request: Request, values: dict[str, str], **extra):
         "page_name": "coach_assistant",
         "metric_values": values,
         "metric_cards": metric_cards,
-        "handedness": values.get("handedness", "unknown"),
+        "handedness": values.get("handedness", "right-handed"),
         "coaching_question": values.get("coaching_question", ""),
         "swing_observations": values.get("swing_observations", ""),
         "p_positions": values.get("p_positions", ""),
@@ -283,56 +283,11 @@ def _standalone_context(request: Request, values: dict[str, str], **extra):
 @router.get("/standalone", response_class=HTMLResponse, name="standalone_coaching_analysis")
 def standalone_coaching_analysis(request: Request):
     values = {key: request.query_params.get(key, "") for key, _, _ in SIMULATOR_FIELDS}
-    values["handedness"] = request.query_params.get("handedness", "unknown")
+    values["handedness"] = request.query_params.get("handedness", "right-handed")
     return templates.TemplateResponse(
         request=request,
         name="standalone_coaching_analysis.html",
         context=_standalone_context(request, values),
-    )
-
-
-@router.post("/standalone/analyze", response_class=HTMLResponse, name="run_standalone_coaching_analysis")
-async def run_standalone_coaching_analysis(request: Request):
-    form = await request.form()
-    values = {key: str(form.get(key, "") or "").strip() for key, _, _ in SIMULATOR_FIELDS}
-    for key in ("handedness", "coaching_question", "swing_observations", "p_positions", "sequencing", "mobility", "stability", "balance"):
-        values[key] = str(form.get(key, "") or "").strip()
-    metrics_text = "\n".join(
-        f"{label}: {values[key]}{(' ' + unit) if unit else ''}"
-        for key, label, unit in SIMULATOR_FIELDS
-        if values.get(key)
-    ) or "No launch-monitor metrics were supplied."
-    observations = {
-        "swing_characteristics": values["swing_observations"] or values["coaching_question"] or "No separate swing video observation supplied; interpret the entered ball-flight metrics.",
-        "handedness": values["handedness"],
-        "simulator_metrics": metrics_text,
-        "p_positions": values["p_positions"],
-        "sequencing": values["sequencing"],
-        "mobility": values["mobility"],
-        "stability": values["stability"],
-        "balance": values["balance"],
-    }
-    goal = values["coaching_question"] or "Interpret these manually entered ball-flight metrics and recommend a coaching priority."
-    error = ""
-    analysis = ""
-    plan = {}
-    try:
-        result = generate(goal, observations)
-        analysis = result["analysis"]
-        plan = _plan_view(result["practice_plan"], goal)
-    except CoachingAIError as exc:
-        error = str(exc)
-    return templates.TemplateResponse(
-        request=request,
-        name="standalone_coaching_analysis.html",
-        context=_standalone_context(
-            request,
-            values,
-            analysis=analysis,
-            plan=plan,
-            error=error,
-            analyzed=True,
-        ),
     )
 
 

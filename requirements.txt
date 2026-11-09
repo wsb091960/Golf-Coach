@@ -3,3 +3,4 @@ uvicorn[standard]
 jinja2
 python-multipart
 SQLAlchemy
+mcp>=1.12.4,<2

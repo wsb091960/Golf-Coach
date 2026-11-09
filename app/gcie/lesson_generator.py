@@ -71,6 +71,6 @@ Record BEFORE/AFTER averages or distributions: club path (°), clubface (° if a
 Use only metrics actually supplied by the device or verified from other measurement; never fabricate face angle or spin axis. If unavailable, mark not measured. Keep alignment, ball, device positioning and hitting conditions consistent.
 Success means improved intended flight and dispersion without harmful loss of strike or distance, not merely matching illustrative numbers.
 
-9. OUTCOME AND EVIDENCE
+9. SUGGESTED INSTRUCTION VIDEOS\nClay Ballard and Eric Cogorno: use the video-search links on the saved lesson page. Select drills only after the root-cause test; no specific video is asserted to have been reviewed.\n\n10. OUTCOME AND EVIDENCE
 No measured outcome yet. Record actual intervention, before/after values, student response, pass/fail and any TPI screen results. Coach must review before treating this plan as validated knowledge.
 """

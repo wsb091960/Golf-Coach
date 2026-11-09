@@ -38,6 +38,7 @@ button.addEventListener('click',async()=>{
   if(!automatic && !/^\\d+(\\s*,\\s*\\d+){9}$/.test(indices)){status.textContent='Enter exactly ten frame numbers, separated by commas.';return}
   button.disabled=true;download.disabled=true;button.textContent='Processing…';
   status.textContent='Uploading '+file.files[0].name+' and decoding frames. Please wait…';
+  const currentZipMode=zipMode;zipMode=false;
   const request=new XMLHttpRequest();
   request.open('POST','/api/biomechanics/contact-sheet');
   request.responseType='blob';request.timeout=90000;
@@ -47,7 +48,7 @@ button.addEventListener('click',async()=>{
   const reset=()=>{button.disabled=false;download.disabled=false;button.textContent='View ten frames on screen'};
   request.onload=()=>{reset();if(request.status!==200){status.textContent='Server error '+request.status+'. Try a shorter MP4.';return}
     const url=URL.createObjectURL(request.response);
-    if(!zipMode){const area=document.querySelector('#sheetArea');area.replaceChildren();const img=document.createElement('img');img.src=url;img.alt='Ten-frame swing contact sheet, candidates requiring coach review';img.style.cssText='width:100%;height:auto;border:2px solid #e3c46c';area.appendChild(img);status.textContent='Sheet displayed below. Review each frame; P-position labels are not automatically verified.';return}
+    if(!currentZipMode){const area=document.querySelector('#sheetArea');area.replaceChildren();const img=document.createElement('img');img.src=url;img.alt='Ten-frame swing contact sheet, candidates requiring coach review';img.style.cssText='width:100%;height:auto;border:2px solid #e3c46c';area.appendChild(img);status.textContent='Sheet displayed below. Review each frame; P-position labels are not automatically verified.';return}
     const a=document.createElement('a');
     a.href=url;a.download='WSBCO_P1-P10.zip';document.body.appendChild(a);a.click();a.remove();
     status.textContent='Finished. If no download appeared, tap this link: ';
@@ -57,7 +58,7 @@ button.addEventListener('click',async()=>{
   request.onerror=()=>{reset();status.textContent='Network error while '+(uploaded?'processing':'uploading')};
   request.ontimeout=()=>{reset();status.textContent='Timed out after 90 seconds. Try a shorter MP4.'};
   request.onabort=()=>{reset();status.textContent='Request cancelled'};
-  const data=new FormData(document.querySelector('#form'));data.set('output_format',zipMode?'zip':'png');zipMode=false;\n  if(automatic)data.set('frame_indices','auto');\n  request.send(data);
+  const data=new FormData(document.querySelector('#form'));data.set('output_format',currentZipMode?'zip':'png');\n  if(automatic)data.set('frame_indices','auto');\n  request.send(data);
 
 });
 </script></html>"""

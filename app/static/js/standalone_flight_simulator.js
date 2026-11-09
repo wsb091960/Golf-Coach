@@ -288,6 +288,7 @@
             carry: `${shot.carry_distance.toFixed(0)} yd`,
             total: `${shot.total_distance.toFixed(0)} yd`,
             apex: `${shot.apex_height.toFixed(0)} ft`,
+            facePath: `${shot.face_to_path.toFixed(1)}°`,
             finish: `${Math.abs(finish).toFixed(1)} yd ${Math.abs(finish) < .05 ? "" : finish < 0 ? "L" : "R"}`.trim(),
         };
         Object.entries(values).forEach(([key, value]) => {

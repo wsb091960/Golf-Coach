@@ -1,2 +1,54 @@
 {% extends "base.html" %}
-{% block content %}<div class="workspace-shell"><header class="workspace-hero"><div class="workspace-hero__copy"><span class="workspace-kicker">GCIE · Provisional lesson</span><h1>{{ plan.title }}</h1><p>Generated reference only; no student data or measured outcomes assumed.</p></div></header><p><a href="/gcie/lesson-plans">← Back to Lesson Plans</a> <button type="button" onclick="window.print()">Print / Save PDF</button></p><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.6;background:var(--surface,#fff);padding:1rem;border-radius:12px">{{ plan.plan_text }}</pre><section class="workspace-card" style="margin:1rem 0;padding:1.25rem"><h2>Suggested Instruction Videos</h2><p>Find relevant lessons from these instructors for this shot pattern. Links open YouTube search results, not pre-reviewed specific videos.</p><ul>{% for name,url in video_links %}<li><a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ name }} — {{ plan.club }} {{ plan.pattern.replace("-", " ")|title }} videos ↗</a></li>{% endfor %}</ul><p><small>Choose videos based on the measured root cause; a matching ball-flight label alone does not validate a drill.</small></p></section></div>{% endblock %}
+{% block page_styles %}
+<style>
+.gcie-reader{max-width:1120px;margin:auto;padding:16px 20px 48px;color:var(--text-primary,#17332c)}
+.gcie-reader__top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 18px}
+.gcie-reader__actions{display:flex;gap:8px;flex-wrap:wrap}
+.gcie-reader__button{display:inline-block;background:#175b46;color:white!important;border:0;border-radius:9px;padding:11px 16px;font:inherit;text-decoration:none;cursor:pointer}
+.gcie-reader__button--light{background:#e7eee8;color:#153b30!important}
+.gcie-reader__hero{background:#173d32;color:#fff;border-radius:18px;padding:24px;margin-bottom:20px}
+.gcie-reader__hero h1{font-size:clamp(1.5rem,3vw,2.3rem);margin:8px 0}
+.gcie-reader__hero p{color:#e3eee7;line-height:1.6}
+.gcie-reader__layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:22px;align-items:start}
+.gcie-reader__toc{position:sticky;top:20px;border:1px solid #d9e2d9;border-radius:12px;background:#fff;padding:15px}
+.gcie-reader__toc a{display:block;padding:8px 6px;color:#175b46;text-decoration:none;font-size:.9rem;border-radius:6px}
+.gcie-reader__toc a:hover,.gcie-reader__toc a:focus{background:#edf4ef}
+.gcie-reader__sections{min-width:0}
+.gcie-reader__card{background:#fff;border:1px solid #d9e2d9;border-radius:14px;padding:22px;margin-bottom:16px;scroll-margin-top:16px}
+.gcie-reader__card h2{font-size:1.15rem;line-height:1.4;margin:0 0 14px;color:#174d39}
+.gcie-reader__card p{line-height:1.8;white-space:pre-line;overflow-wrap:anywhere;margin:0 0 12px}
+.gcie-reader__card p:last-child{margin-bottom:0}
+.gcie-reader__card--videos ul{padding-left:20px;line-height:2}
+.gcie-reader__card--videos a{color:#175b46;font-weight:600}
+.gcie-reader__small{font-size:.9rem;color:#5a6a61}
+@media(max-width:750px){.gcie-reader__layout{grid-template-columns:1fr}.gcie-reader__toc{position:static}.gcie-reader__toc nav{display:flex;flex-wrap:wrap;gap:4px}.gcie-reader__toc a{padding:7px 10px;background:#edf4ef}.gcie-reader__card{padding:17px}}
+@media print{.sidebar,.app-standard-navigation,.gcie-reader__toc,.gcie-reader__actions,.gcie-reader__top,.gcie-reader__card--videos{display:none!important}.app-layout,.main-content,.gcie-reader,.gcie-reader__layout{display:block!important;max-width:none!important;margin:0!important;padding:0!important}.gcie-reader__hero{background:white!important;color:black!important;border:0;border-bottom:2px solid #222;border-radius:0;padding:0 0 12px}.gcie-reader__hero p{color:black!important}.gcie-reader__card{border:0;border-radius:0;padding:8px 0;break-inside:avoid}.gcie-reader__card h2{color:black}.gcie-reader__card p{line-height:1.45;font-size:10pt}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="gcie-reader">
+  <div class="gcie-reader__top"><a href="/gcie/lesson-plans">← Lesson Plan Library</a><div class="gcie-reader__actions"><button class="gcie-reader__button gcie-reader__button--light" type="button" onclick="document.querySelectorAll('.gcie-reader__card').forEach(x=>x.open=true)">Expand All</button><button class="gcie-reader__button" type="button" onclick="window.print()">Print / Save PDF</button></div></div>
+  <header class="gcie-reader__hero"><small>GCIE · PROVISIONAL COACHING REFERENCE</small><h1>{{ plan.title }}</h1><p>Readable lesson plan · TGM / TPI / P1–P10 / Garmin R10. No measured outcome has been established.</p></header>
+  {% set chunks = plan.plan_text.split('\n\n') %}
+  {% set ns = namespace(sections=[], current=None) %}
+  {% for chunk in chunks %}
+    {% set line = chunk.strip() %}
+    {% if line and line[0].isdigit() and '. ' in line[:5] %}
+      {% if ns.current %}{% set ns.sections = ns.sections + [ns.current] %}{% endif %}
+      {% set ns.current = {'title':line.split('\n')[0], 'body':line.split('\n',1)[1] if '\n' in line else ''} %}
+    {% elif ns.current %}
+      {% set ns.current = {'title':ns.current.title, 'body':ns.current.body + '\n\n' + line} %}
+    {% endif %}
+  {% endfor %}
+  {% if ns.current %}{% set ns.sections = ns.sections + [ns.current] %}{% endif %}
+  <div class="gcie-reader__layout">
+    <aside class="gcie-reader__toc"><strong>Jump to section</strong><nav aria-label="Lesson sections">{% for section in ns.sections %}<a href="#lesson-section-{{ loop.index }}">{{ section.title }}</a>{% endfor %}<a href="#lesson-videos">Instruction videos</a></nav></aside>
+    <main class="gcie-reader__sections" id="lesson-content">
+      {% for section in ns.sections %}
+      <section class="gcie-reader__card" id="lesson-section-{{ loop.index }}"><h2>{{ section.title }}</h2>{% for paragraph in section.body.strip().split('\n\n') %}{% if paragraph.strip() %}<p>{{ paragraph.strip() }}</p>{% endif %}{% endfor %}</section>
+      {% endfor %}
+      <section class="gcie-reader__card gcie-reader__card--videos" id="lesson-videos"><h2>Suggested Instruction Videos</h2><p>Explore instruction from Clay Ballard and Eric Cogorno matched to this club and ball-flight pattern. These are YouTube search links, not individually verified video recommendations.</p><ul>{% for name,url in video_links %}<li><a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ name }} — {{ plan.club }} {{ plan.pattern.replace("-", " ")|title }}</a></li>{% endfor %}</ul><p class="gcie-reader__small">Choose drills based on the tested root cause, not the ball-flight label alone.</p></section>
+    </main>
+  </div>
+</div>
+{% endblock %}

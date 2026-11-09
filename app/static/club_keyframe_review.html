@@ -7,7 +7,7 @@
 <input id="file" type="file" accept="video/*"><video id="video" playsinline preload="metadata" style="display:none"></video>
 <div><label>Frame <input id="frame" type="number" min="0" value="0" step="1"></label><button id="seek">Go to frame</button><label>FPS <input id="fps" type="number" value="60" min="1" step=".001"></label><button id="prev">−1 frame</button><button id="next">+1 frame</button></div>
 <div id="wrap"><canvas id="canvas" width="1280" height="720" aria-label="Video frame for marking club grip and clubhead"></canvas></div>
-<div><button id="reset">Clear current marks</button><button id="save">Save keyframe</button><button id="export">Export keyframes JSON</button></div>\n<div><label><input type="checkbox" id="coachVerified"> I have reviewed and verified the grip and clubhead positions for every saved keyframe</label></div>
+<div><label>Reopen saved marks <input id="import" type="file" accept=".json,application/json"></label></div>\n<div><button id="reset">Clear current marks</button><button id="save">Save keyframe</button><button id="export">Export keyframes JSON</button></div>\n<div><label><input type="checkbox" id="coachVerified"> I have reviewed and verified the grip and clubhead positions for every saved keyframe</label></div>
 <div id="status" role="status">Load a video to begin.</div><pre id="summary"></pre></main>
 <script>
 (()=>{
@@ -18,6 +18,26 @@ function setSource(src, ownsUrl=false){if(url)URL.revokeObjectURL(url);url=ownsU
 window.addEventListener('message',e=>{if(e.origin!==window.location.origin)return;const data=e.data;if(!data||data.type!=='wsbco-club-video')return;if(typeof data.src==='string'&&data.src.startsWith('/sessions/'))setSource(data.src);else if(data.file instanceof Blob)setSource(URL.createObjectURL(data.file),true);});
 const say=s=>status.textContent=s;\nfps.addEventListener('change',()=>{verified.checked=false;say('FPS changed. Recheck frame alignment and verify all saved points again.');});
 const frameNumber=()=>Math.max(0,Math.round(Number(frame.value)||0));
+document.querySelector('#import').addEventListener('change',async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const data=JSON.parse(await file.text());
+    if(!Array.isArray(data.seeds)||!data.seeds.length)throw Error('No keyframes');
+    const incoming=new Map();
+    for(const row of data.seeds){
+      if(!Number.isInteger(row.frame_index)||row.frame_index<0||incoming.has(row.frame_index))throw Error('Invalid or duplicate frame');
+      const valid=p=>Array.isArray(p)&&p.length===2&&p.every(v=>Number.isFinite(v)&&v>=0);
+      if(!valid(row.club_grip)||!valid(row.club_head))throw Error('Invalid point');
+      incoming.set(row.frame_index,[[...row.club_grip],[...row.club_head]]);
+    }
+    saved=incoming;verified.checked=false;
+    if(Number.isFinite(data.fps)&&data.fps>0)fps.value=data.fps;
+    summary.textContent=[...saved.keys()].sort((a,b)=>a-b).join(', ');
+    frame.value=Math.min(...saved.keys());seek();
+    say('Imported '+saved.size+' frames. Review against the SAME original video; approval reset.');
+  }catch(err){say('Import failed: '+err.message)}
+  e.target.value='';
+});
 function draw(){
  if(!loaded)return;
  canvas.width=video.videoWidth;canvas.height=video.videoHeight;

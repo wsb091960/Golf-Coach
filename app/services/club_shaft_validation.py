@@ -56,7 +56,7 @@ def validate_track_video(video_path, track, *, min_edge_fraction=.20):
                 continue
             result = validate_shaft_frame(image, row["club_grip"], row["club_head"],
                                           min_edge_fraction=min_edge_fraction)
-            checked.append({**row, "status": "tracked" if result["accepted"] else "rejected",
+            checked.append({**row, "status": "tracked" if result["accepted"] and row.get("status") == "tracked" else "rejected",
                             "validation_reason": result["reason"],
                             "shaft_edge_fraction": result["edge_fraction"]})
     finally:

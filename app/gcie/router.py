@@ -87,8 +87,8 @@ def edit_case(case_id: str, payload: CaseInput, db: Session = Depends(get_db)):
 @router.post("/cases/{case_id}/approve")
 def approve_case(case_id: str, db: Session = Depends(get_db)):
     case = require_case(db, case_id)
-    if not case.problem.strip() or not case.intervention or not case.outcome.strip():
-        raise HTTPException(422, "Problem, intervention, and outcome required for approval")
+    if not case.problem.strip() or not case.intervention or not case.outcome.strip() or case.outcome == "not_tested":
+        raise HTTPException(422, "A documented, tested outcome is required for approval")
     case.status = "approved"
     case.reviewed_by = "owner"
     case.reviewed_at = datetime.utcnow()

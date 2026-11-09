@@ -8,6 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from app.routers.coach_assistant import router as coach_assistant_router
 
 from app.database import Base, engine
+from app.gcie import models as gcie_models
+from app.gcie.router import router as gcie_router
 from app.routers.gapping import router as gapping_router
 from app.routers.analysis import router as analysis_router
 from app.routers.dashboard import router as dashboard_router
@@ -55,6 +57,7 @@ app.include_router(dashboard_router)
 app.include_router(coach_assistant_router)
 app.include_router(students_router)
 app.include_router(sessions_router)
+app.include_router(gcie_router)
 app.include_router(ball_flight_simulator_router)
 app.include_router(importer_router)
 app.include_router(analysis_router)

@@ -18,15 +18,32 @@ def health():
 def index():
     return """<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WSBCO Server Swing Sheet Test</title><style>body{font:17px system-ui;background:#132528;color:white;max-width:680px;margin:25px auto;padding:16px}input,select,button{font:inherit;padding:9px;max-width:100%}label{display:block;margin:18px 0}button{background:#e3c46c;border:0;border-radius:7px}small{color:#d3d9d6}</style>
-<h1>WSBCO Server-Decoded Swing Sheet</h1><p>Test-only preview. Upload one video. Automatic selection is temporarily disabled while we validate it against real swings. Manual extraction remains available. Frames are extracted on the server, not by browser seeking.</p>
+<h1>WSBCO Server-Decoded Swing Sheet</h1><p>Test-only preview. Upload one video. Automatic selection is temporarily disabled while we validate it against real swings. Manual extraction remains available. Adjust any individual P-position frame number below and regenerate the sheet to review the correction. Frames are extracted on the server, not by browser seeking.</p>
 <form id="form"><label>Video <input type="file" name="video" accept="video/mp4,video/quicktime,video/x-m4v,video/*" id="videoFile"></label>
 <label>Camera angle <select name="camera_angle" id="angle"><option value="dtl">Down the line</option><option value="fo">Face on</option></select></label>
 <label><input type="checkbox" id="automatic" disabled> Automatic selection (paused: failed real-video validation)</label>\n<label>Ten manual frame indices (verified extraction method) <input style="width:95%" name="frame_indices" id="frames" value="235,255,270,288,304,310,313,318,325,340" required></label>
-<button type="button" id="generate">View ten frames on screen</button> <button type="button" id="download">Download ZIP</button></form><div id="sheetArea" style="margin-top:16px"></div><p id="status" role="status" aria-live="polite" style="min-height:2em;color:#ffe49c;font-weight:700"></p>
+<div id="checkpointEditor" style="margin:16px 0"></div><button type="button" id="generate">View ten frames on screen</button> <button type="button" id="download">Download ZIP</button></form><div id="sheetArea" style="margin-top:16px"></div><p id="status" role="status" aria-live="polite" style="min-height:2em;color:#ffe49c;font-weight:700"></p>
 <small>Automatic mode selects frames from the motion interval, not actual P1–P10 landmarks. Manual values are only test candidates for the two previously reviewed recordings. They are not automatic detections. No footage is persisted by this endpoint; uploads are processed in temporary files. Avoid uploading sensitive student footage to this unauthenticated test preview.</small>
 <script>
 const samples={dtl:'235,255,270,288,304,310,313,318,325,340',fo:'250,264,270,285,295,300,304,310,315,325'};
-document.querySelector('#angle').addEventListener('change',e=>document.querySelector('#frames').value=samples[e.target.value]);
+document.querySelector('#angle').addEventListener('change',e=>{document.querySelector('#frames').value=samples[e.target.value];buildEditor()});
+const positionNames=['P1 Address','P2 Shaft parallel back','P3 Lead arm parallel back','P4 Top','P5 Lead arm parallel down','P6 Shaft parallel down','P7 Impact','P8 Shaft parallel through','P9 Trail arm parallel through','P10 Finish'];
+const editor=document.querySelector('#checkpointEditor'),framesField=document.querySelector('#frames');
+editor.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px';
+function buildEditor(){
+  editor.replaceChildren();
+  const values=framesField.value.split(',').map(v=>Number(v.trim()));
+  positionNames.forEach((name,i)=>{
+    const cell=document.createElement('label');cell.style.cssText='display:block;margin:0;background:#20383a;border-radius:7px;padding:9px';
+    const heading=document.createElement('span');heading.textContent=name;heading.style.cssText='display:block;font-size:13px;color:#f3d183;margin-bottom:5px';
+    const input=document.createElement('input');input.type='number';input.min='0';input.step='1';input.value=String(values[i]??0);input.dataset.position=String(i);input.style.cssText='width:100%;box-sizing:border-box;background:white;color:#111';
+    input.addEventListener('change',()=>{const inputs=[...editor.querySelectorAll('input')];framesField.value=inputs.map(el=>el.value).join(',')});
+    cell.append(heading,input);editor.appendChild(cell);
+  });
+}
+buildEditor();
+framesField.addEventListener('change',buildEditor);
+document.querySelector('#angle').addEventListener('change',()=>{setTimeout(buildEditor,0)});
 const status=document.querySelector('#status'),button=document.querySelector('#generate'),file=document.querySelector('#videoFile'),download=document.querySelector('#download');
 let zipMode=false;
 download.addEventListener('click',()=>{zipMode=true;button.click()});
@@ -35,7 +52,7 @@ button.addEventListener('click',async()=>{
   status.textContent='Button pressed. Checking video…';
   if(!file.files.length){status.textContent='Please choose a video above, then press the yellow button again.';file.focus();return}
   const automatic=document.querySelector('#automatic').checked;\n  const indices=document.querySelector('#frames').value.trim();
-  if(!automatic && !/^\\d+(\\s*,\\s*\\d+){9}$/.test(indices)){status.textContent='Enter exactly ten frame numbers, separated by commas.';return}
+  if(!automatic && !/^\\d+(\\s*,\\s*\\d+){9}$/.test(indices)){status.textContent='Enter exactly ten frame numbers, separated by commas.';return}\n  const parsed=indices.split(',').map(v=>Number(v.trim()));\n  if(!automatic && parsed.some((v,i)=>i>0 && v<=parsed[i-1])){status.textContent='Frame numbers must increase from P1 through P10. Correct the highlighted checkpoint values.';return}
   button.disabled=true;download.disabled=true;button.textContent='Processing…';
   status.textContent='Uploading '+file.files[0].name+' and decoding frames. Please wait…';
   const currentZipMode=zipMode;zipMode=false;

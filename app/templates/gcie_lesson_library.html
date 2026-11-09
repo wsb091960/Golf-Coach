@@ -2,6 +2,14 @@
 {% block content %}
 <div class="workspace-shell">
 <header class="workspace-hero"><div class="workspace-hero__copy"><span class="workspace-kicker">GCIE Knowledge Base</span><h1>Lesson Plans</h1><p>Permanent coaching references. Select a lesson to review or print; use a student session to record measured outcomes.</p></div></header>
+<section class="workspace-card" style="margin:1rem 0;padding:1.25rem"><h2>Generate New Lesson Plan</h2><p>Choose any of the nine ball-flight patterns. Generated plans are saved as provisional references; they are not approved student outcomes.</p>
+<form method="post" action="/gcie/lesson-plans/generate" style="display:grid;gap:.8rem;max-width:650px">
+<label>Ball-flight pattern <select name="pattern" required>{% for value,label in [('pull-hook','Pull hook'),('pull','Straight pull'),('pull-fade','Pull fade'),('draw','Draw'),('straight','Straight'),('fade','Fade'),('push-draw','Push draw'),('push','Straight push'),('push-slice','Push slice')] %}<option value="{{ value }}" {% if value == 'push-draw' %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<label>Handedness <select name="handedness"><option value="right">Right-handed</option><option value="left">Left-handed</option></select></label>
+<label>Club <select name="club"><option>Driver</option><option>Fairway wood</option><option>Hybrid</option><option>Iron</option><option>Wedge</option></select></label>
+<label>Coach observations <textarea name="observations" maxlength="4000" rows="4" placeholder="Describe intended flight, misses, grip, setup, strike or Garmin metrics (optional)"></textarea></label>
+<button type="submit">Generate &amp; Save Lesson Plan</button></form></section>
+{% if generated_plans %}<section><h2>Saved Generated Lesson Plans</h2><div class="workspace-directory">{% for item in generated_plans %}<a class="workspace-card" href="/gcie/lesson-plans/generated/{{ item.id }}"><h3>{{ item.title }}</h3><p>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }} · Provisional</p><strong>Open / Print →</strong></a>{% endfor %}</div></section>{% endif %}
 <section class="workspace-directory">
 <a class="workspace-card" href="/gcie/lesson-plans/straight-pull-to-pull-fade"><span class="workspace-kicker">GCIE 001 · Driver</span><h2>Straight Pull → Controlled Pull Fade</h2><p>TGM, TPI, P1–P10 checkpoints, three drills, Garmin R10 targets, and 45-minute lesson plan.</p><p><strong>Open reference plan →</strong></p></a>
 <a class="workspace-card" href="/sessions"><span class="workspace-kicker">Measure &amp; Learn</span><h2>Record a Student Outcome</h2><p>Open a student session, select its GCIE Lesson Plan link, then record before/after metrics and coach observations.</p><p><strong>Open sessions →</strong></p></a>

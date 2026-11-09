@@ -9,6 +9,7 @@ from app.routers.coach_assistant import router as coach_assistant_router
 
 from app.database import Base, engine
 from app.gcie import models as gcie_models
+from app.gcie import generated_models as gcie_generated_models
 from app.gcie.router import router as gcie_router
 from app.routers.gapping import router as gapping_router
 from app.routers.analysis import router as analysis_router

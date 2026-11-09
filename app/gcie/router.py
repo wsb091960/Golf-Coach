@@ -174,8 +174,37 @@ def record_lesson_outcome(session_id: str, problem: str = Form("Straight pull to
 
 
 @router.get("/lesson-plans", response_class=HTMLResponse)
-def lesson_plan_library(request: Request):
+def lesson_plan_library(request: Request, db: Session = Depends(get_db)):
     """Permanent lesson plan library, available without selecting a student."""
     return templates.TemplateResponse(request=request, name="gcie_lesson_library.html", context={
-        "page_title": "Lesson Plans", "active_page": "lesson-plans"
+        "page_title": "Lesson Plans", "active_page": "lesson-plans",
+        "generated_plans": db.scalars(select(GeneratedLessonPlan).order_by(GeneratedLessonPlan.created_at.desc()).limit(100)).all()
     })
+
+# Standalone pattern lesson generator. Does not modify student/session workflows.
+from app.gcie.generated_models import GeneratedLessonPlan
+from app.gcie.lesson_generator import PATTERNS, generate
+
+@router.post("/lesson-plans/generate")
+def generate_lesson_plan(pattern: str = Form(...), handedness: str = Form(...),
+                         club: str = Form(...), observations: str = Form(""),
+                         db: Session = Depends(get_db)):
+    if pattern not in PATTERNS or handedness not in {"right", "left"} or club not in {"Driver", "Fairway wood", "Hybrid", "Iron", "Wedge"}:
+        raise HTTPException(422, "Invalid lesson plan selection")
+    if len(observations) > 4000:
+        raise HTTPException(422, "Observations too long")
+    title = f"{club} — {pattern.replace('-', ' ').title()} ({handedness.title()}-handed)"
+    record = GeneratedLessonPlan(title=title, pattern=pattern, handedness=handedness,
+                                 club=club, observations=observations,
+                                 plan_text=generate(pattern, handedness, club, observations))
+    db.add(record)
+    db.commit()
+    return RedirectResponse(f"/gcie/lesson-plans/generated/{record.id}", status_code=303)
+
+@router.get("/lesson-plans/generated/{plan_id}", response_class=HTMLResponse)
+def generated_lesson_plan(request: Request, plan_id: str, db: Session = Depends(get_db)):
+    record = db.get(GeneratedLessonPlan, plan_id)
+    if record is None:
+        raise HTTPException(404, "Lesson plan not found")
+    return templates.TemplateResponse(request=request, name="gcie_generated_lesson.html",
+                                      context={"plan": record, "active_page": "lesson-plans"})

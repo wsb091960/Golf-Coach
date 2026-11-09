@@ -66,14 +66,18 @@
         };
     }
 
-    function refreshEstimatedClubSpeed() {
-        const ballSpeed = optionalNumber("ball_speed");
+    function refreshSpeedPair(changedField = "ball_speed") {
+        const ballField = fields.namedItem("ball_speed");
+        const clubField = fields.namedItem("club_speed_estimate");
         const smashFactor = optionalNumber("smash_factor");
-        const output = fields.namedItem("club_speed_estimate");
-        if (!output) return;
-        output.value = ballSpeed !== null && smashFactor !== null && smashFactor > 0
-            ? (ballSpeed / smashFactor).toFixed(1)
-            : "";
+        if (!ballField || !clubField || smashFactor === null || smashFactor <= 0) return;
+        if (changedField === "club_speed") {
+            const clubSpeed = optionalNumber("club_speed_estimate");
+            if (clubSpeed !== null) ballField.value = (clubSpeed * smashFactor).toFixed(1);
+        } else {
+            const ballSpeed = optionalNumber("ball_speed");
+            if (ballSpeed !== null) clubField.value = (ballSpeed / smashFactor).toFixed(1);
+        }
     }
 
     function estimateKey(input) {
@@ -110,13 +114,14 @@
 
     fields.namedItem("club_face").addEventListener("input", refreshFaceToPath);
     fields.namedItem("club_path").addEventListener("input", refreshFaceToPath);
-    fields.namedItem("ball_speed").addEventListener("input", refreshEstimatedClubSpeed);
-    fields.namedItem("smash_factor").addEventListener("input", refreshEstimatedClubSpeed);
-    ["ball_speed", "launch_angle", "spin_rate"].forEach(name => {
+    fields.namedItem("ball_speed").addEventListener("input", () => refreshSpeedPair("ball_speed"));
+    fields.namedItem("club_speed_estimate").addEventListener("input", () => refreshSpeedPair("club_speed"));
+    fields.namedItem("smash_factor").addEventListener("input", () => refreshSpeedPair("ball_speed"));
+    ["ball_speed", "club_speed_estimate", "launch_angle", "spin_rate"].forEach(name => {
         fields.namedItem(name).addEventListener("change", () => updateFlight(true));
     });
     refreshFaceToPath();
-    refreshEstimatedClubSpeed();
+    refreshSpeedPair("ball_speed");
 
     function finishYards() {
         const start = Math.tan(shot.launch_direction * Math.PI / 180) * shot.carry_distance;
@@ -362,7 +367,7 @@
     }
 
     function updateFlight(recalculateOutcomes = false) {
-        refreshEstimatedClubSpeed();
+        refreshSpeedPair("ball_speed");
         const nextShot = readInputs();
         refreshFaceToPath();
         nextShot.spin_axis_estimate = shot.spin_axis_estimate;
@@ -502,7 +507,7 @@
             ["1. Centeredness of Contact", "Not entered. Check face strike with spray or impact tape; off-center contact can alter speed and curve."],
             ["2. Clubface Angle at Impact", `Face ${angleLabel(input.club_face)} to target. ${startNote}`],
             ["3. Clubpath at Impact", `Path ${angleLabel(input.club_path)} to target. F2P is ${angleLabel(f2p)} (face minus path). ${pathNote}`],
-            ["4. Clubhead Speed at Impact", `Estimated at ${fields.namedItem("club_speed_estimate").value} mph using a ${input.smash_factor.toFixed(2)} assumed smash factor; verify with measured club speed and strike quality.`],
+            ["4. Clubhead Speed at Impact", `Club speed input is ${fields.namedItem("club_speed_estimate").value} mph, linked to ${input.ball_speed.toFixed(1)} mph ball speed using a ${input.smash_factor.toFixed(2)} assumed smash factor. This is a what-if estimate; verify with measured club speed and strike quality.`],
             ["5. Angle of Approach at Impact", "Not entered. Measure attack angle; do not infer it from the shot curve."],
             ["6. Dynamic Loft at Impact", `Launch is ${input.launch_angle.toFixed(1)}° and spin is ${input.spin_rate.toFixed(0)} rpm. Dynamic loft is not entered, so verify it before making a loft or attack-angle change.`],
         ];

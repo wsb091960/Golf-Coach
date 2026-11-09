@@ -238,6 +238,104 @@ def page(request: Request, student_id: str = "", session_id: str = "", case_id: 
     return templates.TemplateResponse(request=request, name="coach_assistant.html", context={"page_title": "Coaching Assistant", "page_name": "coach_assistant", "students": students, "sessions": sessions, "selected_student_id": student_id or (case.student_id if case else ""), "selected_session_id": session_id or (case.session_id if case else ""), "case": case, "history_items": history_items, "assessment_title": assessment_title, "observations": observations, "evidence": evidence, "ai_error": latest.content if latest and latest.role == "error" else "", "preliminary_plan_view": _plan_view(case.preliminary_plan, topic) if case else {}, "refined_plan_view": _plan_view(case.refined_plan, topic) if case else {}, "cleanup_done": bool(cleanup_done), "cleaned": cleaned, "session_removed": bool(session_removed), "session_deleted": bool(session_deleted)})
 
 
+SIMULATOR_FIELDS = (
+    ("ball_speed", "Ball speed", "mph"),
+    ("club_speed_estimate", "Club speed", "mph"),
+    ("smash_factor", "Smash factor", ""),
+    ("launch_angle", "Launch angle", "°"),
+    ("launch_direction", "Start direction", "°"),
+    ("club_face", "Club face to target", "°"),
+    ("club_path", "Club path", "°"),
+    ("face_to_path", "Face-to-path", "°"),
+    ("spin_rate", "Spin rate", "rpm"),
+    ("spin_axis", "Spin axis entered", "°"),
+    ("spin_axis_estimate", "Estimated spin axis", "°"),
+    ("carry_distance", "Carry", "yd"),
+    ("total_distance", "Total", "yd"),
+    ("apex_height", "Apex", "ft"),
+)
+
+
+def _standalone_context(request: Request, values: dict[str, str], **extra):
+    metric_cards = []
+    for key, label, unit in SIMULATOR_FIELDS:
+        raw = str(values.get(key, "") or "").strip()
+        if raw:
+            metric_cards.append({"label": label, "value": raw, "unit": unit})
+    return {
+        "request": request,
+        "page_title": "Standalone Coaching Analysis",
+        "page_name": "coach_assistant",
+        "metric_values": values,
+        "metric_cards": metric_cards,
+        "handedness": values.get("handedness", "unknown"),
+        "coaching_question": values.get("coaching_question", ""),
+        "swing_observations": values.get("swing_observations", ""),
+        "p_positions": values.get("p_positions", ""),
+        "sequencing": values.get("sequencing", ""),
+        "mobility": values.get("mobility", ""),
+        "stability": values.get("stability", ""),
+        "balance": values.get("balance", ""),
+        **extra,
+    }
+
+
+@router.get("/standalone", response_class=HTMLResponse, name="standalone_coaching_analysis")
+def standalone_coaching_analysis(request: Request):
+    values = {key: request.query_params.get(key, "") for key, _, _ in SIMULATOR_FIELDS}
+    values["handedness"] = request.query_params.get("handedness", "unknown")
+    return templates.TemplateResponse(
+        request=request,
+        name="standalone_coaching_analysis.html",
+        context=_standalone_context(request, values),
+    )
+
+
+@router.post("/standalone/analyze", response_class=HTMLResponse, name="run_standalone_coaching_analysis")
+async def run_standalone_coaching_analysis(request: Request):
+    form = await request.form()
+    values = {key: str(form.get(key, "") or "").strip() for key, _, _ in SIMULATOR_FIELDS}
+    for key in ("handedness", "coaching_question", "swing_observations", "p_positions", "sequencing", "mobility", "stability", "balance"):
+        values[key] = str(form.get(key, "") or "").strip()
+    metrics_text = "\n".join(
+        f"{label}: {values[key]}{(' ' + unit) if unit else ''}"
+        for key, label, unit in SIMULATOR_FIELDS
+        if values.get(key)
+    ) or "No launch-monitor metrics were supplied."
+    observations = {
+        "swing_characteristics": values["swing_observations"] or values["coaching_question"] or "No separate swing video observation supplied; interpret the entered ball-flight metrics.",
+        "handedness": values["handedness"],
+        "simulator_metrics": metrics_text,
+        "p_positions": values["p_positions"],
+        "sequencing": values["sequencing"],
+        "mobility": values["mobility"],
+        "stability": values["stability"],
+        "balance": values["balance"],
+    }
+    goal = values["coaching_question"] or "Interpret these manually entered ball-flight metrics and recommend a coaching priority."
+    error = ""
+    analysis = ""
+    plan = {}
+    try:
+        result = generate(goal, observations)
+        analysis = result["analysis"]
+        plan = _plan_view(result["practice_plan"], goal)
+    except CoachingAIError as exc:
+        error = str(exc)
+    return templates.TemplateResponse(
+        request=request,
+        name="standalone_coaching_analysis.html",
+        context=_standalone_context(
+            request,
+            values,
+            analysis=analysis,
+            plan=plan,
+            error=error,
+            analyzed=True,
+        ),
+    )
+
+
 @router.get("/{case_id}/report", response_class=HTMLResponse, name="coach_assistant_report")
 def session_report(
     request: Request,

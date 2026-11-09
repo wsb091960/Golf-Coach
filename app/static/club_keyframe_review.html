@@ -7,7 +7,9 @@
 <input id="file" type="file" accept="video/*"><video id="video" playsinline preload="metadata" style="display:none"></video>
 <div><label>Frame <input id="frame" type="number" min="0" value="0" step="1"></label><button id="seek">Go to frame</button><label>FPS <input id="fps" type="number" value="60" min="1" step=".001"></label><button id="prev">−1 frame</button><button id="next">+1 frame</button></div>
 <div id="wrap"><canvas id="canvas" width="1280" height="720" aria-label="Video frame for marking club grip and clubhead"></canvas></div>
-<div><label>Reopen saved marks <input id="import" type="file" accept=".json,application/json"></label></div>\n<div><button id="reset">Clear current marks</button><button id="save">Save keyframe</button><button id="export">Export keyframes JSON</button></div>\n<div><label><input type="checkbox" id="coachVerified"> I have reviewed and verified the grip and clubhead positions for every saved keyframe</label></div>
+<div><label>Reopen saved marks <input id="import" type="file" accept=".json,application/json"></label></div>
+<div><button id="reset">Clear current marks</button><button id="save">Save keyframe</button><button id="export">Export keyframes JSON</button></div>
+<div><label><input type="checkbox" id="coachVerified"> I have reviewed and verified the grip and clubhead positions for every saved keyframe</label></div>
 <div id="status" role="status">Load a video to begin.</div><pre id="summary"></pre></main>
 <script>
 (()=>{
@@ -16,7 +18,8 @@ const status=document.querySelector('#status'),frame=document.querySelector('#fr
 let points=[],saved=new Map(),url=null,loaded=false,seeking=false;
 function setSource(src, ownsUrl=false){if(url)URL.revokeObjectURL(url);url=ownsUrl?src:null;saved.clear();points=[];loaded=false;verified.checked=false;video.src=src;video.load();summary.textContent='';}
 window.addEventListener('message',e=>{if(e.origin!==window.location.origin)return;const data=e.data;if(!data||data.type!=='wsbco-club-video')return;if(typeof data.src==='string'&&data.src.startsWith('/sessions/'))setSource(data.src);else if(data.file instanceof Blob)setSource(URL.createObjectURL(data.file),true);});
-const say=s=>status.textContent=s;\nfps.addEventListener('change',()=>{verified.checked=false;say('FPS changed. Recheck frame alignment and verify all saved points again.');});
+const say=s=>status.textContent=s;
+fps.addEventListener('change',()=>{verified.checked=false;say('FPS changed. Recheck frame alignment and verify all saved points again.');});
 const frameNumber=()=>Math.max(0,Math.round(Number(frame.value)||0));
 document.querySelector('#import').addEventListener('change',async e=>{
   const file=e.target.files[0];if(!file)return;
@@ -51,8 +54,8 @@ function seek(){
  if(!(rate>0))return say('Enter a positive FPS.');
  const time=(f+0.5)/rate;
  if(time>=video.duration)return say('Frame exceeds video duration.');
- points=saved.has(f)?[...saved.get(f)]:[];
- video.currentTime=time;
+ points=saved.has(f)?saved.get(f).map(p=>[...p]):[];
+ seeking=true;video.currentTime=time;
 }
 video.addEventListener('seeked',()=>{seeking=false;draw();say('Frame '+frameNumber()+': click '+(points.length===0?'grip':points.length===1?'clubhead':'Clear to replace marks')+'.');});
 video.addEventListener('loadedmetadata',()=>{loaded=true;frame.value='0';video.currentTime=0;draw();say('Video loaded. Confirm original stream FPS before marking; HTML video metadata does not expose exact FPS.');});

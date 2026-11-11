@@ -137,7 +137,7 @@ async def session_screenshot_rename(session_id: str, screenshot_id: str, request
     require_session(session_id, db)
     form = await request.form()
     raw_name = str(form.get('filename') or '').strip()
-    filename = Path(raw_name.replace('\\\\', '/')).name[:255]
+    filename = Path(raw_name.replace(chr(92), '/')).name[:255]
     if not filename:
         raise HTTPException(422, 'Enter a name for this screenshot')
     screenshot = db.query(SessionScreenshot).filter(

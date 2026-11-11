@@ -467,6 +467,14 @@
                     </a>
                     <div class="session-screenshot-meta">
                         <strong>{{ screenshot.original_filename }}</strong>
+                        <details class="screenshot-rename-details">
+                            <summary>Rename</summary>
+                            <form method="post" action="/sessions/{{ session.id }}/screenshots/{{ screenshot.id }}/rename" class="screenshot-rename-form">
+                                <label class="visually-hidden" for="screenshot-name-{{ screenshot.id }}">Image name</label>
+                                <input id="screenshot-name-{{ screenshot.id }}" type="text" name="filename" value="{{ screenshot.original_filename }}" maxlength="255" required>
+                                <button class="table-action" type="submit">Save</button>
+                            </form>
+                        </details>
                         <form method="post" action="/sessions/{{ session.id }}/screenshots/{{ screenshot.id }}/delete" onsubmit="return confirm('Delete this screenshot?')">
                             <button class="table-action" type="submit">Delete</button>
                         </form>

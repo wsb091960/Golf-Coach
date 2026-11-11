@@ -132,6 +132,25 @@ def session_screenshot_image(session_id: str, screenshot_id: str, db: Session = 
     )
 
 
+@router.post('/{session_id}/screenshots/{screenshot_id}/rename', name='session_screenshot_rename')
+async def session_screenshot_rename(session_id: str, screenshot_id: str, request: Request, db: Session = Depends(get_db)):
+    require_session(session_id, db)
+    form = await request.form()
+    raw_name = str(form.get('filename') or '').strip()
+    filename = Path(raw_name.replace('\\\\', '/')).name[:255]
+    if not filename:
+        raise HTTPException(422, 'Enter a name for this screenshot')
+    screenshot = db.query(SessionScreenshot).filter(
+        SessionScreenshot.id == screenshot_id,
+        SessionScreenshot.session_id == session_id,
+    ).first()
+    if screenshot is None:
+        raise HTTPException(404, 'Screenshot not found')
+    screenshot.original_filename = filename
+    db.commit()
+    return RedirectResponse(f'/sessions/{session_id}?tab=screenshots', status_code=303)
+
+
 @router.post('/{session_id}/screenshots/{screenshot_id}/delete', name='session_screenshot_delete')
 def session_screenshot_delete(session_id: str, screenshot_id: str, db: Session = Depends(get_db)):
     require_session(session_id, db)

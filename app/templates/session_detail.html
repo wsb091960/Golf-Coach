@@ -6,7 +6,7 @@
     <title>Session Performance | WSBCO Golf Coach</title>
 
     <link rel="stylesheet" href="/static/css/dashboard.css">
-    <link rel="stylesheet" href="/static/css/session_performance.css?v=5.3O">
+    <link rel="stylesheet" href="/static/css/session_performance.css?v=5.3P">
     <link rel="stylesheet" href="/static/css/topdown_flight.css?v=5.3O">
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
@@ -647,6 +647,10 @@
             </form>
 
             {% if p_sheets %}
+            <form method="post" action="/sessions/{{ session.id }}/p-sheets/analyze" class="p-sheet-analyze-form">
+                <button class="button button-primary" type="submit">Analyze P-Sheets</button>
+                <span>Creates visual candidate findings and an approximate X-Factor range when the images support it.</span>
+            </form>
             <div class="p-sheet-grid">
                 {% for sheet in p_sheets %}
                 <article class="p-sheet-card">
@@ -668,6 +672,57 @@
             </div>
             {% else %}
             <p class="video-empty">No P-Sheets are attached to this session yet. Add the FO and DTL sheets above.</p>
+            {% endif %}
+
+            {% if p_sheet_analysis %}
+            <section class="p-sheet-analysis" aria-label="P-Sheet analysis results">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Visual screening · Coach review required</span>
+                        <h2>Analyzer Findings</h2>
+                        <p>{{ p_sheet_analysis.summary }}</p>
+                    </div>
+                </div>
+
+                {% if p_sheet_analysis.findings %}
+                <div class="p-sheet-findings">
+                    {% for finding in p_sheet_analysis.findings %}
+                    <article class="p-sheet-finding">
+                        <div class="p-sheet-finding-heading">
+                            <h3>{{ finding.title }}</h3>
+                            <span class="shape-pill">{{ finding.confidence|title }} confidence</span>
+                        </div>
+                        <p>{{ finding.observation }}</p>
+                        <small><strong>Evidence:</strong> {{ finding.view }} · {{ finding.evidence_positions|join(", ") }}</small>
+                        <p><strong>Coach check:</strong> {{ finding.coach_check }}</p>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p>No swing fault was flagged clearly enough from these sheets.</p>
+                {% endif %}
+
+                <article class="p-sheet-xfactor">
+                    <h3>X-Factor approximation</h3>
+                    {% set xfactor = p_sheet_analysis.x_factor %}
+                    {% if xfactor.estimate_band != "insufficient_evidence" %}
+                    <p><strong>Approximate separation:</strong> <span class="shape-pill">{{ xfactor.estimate_band|title }}</span></p>
+                    {% else %}
+                    <p><strong>Estimate unavailable:</strong> {{ xfactor.explanation }}</p>
+                    {% endif %}
+                    <p>{{ xfactor.explanation }}</p>
+                    <small>{{ xfactor.view }} · {{ xfactor.confidence|title }} confidence · Evidence: {{ xfactor.evidence_positions|join(", ") }}</small>
+                </article>
+
+                {% if p_sheet_analysis.limitations %}
+                <ul class="p-sheet-limitations">
+                    {% for limitation in p_sheet_analysis.limitations %}
+                    <li>{{ limitation }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <small>Automated visual screening only. The coach confirms findings and decides instruction.</small>
+            </section>
             {% endif %}
         </section>
 

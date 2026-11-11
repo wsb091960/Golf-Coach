@@ -451,9 +451,14 @@
             </div>
 
             <form method="post" action="/sessions/{{ session.id }}/screenshots" enctype="multipart/form-data" class="screenshot-upload-form">
+                <div id="screenshot-paste-area" tabindex="0" role="button" aria-label="Paste screenshots" style="border:2px dashed #b3c9c0;border-radius:12px;padding:16px;margin:12px 0;color:#174c3e;text-align:center;cursor:text;background:#f8fbf9;">
+                    <strong>Paste screenshots here</strong>
+                    <div>Click here, then press Ctrl+V or Command+V. You can also drag images here.</div>
+                    <div id="screenshot-paste-status" aria-live="polite"></div>
+                </div>
                 <label>
                     <span>Add screenshots</span>
-                    <input type="file" name="screenshots" accept="image/jpeg,image/png,image/webp" multiple required>
+                    <input id="session-screenshot-files" type="file" name="screenshots" accept="image/jpeg,image/png,image/webp" multiple required>
                 </label>
                 <button class="button button-primary" type="submit">Add Screenshots</button>
             </form>
@@ -552,10 +557,7 @@
                         placeholder="Session name"
                     >
 
-                    <textarea
-                        name="notes"
-                        placeholder="Session notes"
-                    >{{ session.notes or '' }}</textarea>
+                    <input type="hidden" name="notes" value="{{ session.notes or '' }}">
 
                     <textarea
                         name="coaching_notes"
@@ -914,6 +916,49 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const screenshotInput = document.getElementById("session-screenshot-files");
+    const screenshotPasteArea = document.getElementById("screenshot-paste-area");
+    const screenshotPasteStatus = document.getElementById("screenshot-paste-status");
+
+    function addScreenshotFiles(files) {
+        if (!screenshotInput) return 0;
+        const images = Array.from(files || []).filter(file => file && file.type && file.type.startsWith("image/"));
+        if (!images.length) return 0;
+        const transfer = new DataTransfer();
+        Array.from(screenshotInput.files || []).forEach(file => transfer.items.add(file));
+        images.forEach((file, index) => {
+            const type = file.type || "image/png";
+            const extension = type.includes("jpeg") ? "jpg" : type.includes("webp") ? "webp" : "png";
+            const filename = file.name || `pasted-screenshot-${Date.now()}-${index + 1}.${extension}`;
+            transfer.items.add(new File([file], filename, { type }));
+        });
+        screenshotInput.files = transfer.files;
+        return images.length;
+    }
+
+    if (screenshotPasteArea && screenshotInput) {
+        screenshotPasteArea.addEventListener("paste", function (event) {
+            const items = Array.from(event.clipboardData?.items || []);
+            const files = items
+                .filter(item => item.kind === "file" && item.type.startsWith("image/"))
+                .map(item => item.getAsFile())
+                .filter(Boolean);
+            const count = addScreenshotFiles(files);
+            if (count) {
+                event.preventDefault();
+                screenshotPasteStatus.textContent = `${count} screenshot${count === 1 ? "" : "s"} ready. Click Add Screenshots to save.`;
+            }
+        });
+        screenshotPasteArea.addEventListener("dragover", event => event.preventDefault());
+        screenshotPasteArea.addEventListener("drop", function (event) {
+            event.preventDefault();
+            const count = addScreenshotFiles(event.dataTransfer?.files || []);
+            screenshotPasteStatus.textContent = count
+                ? `${count} screenshot${count === 1 ? "" : "s"} ready. Click Add Screenshots to save.`
+                : "Drop image files here.";
+        });
+    }
+
     const originalModal = document.getElementById("video-modal");
     const uploadForm = document.getElementById("original-swing-upload-form");
     const uploadFile = document.getElementById("original-swing-video-file");

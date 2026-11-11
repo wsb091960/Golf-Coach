@@ -11,6 +11,26 @@
     <link rel="stylesheet" href="/static/css/swing_analysis_assist.css">
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
+<style>
+.p-frame-utility,.p-detection-panel{margin:16px 0;padding:16px;border:1px solid #d9e4de;border-radius:12px;background:#f8fbf9}
+.p-frame-utility{display:flex;flex-wrap:wrap;align-items:end;gap:10px}
+.p-frame-utility label{display:grid;gap:5px;color:#244a3d;font-weight:700;font-size:12px}
+.p-frame-utility select,.p-frame-utility input{min-height:38px;padding:7px 10px;border:1px solid #cad8d1;border-radius:8px;font:inherit}
+.p-frame-status{font-weight:750;color:#315849;min-width:110px}
+.p-detection-intro{color:#53665d;max-width:850px}
+.p-detection-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.p-detection-progress{margin:12px 0;color:#315849;font-weight:700}
+.p-detection-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px;margin-top:12px}
+.p-candidate{padding:12px;border:1px solid #d9e3de;border-radius:10px;background:#fff}
+.p-candidate.is-confirmed{border-color:#70a58a;background:#f0f8f3}
+.p-candidate strong{display:block;color:#174b3e}
+.p-candidate small{display:block;margin:5px 0;color:#65756d;line-height:1.4}
+.p-candidate-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.p-candidate-actions button{padding:7px 9px;border:1px solid #cad8d1;border-radius:8px;background:#fff;color:#174b3e;font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+.p-candidate-actions button.confirm{background:#155341;color:#fff;border-color:#155341}
+.p-detection-footnote{font-size:12px;color:#68776f;margin:12px 0 0}
+@media(max-width:600px){.p-frame-utility{align-items:stretch}.p-frame-utility button,.p-frame-utility label{flex:1 1 42%}}
+</style>
 </head>
 
 <body>
@@ -137,6 +157,34 @@
             </div>
             {% endif %}
 
+            {% if not is_observation_only %}
+            <div class="p-frame-utility" aria-label="Frame-accurate video controls">
+                <button type="button" class="button button-secondary" id="p-frame-back">◀ 1 frame</button>
+                <button type="button" class="button button-secondary" id="p-frame-forward">1 frame ▶</button>
+                <label>Recording FPS
+                    <select id="p-detection-fps"><option value="30">30</option><option value="60">60</option><option value="120" selected>120</option><option value="240">240</option></select>
+                </label>
+                <label>Playback
+                    <select id="p-playback-rate"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option></select>
+                </label>
+                <span class="p-frame-status" id="p-frame-status" aria-live="polite">Frame — · 0.000s</span>
+            </div>
+            <section class="p-detection-panel" aria-labelledby="p-detection-title">
+                <span class="section-kicker">Pose-Assisted Video Utility</span>
+                <h3 id="p-detection-title">Find P1–P10 candidate frames</h3>
+                <p class="p-detection-intro">Analyze the selected swing in this browser and get candidate timestamps from the golfer’s movement. Review each frame at full speed and confirm it before it becomes part of the lesson report. Pose-only cues are estimates; P7 impact and club/shaft positions need your visual check.</p>
+                <div class="p-frame-utility">
+                    <label>Analyze from (sec)<input id="p-detect-start" type="number" min="0" step="0.001" value="0"></label>
+                    <label>Analyze to (sec)<input id="p-detect-end" type="number" min="0" step="0.001" value=""></label>
+                    <button type="button" class="button button-primary" id="p-detect-run">Detect P-Position Candidates</button>
+                    <button type="button" class="button button-secondary" id="p-detect-clear">Clear Candidates</button>
+                </div>
+                <p class="p-detection-progress" id="p-detect-status" aria-live="polite">Choose a short clip around one swing. Candidate frames are suggestions; no checkpoint is saved until you confirm it.</p>
+                <div class="p-detection-list" id="p-detection-list" aria-live="polite"></div>
+                <p class="p-detection-footnote">P1, P4, and P10 use pose movement cues. P2–P3 and P5–P9 are lower-confidence timing candidates because camera video cannot always reveal club position or exact ball contact. Detection uses the browser model; video frames are not sent to an AI service.</p>
+            </section>
+            {% endif %}
+
             <div class="landmark-toolbar">
                 <button type="button" class="button button-secondary" id="landmark-start" {% if is_observation_only %}disabled title="Attach a swing video first"{% endif %}>Measure 4 Landmarks</button>
                 <button type="button" class="button button-secondary" id="landmark-clear" {% if is_observation_only %}disabled title="Attach a swing video first"{% endif %}>Clear Landmarks</button>
@@ -165,66 +213,10 @@
 
 
             <div class="checkpoint-assist-panel">
-                <span class="section-kicker">Auto Assist</span>
-                <h3>P1–P10 Timing Assistant</h3>
-                <p>
-                    Mark P1 and P10 from the original video, choose the capture
-                    frame rate, then estimate P2–P9. Every estimate remains coach-adjustable.
-                </p>
-
-                <div class="checkpoint-assist-grid">
-                    <label>
-                        <span>P1 Time (sec)</span>
-                        <input id="assist-p1-time" type="number" step="0.001"
-                               value="{{ analysis.checkpoints[0].time_seconds if analysis.checkpoints and analysis.checkpoints[0].time_seconds is not none else '' }}">
-                    </label>
-
-                    <label>
-                        <span>P10 Time (sec)</span>
-                        <input id="assist-p10-time" type="number" step="0.001"
-                               value="{{ analysis.checkpoints[9].time_seconds if analysis.checkpoints|length >= 10 and analysis.checkpoints[9].time_seconds is not none else '' }}">
-                    </label>
-
-                    <label>
-                        <span>Video FPS</span>
-                        <select id="assist-fps">
-                            <option value="30">30 fps</option>
-                            <option value="60">60 fps</option>
-                            <option value="120" selected>120 fps</option>
-                            <option value="240">240 fps</option>
-                        </select>
-                    </label>
-
-                    <label>
-                        <span>Method</span>
-                        <input value="Coach-marked timing estimate" readonly>
-                    </label>
-                </div>
-
-                <label class="checkpoint-assist-check">
-                    <input id="assist-overwrite" type="checkbox">
-                    <span>Overwrite already-set P2–P9 times</span>
-                </label>
-
-                <div class="checkpoint-assist-actions">
-                    <button type="button" class="button button-secondary" id="assist-mark-p1">
-                        Mark Current Time as P1
-                    </button>
-                    <button type="button" class="button button-secondary" id="assist-mark-p10">
-                        Mark Current Time as P10
-                    </button>
-                    <button type="button" class="button button-secondary" id="assist-use-video-range">
-                        Use Full Video Range
-                    </button>
-                    <button type="button" class="button button-primary" id="assist-seed-checkpoints">
-                        Auto-Seed P1–P10
-                    </button>
-                    <button type="button" class="button button-secondary" id="assist-derive-x-factor">
-                        Recalculate X-Factor
-                    </button>
-                </div>
-
-                <strong id="assist-status"></strong>
+                <span class="section-kicker">P-Position review</span>
+                <h3>Review and approve detected frames</h3>
+                <p>Run pose-assisted candidate detection in the Swing Video tab. Inspect each suggested frame with one-frame controls, then confirm candidates there. Only coach-confirmed P1–P10 timestamps are saved for the lesson report. Manual frame selection and measurement remain available here.</p>
+                <strong id="assist-status" aria-live="polite"></strong>
             </div>
 
             <div
@@ -459,6 +451,7 @@
 <script src="/static/js/swing_landmark_measurements.js?v=5.2.6"></script>
 <script src="/static/js/swing_analysis_workspace.js?v=5.2.6"></script>
 <script src="/static/js/swing_analysis_assist.js?v=5.2.4"></script>
+<script src="/static/js/p_position_detector.js?v=1"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 </body>

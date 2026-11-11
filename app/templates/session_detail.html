@@ -96,7 +96,7 @@
 
         <div style="margin:12px 0"><a class="button button-secondary" href="/gcie/sessions/{{ session.id }}/lesson-plan">GCIE Lesson Plan · View / Print / Record Results</a></div>
 
-        <nav class="workspace-tabs" role="tablist" data-workspace-tabs="session-detail" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="charts">Charts</button><button type="button" role="tab" data-workspace-tab="shots">Shots</button><button type="button" role="tab" data-workspace-tab="videos">Videos</button><button type="button" role="tab" data-workspace-tab="notes">Notes</button></nav>
+        <nav class="workspace-tabs" role="tablist" data-workspace-tabs="session-detail" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="charts">Charts</button><button type="button" role="tab" data-workspace-tab="shots">Shots</button><button type="button" role="tab" data-workspace-tab="videos">Videos</button><button type="button" role="tab" data-workspace-tab="notes">Notes</button><button type="button" role="tab" data-workspace-tab="p-sheets">P-Sheets</button></nav>
 
 
         <section class="performance-kpis" data-workspace-panel="overview" data-workspace-group="session-detail">
@@ -619,6 +619,56 @@
                     Save Session Notes
                 </button>
             </form>
+        </section>
+
+        <section class="performance-card" data-workspace-panel="p-sheets" data-workspace-group="session-detail" hidden>
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">P1–P10 Reference Sheets</span>
+                    <h2>Session P-Sheets</h2>
+                    <p>Each sheet image and its ChatGPT Library link are saved with this coaching session.</p>
+                </div>
+            </div>
+
+            <form method="post" action="/sessions/{{ session.id }}/p-sheets" enctype="multipart/form-data" class="p-sheet-upload-form">
+                <label>
+                    <span>Sheet title</span>
+                    <input type="text" name="title" placeholder="DTL P1–P10" required>
+                </label>
+                <label>
+                    <span>ChatGPT Library link</span>
+                    <input type="url" name="library_url" placeholder="https://chatgpt.com/library?file_id=..." required>
+                </label>
+                <label>
+                    <span>Image file</span>
+                    <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
+                </label>
+                <button class="button button-primary" type="submit">Add P-Sheet</button>
+            </form>
+
+            {% if p_sheets %}
+            <div class="p-sheet-grid">
+                {% for sheet in p_sheets %}
+                <article class="p-sheet-card">
+                    <h3>{{ sheet.title }}</h3>
+                    <a href="/sessions/{{ session.id }}/p-sheets/{{ sheet.id }}/image" target="_blank" rel="noopener">
+                        <img src="/sessions/{{ session.id }}/p-sheets/{{ sheet.id }}/image" alt="{{ sheet.title }}">
+                    </a>
+                    <div class="p-sheet-actions">
+                        {% if sheet.library_url %}
+                        <a class="button button-secondary" href="{{ sheet.library_url }}" target="_blank" rel="noopener">Open Library link</a>
+                        {% endif %}
+                        <form method="post" action="/sessions/{{ session.id }}/p-sheets/{{ sheet.id }}/delete" onsubmit="return confirm('Delete this P-Sheet from the session?')">
+                            <button class="table-action" type="submit">Remove</button>
+                        </form>
+                    </div>
+                    <small>{{ sheet.original_filename }}</small>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="video-empty">No P-Sheets are attached to this session yet. Add the FO and DTL sheets above.</p>
+            {% endif %}
         </section>
 
     </main>
@@ -1192,6 +1242,12 @@ document.addEventListener("DOMContentLoaded", function () {
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    if (requestedTab) {
+        const tab = document.querySelector('[data-workspace-tab="' + requestedTab + '"]');
+        if (tab) tab.click();
+        return;
+    }
     if (window.location.hash !== "#ball-flight-simulator") return;
     const chartsTab = document.querySelector('[data-workspace-tab="charts"]');
     if (chartsTab) chartsTab.click();

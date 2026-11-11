@@ -82,7 +82,7 @@ This is the numbered continuation of the GCDevLog beginning at #10. These are ap
 ## #21 — One-Click P-Sheet Analyzer & X-Factor Approximation
 - Analyze uploaded FO/DTL P-sheet images with automatic frame, body-landmark and club detection; do not require manual point marking.
 - Flag visible candidate patterns with frame evidence, overlay, and confidence: sway/slide, casting or early release, steepening/shallowing, over-the-top delivery, early extension/loss of posture, setup geometry, and finish balance.
-- Provide an X-Factor approximation at the top of the backswing from estimated thorax/shoulder and pelvis rotation. Label it clearly as an approximate, view-dependent estimate—not a measured 3D angle or medical/biomechanical diagnosis.
+- Provide a low/medium/high qualitative estimate of relative thorax/shoulder-to-pelvis rotation near the top of the backswing when visible. Label it as a coarse, view-dependent approximation—not a measured 3D angle or a grade where high is automatically better.
 - Prefer matching FO/DTL views of the same swing, automatically phase-align them where possible, and show the supporting frames and assumptions. If the views are unsynchronized or camera geometry is inadequate, report a single-view proxy or “insufficient evidence” instead of fabricating a combined 3D value.
 - Include confidence and camera/2D limitations; allow the coach to accept or correct each finding. Apply the PGA framework before recommending instruction, and prioritize the smallest safe, testable change.
 

@@ -3,10 +3,11 @@ from collections import Counter
 from datetime import date
 from pathlib import Path
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.models import PPositionSheet
 from app.store import add_session, add_shot, delete_session, delete_shot, get_session, get_session_shots, get_student, list_sessions, list_students, update_session, update_shot
 from app.video_store import list_session_videos
 
@@ -65,8 +66,78 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
     return templates.TemplateResponse(request=request, name='session_detail.html', context={
         'page_title':'Session Performance','active_page':'sessions','session':session,'student':student,
         'session_shots':shots,'session_videos':videos,
+        'p_sheets': db.query(PPositionSheet).filter(PPositionSheet.session_id == session_id).order_by(PPositionSheet.created_at.desc()).all(),
         'session_metrics':{'shots':len(included),'club_count':club_count,'club_summary':club_summary,'dominant_club':dominant_club,'carry':avg('carry_distance'),'ball_speed':avg('ball_speed'),'club_speed':avg('club_speed'),'smash':avg('smash_factor'),'attack':avg('attack_angle'),'path':avg('club_path'),'face':avg('club_face')}
     })
+
+@router.post('/{session_id}/p-sheets', name='p_sheet_upload')
+async def p_sheet_upload(session_id: str, request: Request, db: Session = Depends(get_db)):
+    require_session(session_id, db)
+    form = await request.form()
+    upload = form.get("image")
+    if upload is None or not hasattr(upload, "read"):
+        raise HTTPException(422, "Choose a P-Sheet image to upload")
+
+    content_type = str(getattr(upload, "content_type", "") or "").lower()
+    if content_type not in {"image/jpeg", "image/png", "image/webp"}:
+        raise HTTPException(415, "Upload a JPG, PNG, or WEBP image")
+
+    image_data = await upload.read()
+    if not image_data or len(image_data) > 20 * 1024 * 1024:
+        raise HTTPException(413, "Image must be between 1 byte and 20 MB")
+
+    library_url = str(form.get("library_url") or "").strip()
+    if library_url and not library_url.startswith(("https://", "http://")):
+        raise HTTPException(422, "The sheet link must begin with http:// or https://")
+
+    filename = str(getattr(upload, "filename", "") or "P-Sheet image")[:255]
+    title = str(form.get("title") or "").strip()[:255]
+    if not title:
+        title = Path(filename).stem or "P-Position Sheet"
+
+    sheet = PPositionSheet(
+        id=__import__("uuid").uuid4().hex,
+        session_id=session_id,
+        title=title,
+        original_filename=filename,
+        content_type=content_type,
+        image_data=image_data,
+        library_url=library_url,
+    )
+    db.add(sheet)
+    db.commit()
+    return RedirectResponse(f"/sessions/{session_id}?tab=p-sheets", status_code=303)
+
+
+@router.get('/{session_id}/p-sheets/{sheet_id}/image', name='p_sheet_image')
+def p_sheet_image(session_id: str, sheet_id: str, db: Session = Depends(get_db)):
+    require_session(session_id, db)
+    sheet = db.query(PPositionSheet).filter(
+        PPositionSheet.id == sheet_id,
+        PPositionSheet.session_id == session_id,
+    ).first()
+    if sheet is None:
+        raise HTTPException(404, "P-Sheet image not found")
+    return Response(
+        content=sheet.image_data,
+        media_type=sheet.content_type,
+        headers={"Cache-Control": "private, max-age=3600"},
+    )
+
+
+@router.post('/{session_id}/p-sheets/{sheet_id}/delete', name='p_sheet_delete')
+def p_sheet_delete(session_id: str, sheet_id: str, db: Session = Depends(get_db)):
+    require_session(session_id, db)
+    sheet = db.query(PPositionSheet).filter(
+        PPositionSheet.id == sheet_id,
+        PPositionSheet.session_id == session_id,
+    ).first()
+    if sheet is None:
+        raise HTTPException(404, "P-Sheet not found")
+    db.delete(sheet)
+    db.commit()
+    return RedirectResponse(f"/sessions/{session_id}?tab=p-sheets", status_code=303)
+
 
 @router.post('/{session_id}/update', name='session_update')
 def session_update(session_id: str, session_date: str = Form(...), session_type: str = Form('Coaching Session'), name: str = Form(''), notes: str = Form(''), coaching_notes: str = Form(''), db: Session = Depends(get_db)):

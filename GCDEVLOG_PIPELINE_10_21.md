@@ -17,7 +17,7 @@ This is the numbered continuation of the GCDevLog beginning at #10. These are ap
 | 18 | Coach-Approved Case Learning & Outcome Analytics | Planned — pipeline | P1 | #14–17 |
 | 19 | Interactive 3D Ball-Flight Simulator & Teaching Recommendations | Planned — pipeline | P1 | #16–17 |
 | 20 | Student Lesson Report & Video Evidence Workflow | Planned — pipeline | P1 | #10–18 |
-| 21 | One-Click P-Sheet Analyzer & X-Factor Approximation | Planned — pipeline | P1 | #10, #12 |
+| 21 | One-Click P-Sheet Analyzer & X-Factor Approximation | In Progress | P1 | #10, #12 |
 
 ## #10 — FO/DTL Video Viewer & P-Position Utility
 - Chromebook-first workflow; import uploaded videos and accessible Onform shared links (fallback to uploads if access/download restricted).

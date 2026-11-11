@@ -82,7 +82,7 @@
 .p-sheet-upload-form input { max-width: 100%; }
 .p-sheet-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 18px;
 }
 .p-sheet-card {
@@ -198,7 +198,8 @@
 .session-screenshot-card img {
     display: block;
     width: 100%;
-    max-height: 480px;
+    height: 200px;
+    max-height: 200px;
     object-fit: contain;
 }
 .session-screenshot-meta {
@@ -229,6 +230,10 @@
 .session-video-archive > p {
     color: #687b74;
 }
-@media (max-width: 640px) {
+@media (max-width: 900px) {
+    .session-screenshot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
     .session-screenshot-grid { grid-template-columns: 1fr; }
+    .session-screenshot-card img { height: 240px; max-height: 240px; }
 }

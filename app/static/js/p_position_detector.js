@@ -15,6 +15,8 @@
     const ANALYSIS_VERSION = "pose-timing-candidates-v1";
     let visionTask = null;
     let candidates = [];
+    let frameTimes = null;
+    let frameMapPromise = null;
 
     const POSITIONS = [
         ["P1", "Address / motion start"],
@@ -34,27 +36,128 @@
         status.dataset.error = error ? "1" : "0";
     }
 
-    function fps() {
-        const value = Number(fpsSelect?.value || 120);
-        return Number.isFinite(value) && value > 0 ? value : 120;
+    function sampleRate() {
+        const value = Number(fpsSelect?.value || 24);
+        return Number.isFinite(value) && value > 0 ? value : 24;
+    }
+
+    function nearestFrameIndex(time) {
+        if (!frameTimes?.length) return -1;
+        let low = 0, high = frameTimes.length - 1;
+        while (low < high) {
+            const middle = Math.floor((low + high) / 2);
+            if (frameTimes[middle] < time) low = middle + 1;
+            else high = middle;
+        }
+        if (low > 0 && Math.abs(frameTimes[low - 1] - time) <= Math.abs(frameTimes[low] - time)) return low - 1;
+        return low;
     }
 
     function updateFrameStatus() {
         if (!frameStatus || !Number.isFinite(video.currentTime)) return;
-        const frame = Math.max(0, Math.round(video.currentTime * fps()));
-        frameStatus.textContent = `Frame ${frame} · ${video.currentTime.toFixed(3)}s`;
+        const frame = nearestFrameIndex(video.currentTime);
+        frameStatus.textContent = frame >= 0
+            ? `Frame index ${frame} / ${frameTimes.length - 1} · ${video.currentTime.toFixed(3)}s`
+            : `Time ${video.currentTime.toFixed(3)}s · frame map loads on first step`;
     }
 
-    function nudgeFrame(direction) {
+    async function loadMp4Box() {
+        if (window.MP4Box?.createFile) return window.MP4Box;
+        await new Promise((resolve, reject) => {
+            const existing = document.querySelector('script[data-mp4box="1"]');
+            if (existing) {
+                existing.addEventListener("load", resolve, { once: true });
+                existing.addEventListener("error", () => reject(new Error("Could not load the MP4 frame reader.")), { once: true });
+                return;
+            }
+            const script = document.createElement("script");
+            script.src = "https://cdn.jsdelivr.net/npm/mp4box@0.5.4/dist/mp4box.all.min.js";
+            script.dataset.mp4box = "1";
+            script.onload = resolve;
+            script.onerror = () => reject(new Error("Could not load the MP4 frame reader. Check the connection and retry."));
+            document.head.append(script);
+        });
+        if (!window.MP4Box?.createFile) throw new Error("The MP4 frame reader did not initialize.");
+        return window.MP4Box;
+    }
+
+    async function loadFrameTimestamps() {
+        if (frameTimes?.length) return frameTimes;
+        if (frameMapPromise) return frameMapPromise;
+        frameMapPromise = (async () => {
+            setStatus("Reading exact frame timestamps from the video file…");
+            const MP4Box = await loadMp4Box();
+            const response = await fetch(video.currentSrc, { credentials: "same-origin" });
+            if (!response.ok) throw new Error(`Video frame map request failed (${response.status}).`);
+            const data = await response.arrayBuffer();
+            data.fileStart = 0;
+            const parsed = await new Promise((resolve, reject) => {
+                const mp4 = MP4Box.createFile();
+                const timestamps = [];
+                let expected = 0;
+                let settled = false;
+                const timeout = setTimeout(() => {
+                    if (!settled) { settled = true; reject(new Error("Timed out reading video frame timestamps.")); }
+                }, 30000);
+                const fail = error => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timeout);
+                    reject(new Error(String(error || "Could not read the MP4 frame table.")));
+                };
+                mp4.onError = fail;
+                mp4.onReady = info => {
+                    const track = (info.tracks || []).find(item => item.type === "video");
+                    expected = Number(track?.nb_samples || 0);
+                    if (!track || expected < 2) { fail("This MP4 does not expose a usable video frame table."); return; }
+                    mp4.onSamples = (_trackId, _user, samples) => {
+                        for (const sample of samples) {
+                            const scale = Number(sample.timescale);
+                            if (scale > 0) timestamps.push(Number(sample.cts) / scale);
+                        }
+                        if (!settled && timestamps.length >= expected) {
+                            settled = true;
+                            clearTimeout(timeout);
+                            resolve(timestamps.sort((a, b) => a - b));
+                        }
+                    };
+                    mp4.setExtractionOptions(track.id, null, { nbSamples: 512 });
+                    mp4.start();
+                };
+                try {
+                    mp4.appendBuffer(data);
+                    mp4.flush();
+                } catch (error) { fail(error.message); }
+            });
+            const base = parsed[0] || 0;
+            frameTimes = parsed.map(time => Math.max(0, time - base));
+            if (frameTimes.length < 2) throw new Error("The video frame table is empty.");
+            updateFrameStatus();
+            return frameTimes;
+        })();
+        try {
+            return await frameMapPromise;
+        } catch (error) {
+            frameMapPromise = null;
+            throw error;
+        }
+    }
+
+    async function nudgeFrame(direction) {
         video.pause();
-        const next = Math.max(0, Math.min(video.duration || Infinity, video.currentTime + direction / fps()));
-        video.currentTime = next;
-        updateFrameStatus();
+        try {
+            const times = await loadFrameTimestamps();
+            const current = nearestFrameIndex(video.currentTime);
+            const next = Math.max(0, Math.min(times.length - 1, current + direction));
+            video.currentTime = times[next];
+            updateFrameStatus();
+        } catch (error) {
+            setStatus(error.message, true);
+        }
     }
 
     document.getElementById("p-frame-back")?.addEventListener("click", () => nudgeFrame(-1));
     document.getElementById("p-frame-forward")?.addEventListener("click", () => nudgeFrame(1));
-    fpsSelect?.addEventListener("change", updateFrameStatus);
     rateSelect?.addEventListener("change", () => {
         video.playbackRate = Number(rateSelect.value || 1);
     });
@@ -229,7 +332,7 @@
             position,
             label,
             time: points[index].time,
-            frame: Math.round(points[index].time * fps()),
+            frame: points[index].frame,
             quality,
             reason: reasons[index],
             sampleRate,
@@ -238,8 +341,7 @@
     }
 
     function formatCandidate(candidate) {
-        const number = Math.max(0, Math.round(candidate.time * fps()));
-        return `Frame ${number} · ${candidate.time.toFixed(3)} sec`;
+        return `Frame index ${candidate.frame} · ${candidate.time.toFixed(3)} sec`;
     }
 
     function updateCheckpointStrip(candidate, data) {
@@ -351,27 +453,38 @@
             if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
                 throw new Error("Choose a valid start and end time that includes one complete swing.");
             }
-            const sampleRate = Math.min(fps(), 24);
-            const interval = 1 / sampleRate;
-            const frameCount = Math.floor((end - start) / interval) + 1;
-            if (frameCount < 8) throw new Error("The selected clip is too short. Include at least a third of a second.");
-            if (frameCount > 720) throw new Error("Trim the video to one swing (30 seconds or less) before analysis.");
+            const times = await loadFrameTimestamps();
+            const sampleRateValue = sampleRate();
+            const targetCount = Math.max(8, Math.ceil((end - start) * sampleRateValue) + 1);
+            if (targetCount > 720) throw new Error("Trim the video to one swing (30 seconds or less) before analysis.");
+            const sampleIndices = [];
+            const unique = new Set();
+            for (let i = 0; i < targetCount; i++) {
+                const target = targetCount === 1 ? start : start + (end - start) * i / (targetCount - 1);
+                const frameIndex = nearestFrameIndex(target);
+                if (frameIndex >= 0 && times[frameIndex] >= start && times[frameIndex] <= end && !unique.has(frameIndex)) {
+                    unique.add(frameIndex);
+                    sampleIndices.push(frameIndex);
+                }
+            }
+            if (sampleIndices.length < 8) throw new Error("The selected clip is too short. Include at least a third of a second.");
             setStatus("Loading the on-device pose model…");
             const detector = await loadVision();
             const samples = [];
-            for (let index = 0; index < frameCount; index++) {
-                const time = Math.min(end, start + index * interval);
+            for (let index = 0; index < sampleIndices.length; index++) {
+                const frame = sampleIndices[index];
+                const time = times[frame];
                 await waitForSeek(time);
                 const result = detector.detectForVideo(video, Math.max(1, Math.round(time * 1000)));
                 const metrics = frameMetrics(result);
-                if (metrics) samples.push({ time, ...metrics });
-                if (index % 8 === 0 || index === frameCount - 1) {
-                    setStatus(`Analyzing pose frames: ${index + 1} / ${frameCount}. Keep this page open.`);
+                if (metrics) samples.push({ time, frame, ...metrics });
+                if (index % 8 === 0 || index === sampleIndices.length - 1) {
+                    setStatus(`Analyzing pose frames: ${index + 1} / ${sampleIndices.length}. Keep this page open.`);
                     await new Promise(resolve => requestAnimationFrame(() => resolve()));
                 }
             }
             const tracked = addSpeeds(samples);
-            candidates = makeCandidates(tracked, sampleRate);
+            candidates = makeCandidates(tracked, sampleRateValue);
             const oldData = JSON.parse(document.getElementById("analysis-data")?.textContent || "{}");
             const saved = new Map((oldData.checkpoints || []).map(cp => [cp.position, cp]));
             candidates.forEach(candidate => {

@@ -161,14 +161,14 @@
             <div class="p-frame-utility" aria-label="Frame-accurate video controls">
                 <button type="button" class="button button-secondary" id="p-frame-back">◀ 1 frame</button>
                 <button type="button" class="button button-secondary" id="p-frame-forward">1 frame ▶</button>
-                <label>Video file FPS
-                    <select id="p-detection-fps"><option value="30">30</option><option value="60">60</option><option value="120" selected>120</option><option value="240">240</option></select>
+                <label>Pose analysis rate
+                    <select id="p-detection-fps"><option value="12">12 fps</option><option value="24" selected>24 fps</option><option value="30">30 fps</option></select>
                 </label>
                 <label>Playback
                     <select id="p-playback-rate"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option></select>
                 </label>
                 <span class="p-frame-status" id="p-frame-status" aria-live="polite">Frame — · 0.000s</span>
-                <small class="p-frame-help">Use the FPS encoded in this video file. Slow-motion clips may be exported at a different FPS than the camera capture rate.</small>
+                <small class="p-frame-help">Frame stepping follows timestamps parsed from the video file, including variable-rate Onform exports.</small>
             </div>
             <section class="p-detection-panel" aria-labelledby="p-detection-title">
                 <span class="section-kicker">Pose-Assisted Video Utility</span>

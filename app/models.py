@@ -40,6 +40,21 @@ class PPositionSheet(Base):
     )
 
 
+class SessionScreenshot(Base):
+    __tablename__ = "session_screenshots"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    session_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("sessions.id", ondelete="CASCADE"),
+        index=True,
+    )
+    original_filename: Mapped[str] = mapped_column(String(255), default="")
+    content_type: Mapped[str] = mapped_column(String(100), default="image/png")
+    image_data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class PPositionAnalysis(Base):
     __tablename__ = "session_p_sheet_analyses"
 

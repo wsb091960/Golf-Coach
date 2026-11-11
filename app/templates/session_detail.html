@@ -96,7 +96,7 @@
 
         <div style="margin:12px 0"><a class="button button-secondary" href="/gcie/sessions/{{ session.id }}/lesson-plan">GCIE Lesson Plan · View / Print / Record Results</a></div>
 
-        <nav class="workspace-tabs" role="tablist" data-workspace-tabs="session-detail" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="charts">Charts</button><button type="button" role="tab" data-workspace-tab="shots">Shots</button><button type="button" role="tab" data-workspace-tab="videos">Videos</button><button type="button" role="tab" data-workspace-tab="notes">Notes</button><button type="button" role="tab" data-workspace-tab="p-sheets">P-Sheets</button></nav>
+        <nav class="workspace-tabs" role="tablist" data-workspace-tabs="session-detail" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="charts">Charts</button><button type="button" role="tab" data-workspace-tab="shots">Shots</button><button type="button" role="tab" data-workspace-tab="screenshots">Screenshots</button><button type="button" role="tab" data-workspace-tab="notes">Notes</button><button type="button" role="tab" data-workspace-tab="p-sheets">P-Sheets</button></nav>
 
 
         <section class="performance-kpis" data-workspace-panel="overview" data-workspace-group="session-detail">
@@ -441,120 +441,72 @@
         </section>
 
 
-        <!-- =========================================================
-             PHASE 5.2.5C — SWING VIDEO → P-POSITION ANALYSIS
-             ========================================================= -->
-
-        <section class="performance-card video-section" data-workspace-panel="videos" data-workspace-group="session-detail" hidden>
+        <section class="performance-card screenshot-section" data-workspace-panel="screenshots" data-workspace-group="session-detail" hidden>
             <div class="card-heading">
                 <div>
-                    <span class="section-kicker">Phase 5.2.5C · Manual P-Position Source</span>
-                    <h2>Swing Video for P-Position Analysis</h2>
-                    <p>Upload the actual swing video here. Onform metric screenshots are uploaded separately inside Swing Analysis.</p>
+                    <span class="section-kicker">Session Screenshots</span>
+                    <h2>Onform Screenshots</h2>
+                    <p>Images uploaded here are stored with Noah’s coaching session and remain available for lesson review.</p>
                 </div>
-
-                <button
-                    class="button button-primary"
-                    type="button"
-                    data-open-video
-                    data-video-mode="original_swing"
-                >
-                    Add Swing Video for P-Position Analysis
-                </button>
             </div>
 
+            <form method="post" action="/sessions/{{ session.id }}/screenshots" enctype="multipart/form-data" class="screenshot-upload-form">
+                <label>
+                    <span>Add screenshots</span>
+                    <input type="file" name="screenshots" accept="image/jpeg,image/png,image/webp" multiple required>
+                </label>
+                <button class="button button-primary" type="submit">Add Screenshots</button>
+            </form>
 
-            <div class="video-grid">
-
-                {% set ns = namespace(original_count=0) %}
-
-                {% for video in session_videos %}
-                    {% if video.video_type == "original_swing" or not video.video_type %}
-                        {% set ns.original_count = ns.original_count + 1 %}
-
-                        <article class="video-card original-swing-card">
-                            <div class="video-type-label">Original Swing</div>
-
-                            <video
-                                controls
-                                preload="metadata"
-                                src="/sessions/{{ session.id }}/videos/{{ video.id }}/stream"
-                            ></video>
-
-                            <div class="video-meta">
-                                <div>
-                                    <strong>{{ video.title or "Swing Video" }}</strong>
-
-                                    <span>
-                                        {{ video.camera_view or "View not specified" }}
-                                        {% if video.club %}
-                                            · {{ video.club }}
-                                        {% endif %}
-                                        {% if video.shot_number %}
-                                            · Shot {{ video.shot_number }}
-                                        {% endif %}
-                                    </span>
-                                </div>
-
-                                {% if video.notes %}
-                                <p>{{ video.notes }}</p>
-                                {% endif %}
-
-                                <div class="video-actions">
-                                    <a
-                                        class="table-action"
-                                        href="/sessions/{{ session.id }}/videos/{{ video.id }}/download"
-                                    >
-                                        Download / Share
-                                    </a>
-
-                                    <a
-                                        class="table-action"
-                                        href="/swing-analysis/video/{{ video.id }}/open"
-                                    >
-                                        Open Swing Analysis
-                                    </a>
-
-
-                                    {% if video.onform_url %}
-                                    <a
-                                        class="table-action"
-                                        href="{{ video.onform_url }}"
-                                        target="_blank"
-                                        rel="noopener"
-                                    >
-                                        Onform Link
-                                    </a>
-                                    {% endif %}
-
-                                    <form
-                                        method="post"
-                                        action="/sessions/{{ session.id }}/videos/{{ video.id }}/delete"
-                                        onsubmit="return confirm('Delete this original swing?')"
-                                    >
-                                        <button class="table-action" type="submit">
-                                            Delete
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-
-
-                        </article>
-
-                    {% endif %}
+            {% if session_screenshots %}
+            <div class="session-screenshot-grid">
+                {% for screenshot in session_screenshots %}
+                <article class="session-screenshot-card">
+                    <a href="/sessions/{{ session.id }}/screenshots/{{ screenshot.id }}/image" target="_blank" rel="noopener">
+                        <img src="/sessions/{{ session.id }}/screenshots/{{ screenshot.id }}/image" alt="{{ screenshot.original_filename }}">
+                    </a>
+                    <div class="session-screenshot-meta">
+                        <strong>{{ screenshot.original_filename }}</strong>
+                        <form method="post" action="/sessions/{{ session.id }}/screenshots/{{ screenshot.id }}/delete" onsubmit="return confirm('Delete this screenshot?')">
+                            <button class="table-action" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </article>
                 {% endfor %}
-
-
-                {% if ns.original_count == 0 %}
-                <div class="video-empty">
-                    No original swing videos attached yet.
-                    Add a raw swing first, then use Onform for drawing,
-                    voiceover, comparison and biomechanical analysis.
-                </div>
-                {% endif %}
-
             </div>
+            {% else %}
+            <p class="screenshot-empty">No screenshots are stored with this session yet.</p>
+            {% endif %}
+
+            <details class="session-video-archive">
+                <summary>Swing videos · {{ session_videos|length }}</summary>
+                <p>Use these original swing clips for video analysis. Uploaded clips remain separate from the screenshot gallery.</p>
+                <button class="button button-secondary" type="button" data-open-video data-video-mode="original_swing">Add Swing Video</button>
+                <div class="video-grid">
+                    {% for video in session_videos %}
+                    {% if video.video_type == "original_swing" or not video.video_type %}
+                    <article class="video-card original-swing-card">
+                        <div class="video-type-label">Original Swing</div>
+                        <video controls preload="metadata" src="/sessions/{{ session.id }}/videos/{{ video.id }}/stream"></video>
+                        <div class="video-meta">
+                            <div><strong>{{ video.title or "Swing Video" }}</strong><span>{{ video.camera_view or "View not specified" }}{% if video.club %} · {{ video.club }}{% endif %}{% if video.shot_number %} · Shot {{ video.shot_number }}{% endif %}</span></div>
+                            {% if video.notes %}<p>{{ video.notes }}</p>{% endif %}
+                            <div class="video-actions">
+                                <a class="table-action" href="/sessions/{{ session.id }}/videos/{{ video.id }}/download">Download / Share</a>
+                                <a class="table-action" href="/swing-analysis/video/{{ video.id }}/open">Open Swing Analysis</a>
+                                {% if video.onform_url %}<a class="table-action" href="{{ video.onform_url }}" target="_blank" rel="noopener">Onform Link</a>{% endif %}
+                                <form method="post" action="/sessions/{{ session.id }}/videos/{{ video.id }}/delete" onsubmit="return confirm('Delete this original swing?')">
+                                    <button class="table-action" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </article>
+                    {% endif %}
+                    {% else %}
+                    <p class="video-empty">No swing videos are attached to this session.</p>
+                    {% endfor %}
+                </div>
+            </details>
         </section>
 
 

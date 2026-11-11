@@ -96,7 +96,7 @@
 
         <div style="margin:12px 0"><a class="button button-secondary" href="/gcie/sessions/{{ session.id }}/lesson-plan">GCIE Lesson Plan · View / Print / Record Results</a></div>
 
-        <nav class="workspace-tabs" role="tablist" data-workspace-tabs="session-detail" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="charts">Simulator</button><button type="button" role="tab" data-workspace-tab="shots">Shots</button><button type="button" role="tab" data-workspace-tab="screenshots">Biomechanics</button><button type="button" role="tab" data-workspace-tab="p-sheets">P-Sheets</button><button type="button" role="tab" data-workspace-tab="notes">Notes</button></nav>
+        <nav class="workspace-tabs" role="tablist" data-workspace-tabs="session-detail" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="charts">Simulator</button><button type="button" role="tab" data-workspace-tab="shots">Shots</button><button type="button" role="tab" data-workspace-tab="screenshots">Biomechanics</button><button type="button" role="tab" data-workspace-tab="notes">Notes</button></nav>
 
 
         <section class="performance-kpis" data-workspace-panel="overview" data-workspace-group="session-detail">
@@ -467,14 +467,6 @@
                     </a>
                     <div class="session-screenshot-meta">
                         <strong>{{ screenshot.original_filename }}</strong>
-                        <details class="screenshot-rename-details">
-                            <summary>Rename</summary>
-                            <form method="post" action="/sessions/{{ session.id }}/screenshots/{{ screenshot.id }}/rename" class="screenshot-rename-form">
-                                <label class="visually-hidden" for="screenshot-name-{{ screenshot.id }}">Image name</label>
-                                <input id="screenshot-name-{{ screenshot.id }}" type="text" name="filename" value="{{ screenshot.original_filename }}" maxlength="255" required>
-                                <button class="table-action" type="submit">Save</button>
-                            </form>
-                        </details>
                         <form method="post" action="/sessions/{{ session.id }}/screenshots/{{ screenshot.id }}/delete" onsubmit="return confirm('Delete this screenshot?')">
                             <button class="table-action" type="submit">Delete</button>
                         </form>
@@ -581,110 +573,7 @@
             </form>
         </section>
 
-        <section class="performance-card" data-workspace-panel="p-sheets" data-workspace-group="session-detail" hidden>
-            <div class="card-heading">
-                <div>
-                    <span class="section-kicker">P1–P10 Reference Sheets</span>
-                    <h2>Session P-Sheets</h2>
-                    <p>Each sheet image and its ChatGPT Library link are saved with this coaching session.</p>
-                </div>
-            </div>
-
-            <form method="post" action="/sessions/{{ session.id }}/p-sheets" enctype="multipart/form-data" class="p-sheet-upload-form">
-                <label>
-                    <span>Sheet title</span>
-                    <input type="text" name="title" placeholder="DTL P1–P10" required>
-                </label>
-                <label>
-                    <span>ChatGPT Library link</span>
-                    <input type="url" name="library_url" placeholder="https://chatgpt.com/library?file_id=..." required>
-                </label>
-                <label>
-                    <span>Image file</span>
-                    <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
-                </label>
-                <button class="button button-primary" type="submit">Add P-Sheet</button>
-            </form>
-
-            {% if p_sheets %}
-            <form method="post" action="/sessions/{{ session.id }}/p-sheets/analyze" class="p-sheet-analyze-form">
-                <button class="button button-primary" type="submit">Analyze P-Sheets</button>
-                <span>Flags visual candidates and gives a rough Low / Medium / High X-Factor estimate when visible. This is not a grade.</span>
-            </form>
-            <div class="p-sheet-grid">
-                {% for sheet in p_sheets %}
-                <article class="p-sheet-card">
-                    <h3>{{ sheet.title }}</h3>
-                    <a href="/sessions/{{ session.id }}/p-sheets/{{ sheet.id }}/image" target="_blank" rel="noopener">
-                        <img src="/sessions/{{ session.id }}/p-sheets/{{ sheet.id }}/image" alt="{{ sheet.title }}">
-                    </a>
-                    <div class="p-sheet-actions">
-                        {% if sheet.library_url %}
-                        <a class="button button-secondary" href="{{ sheet.library_url }}" target="_blank" rel="noopener">Open Library link</a>
-                        {% endif %}
-                        <form method="post" action="/sessions/{{ session.id }}/p-sheets/{{ sheet.id }}/delete" onsubmit="return confirm('Delete this P-Sheet from the session?')">
-                            <button class="table-action" type="submit">Remove</button>
-                        </form>
-                    </div>
-                    <small>{{ sheet.original_filename }}</small>
-                </article>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="video-empty">No P-Sheets are attached to this session yet. Add the FO and DTL sheets above.</p>
-            {% endif %}
-
-            {% if p_sheet_analysis %}
-            <section class="p-sheet-analysis" aria-label="P-Sheet analysis results">
-                <div class="card-heading">
-                    <div>
-                        <span class="section-kicker">Visual screening · Coach review required</span>
-                        <h2>Analyzer Findings</h2>
-                        <p>{{ p_sheet_analysis.summary }}</p>
-                    </div>
-                </div>
-
-                {% if p_sheet_analysis.findings %}
-                <div class="p-sheet-findings">
-                    {% for finding in p_sheet_analysis.findings %}
-                    <article class="p-sheet-finding">
-                        <div class="p-sheet-finding-heading">
-                            <h3>{{ finding.title }}</h3>
-                            <span class="shape-pill">{{ finding.confidence|title }} confidence</span>
-                        </div>
-                        <p>{{ finding.observation }}</p>
-                        <small><strong>Evidence:</strong> {{ finding.view }} · {{ finding.evidence_positions|join(", ") }}</small>
-                        <p><strong>Coach check:</strong> {{ finding.coach_check }}</p>
-                    </article>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p>No swing fault was flagged clearly enough from these sheets.</p>
-                {% endif %}
-
-                <article class="p-sheet-xfactor">
-                    <h3>X-Factor approximation</h3>
-                    {% set xfactor = p_sheet_analysis.x_factor %}
-                    {% if xfactor.estimate_band != "insufficient_evidence" %}
-                    <p><strong>Approximate separation:</strong> <span class="shape-pill">{{ xfactor.estimate_band|title }}</span></p>
-                    {% else %}
-                    <p><strong>Estimate unavailable:</strong> {{ xfactor.explanation }}</p>
-                    {% endif %}
-                    <p>{{ xfactor.explanation }}</p>
-                    <small>{{ xfactor.view }} · {{ xfactor.confidence|title }} confidence · Evidence: {{ xfactor.evidence_positions|join(", ") }}</small>
-                </article>
-
-                {% if p_sheet_analysis.limitations %}
-                <ul class="p-sheet-limitations">
-                    {% for limitation in p_sheet_analysis.limitations %}
-                    <li>{{ limitation }}</li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-                <small>Automated visual screening only. The coach confirms findings and decides instruction.</small>
-            </section>
-            {% endif %}
-        </section>
+        
 
     </main>
 </div>

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from collections import Counter
+import json
 from datetime import date
 from pathlib import Path
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -7,7 +8,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import PPositionSheet
+from app.models import PPositionAnalysis, PPositionSheet
+from app.services.p_sheet_analyzer import PSheetAnalysisError, analyze as analyze_p_sheets
 from app.store import add_session, add_shot, delete_session, delete_shot, get_session, get_session_shots, get_student, list_sessions, list_students, update_session, update_shot
 from app.video_store import list_session_videos
 
@@ -41,6 +43,11 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
     shots = get_session_shots(session_id, db=db)
     _backfill_manual_estimates(shots, db)
     videos = list_session_videos(db, session_id)
+    latest_p_sheet_analysis = db.query(PPositionAnalysis).filter(PPositionAnalysis.session_id == session_id).order_by(PPositionAnalysis.created_at.desc()).first()
+    try:
+        p_sheet_analysis = json.loads(latest_p_sheet_analysis.results_json) if latest_p_sheet_analysis else None
+    except (TypeError, ValueError):
+        p_sheet_analysis = None
     included = [s for s in shots if s.get('included', True)]
     club_counts = Counter(
         str(row.get('club')).strip()
@@ -67,6 +74,7 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
         'page_title':'Session Performance','active_page':'sessions','session':session,'student':student,
         'session_shots':shots,'session_videos':videos,
         'p_sheets': db.query(PPositionSheet).filter(PPositionSheet.session_id == session_id).order_by(PPositionSheet.created_at.desc()).all(),
+        'p_sheet_analysis': p_sheet_analysis,
         'session_metrics':{'shots':len(included),'club_count':club_count,'club_summary':club_summary,'dominant_club':dominant_club,'carry':avg('carry_distance'),'ball_speed':avg('ball_speed'),'club_speed':avg('club_speed'),'smash':avg('smash_factor'),'attack':avg('attack_angle'),'path':avg('club_path'),'face':avg('club_face')}
     })
 
@@ -107,6 +115,39 @@ async def p_sheet_upload(session_id: str, request: Request, db: Session = Depend
     db.add(sheet)
     db.commit()
     return RedirectResponse(f"/sessions/{session_id}?tab=p-sheets", status_code=303)
+
+
+@router.post('/{session_id}/p-sheets/analyze', name='p_sheet_analyze')
+def p_sheet_analyze(session_id: str, db: Session = Depends(get_db)):
+    require_session(session_id, db)
+    sheets = db.query(PPositionSheet).filter(
+        PPositionSheet.session_id == session_id,
+    ).order_by(PPositionSheet.created_at.asc()).all()
+    if not sheets:
+        raise HTTPException(422, "Add at least one P-Sheet before running the analyzer.")
+
+    image_sheets = [{
+        "id": sheet.id,
+        "title": sheet.title or sheet.original_filename,
+        "content_type": sheet.content_type,
+        "image_data": sheet.image_data,
+    } for sheet in sheets]
+
+    try:
+        result, model_name = analyze_p_sheets(image_sheets)
+    except PSheetAnalysisError as error:
+        raise HTTPException(503, str(error)) from None
+
+    record = PPositionAnalysis(
+        id=__import__("uuid").uuid4().hex,
+        session_id=session_id,
+        results_json=json.dumps(result, ensure_ascii=False),
+        source_sheet_ids=json.dumps([sheet.id for sheet in sheets]),
+        model_name=model_name,
+    )
+    db.add(record)
+    db.commit()
+    return RedirectResponse(f"/sessions/{session_id}?tab=p-sheets&analysis=saved", status_code=303)
 
 
 @router.get('/{session_id}/p-sheets/{sheet_id}/image', name='p_sheet_image')

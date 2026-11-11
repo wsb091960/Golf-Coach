@@ -705,12 +705,10 @@
                 <article class="p-sheet-xfactor">
                     <h3>X-Factor approximation</h3>
                     {% set xfactor = p_sheet_analysis.x_factor %}
-                    {% if xfactor.approximate_range_degrees %}
-                    <p><strong>Approximate view-dependent range:</strong>
-                        {{ "%.1f"|format(xfactor.approximate_range_degrees[0]) }}°–{{ "%.1f"|format(xfactor.approximate_range_degrees[1]) }}°
-                    </p>
+                    {% if xfactor.estimate_band != "insufficient_evidence" %}
+                    <p><strong>Approximate separation:</strong> <span class="shape-pill">{{ xfactor.estimate_band|title }}</span></p>
                     {% else %}
-                    <p><strong>No numeric approximation:</strong> {{ xfactor.explanation }}</p>
+                    <p><strong>Estimate unavailable:</strong> {{ xfactor.explanation }}</p>
                     {% endif %}
                     <p>{{ xfactor.explanation }}</p>
                     <small>{{ xfactor.view }} · {{ xfactor.confidence|title }} confidence · Evidence: {{ xfactor.evidence_positions|join(", ") }}</small>

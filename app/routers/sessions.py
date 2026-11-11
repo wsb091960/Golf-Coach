@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import PPositionAnalysis, PPositionSheet
+from app.models import PPositionAnalysis, PPositionSheet, SessionScreenshot
 from app.services.p_sheet_analyzer import PSheetAnalysisError, analyze as analyze_p_sheets
 from app.store import add_session, add_shot, delete_session, delete_shot, get_session, get_session_shots, get_student, list_sessions, list_students, update_session, update_shot
 from app.video_store import list_session_videos
@@ -43,6 +43,7 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
     shots = get_session_shots(session_id, db=db)
     _backfill_manual_estimates(shots, db)
     videos = list_session_videos(db, session_id)
+    screenshots = db.query(SessionScreenshot).filter(SessionScreenshot.session_id == session_id).order_by(SessionScreenshot.created_at.desc()).all()
     latest_p_sheet_analysis = db.query(PPositionAnalysis).filter(PPositionAnalysis.session_id == session_id).order_by(PPositionAnalysis.created_at.desc()).first()
     try:
         p_sheet_analysis = json.loads(latest_p_sheet_analysis.results_json) if latest_p_sheet_analysis else None
@@ -72,11 +73,78 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
         return round(sum(vals)/len(vals),2) if vals else None
     return templates.TemplateResponse(request=request, name='session_detail.html', context={
         'page_title':'Session Performance','active_page':'sessions','session':session,'student':student,
-        'session_shots':shots,'session_videos':videos,
+        'session_shots':shots,'session_videos':videos,'session_screenshots':screenshots,
         'p_sheets': db.query(PPositionSheet).filter(PPositionSheet.session_id == session_id).order_by(PPositionSheet.created_at.desc()).all(),
         'p_sheet_analysis': p_sheet_analysis,
         'session_metrics':{'shots':len(included),'club_count':club_count,'club_summary':club_summary,'dominant_club':dominant_club,'carry':avg('carry_distance'),'ball_speed':avg('ball_speed'),'club_speed':avg('club_speed'),'smash':avg('smash_factor'),'attack':avg('attack_angle'),'path':avg('club_path'),'face':avg('club_face')}
     })
+
+
+@router.post('/{session_id}/screenshots', name='session_screenshot_upload')
+async def session_screenshot_upload(session_id: str, request: Request, db: Session = Depends(get_db)):
+    require_session(session_id, db)
+    form = await request.form()
+    uploads = [item for item in form.getlist('screenshots') if hasattr(item, 'read')]
+    if not uploads:
+        raise HTTPException(422, 'Choose at least one screenshot to upload')
+
+    allowed = {'image/jpeg', 'image/png', 'image/webp'}
+    staged = []
+    total_bytes = 0
+    for upload in uploads:
+        content_type = str(getattr(upload, 'content_type', '') or '').lower()
+        if content_type not in allowed:
+            raise HTTPException(415, 'Upload JPG, PNG, or WEBP screenshots')
+        data = await upload.read()
+        total_bytes += len(data)
+        if not data or len(data) > 20 * 1024 * 1024:
+            raise HTTPException(413, 'Each screenshot must be between 1 byte and 20 MB')
+        if total_bytes > 100 * 1024 * 1024:
+            raise HTTPException(413, 'The screenshot batch cannot exceed 100 MB')
+        filename = Path(str(getattr(upload, 'filename', '') or 'Screenshot')).name[:255]
+        staged.append((filename, content_type, data))
+
+    for filename, content_type, data in staged:
+        db.add(SessionScreenshot(
+            id=__import__('uuid').uuid4().hex,
+            session_id=session_id,
+            original_filename=filename,
+            content_type=content_type,
+            image_data=data,
+        ))
+    db.commit()
+    return RedirectResponse(f'/sessions/{session_id}?tab=screenshots&screenshots_added={len(staged)}', status_code=303)
+
+
+@router.get('/{session_id}/screenshots/{screenshot_id}/image', name='session_screenshot_image')
+def session_screenshot_image(session_id: str, screenshot_id: str, db: Session = Depends(get_db)):
+    require_session(session_id, db)
+    screenshot = db.query(SessionScreenshot).filter(
+        SessionScreenshot.id == screenshot_id,
+        SessionScreenshot.session_id == session_id,
+    ).first()
+    if screenshot is None:
+        raise HTTPException(404, 'Screenshot not found')
+    return Response(
+        content=screenshot.image_data,
+        media_type=screenshot.content_type,
+        headers={'Cache-Control': 'private, max-age=3600'},
+    )
+
+
+@router.post('/{session_id}/screenshots/{screenshot_id}/delete', name='session_screenshot_delete')
+def session_screenshot_delete(session_id: str, screenshot_id: str, db: Session = Depends(get_db)):
+    require_session(session_id, db)
+    screenshot = db.query(SessionScreenshot).filter(
+        SessionScreenshot.id == screenshot_id,
+        SessionScreenshot.session_id == session_id,
+    ).first()
+    if screenshot is None:
+        raise HTTPException(404, 'Screenshot not found')
+    db.delete(screenshot)
+    db.commit()
+    return RedirectResponse(f'/sessions/{session_id}?tab=screenshots', status_code=303)
+
 
 @router.post('/{session_id}/p-sheets', name='p_sheet_upload')
 async def p_sheet_upload(session_id: str, request: Request, db: Session = Depends(get_db)):

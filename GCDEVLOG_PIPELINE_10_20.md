@@ -23,6 +23,7 @@ This is the numbered continuation of the GCDevLog beginning at #10. These are ap
 - Trim/select start and end; correct orientation/mirroring; frame-by-frame navigation and timestamps; support 120/240-fps iPhone/iPad slow-motion recordings without inventing missing frames.
 - Identify P1–P10 in both face-on and down-the-line views, including accurate P7 impact timing; manual adjustment and explicit coach approval; persist frame selections and export evidence.
 - Coordinate with existing GCDevLog #4 (in-house video biomechanics) and #5 (automatic P-position detection), without duplicating their scope.
+- Current increment: frame-by-frame controls and browser-side pose-assisted candidate timestamps. P2–P9 and P7 require coach review; validate exact P7 contact and shaft-aware accuracy on FO/DTL sample videos before calling automatic detection complete.
 
 ## #11 — Fixed and Dynamic Biomechanical Overlays
 - Fixed reference lines (address spine angle, head, hip depth, posture) and tracking overlays following landmarks over time.

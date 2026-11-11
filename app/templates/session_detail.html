@@ -649,7 +649,7 @@
             {% if p_sheets %}
             <form method="post" action="/sessions/{{ session.id }}/p-sheets/analyze" class="p-sheet-analyze-form">
                 <button class="button button-primary" type="submit">Analyze P-Sheets</button>
-                <span>Creates visual candidate findings and an approximate X-Factor range when the images support it.</span>
+                <span>Flags visual candidates and gives a rough Low / Medium / High X-Factor estimate when visible. This is not a grade.</span>
             </form>
             <div class="p-sheet-grid">
                 {% for sheet in p_sheets %}

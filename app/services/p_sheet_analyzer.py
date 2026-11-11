@@ -18,7 +18,7 @@ The uploaded images are labeled P1-P10 and may be face-on (FO) or down-the-line 
 
 Look for visible candidate patterns: sway/slide; casting or early release; shaft steepening/shallowing; over-the-top delivery; early extension/loss of posture; setup geometry; and finish balance. Do not state a root cause or prescribe a correction. Cite the frame labels and view for every finding. Use confidence low/moderate/high and explain what the coach should verify.
 
-For X-Factor, the actual measure is 3D relative axial rotation of thorax and pelvis. Ordinary 2D P-sheets cannot establish an exact 3D angle. If shoulder and pelvis orientation are both visible near the top, provide only a broad, view-dependent approximate range in degrees, state the view and assumptions, and label it an approximation. If views are unsynchronized, obstructed, or insufficient, return no numeric range and explain why. Never manufacture a number.
+For X-Factor, the actual measure is 3D relative axial rotation of thorax and pelvis. Ordinary 2D P-sheets cannot establish an exact 3D angle. Give a coarse visual estimate of the relative separation as low, medium, or high when the top-of-backswing frame provides a reasonable view of both shoulder/thorax and pelvis orientation. This is a view-dependent approximation, not a numeric measurement, skill grade, or recommendation that high is better. If FO/DTL views are unsynchronized, do not combine them into a 3D result; use the clearest single view and say that it is a single-view estimate. Return insufficient_evidence only when neither view shows enough to make even a rough category.
 
 Return only the requested JSON object. Be concise and evidence-specific."""
 
@@ -53,10 +53,9 @@ SCHEMA = {
         "x_factor": {
             "type": "object",
             "properties": {
-                "status": {"type": "string"},
-                "approximate_range_degrees": {
-                    "type": ["array", "null"],
-                    "items": {"type": "number"},
+                "estimate_band": {
+                    "type": "string",
+                    "enum": ["low", "medium", "high", "insufficient_evidence"],
                 },
                 "view": {"type": "string"},
                 "confidence": {"type": "string"},
@@ -67,8 +66,8 @@ SCHEMA = {
                 },
             },
             "required": [
-                "status", "approximate_range_degrees", "view",
-                "confidence", "explanation", "evidence_positions",
+                "estimate_band", "view", "confidence",
+                "explanation", "evidence_positions",
             ],
             "additionalProperties": False,
         },

@@ -134,9 +134,9 @@
 <section class="analysis-card manual-p-video-card" data-workspace-panel="video" data-workspace-group="p-position">
             <div class="card-heading">
                 <div>
-                    <span class="section-kicker">Step 2 · Manual P-Position Analysis</span>
+                    <span class="section-kicker">Step 2 · Video Review + P-Position Detection</span>
                     <h2>{{ analysis.original_video.title or "Swing Video" }}</h2>
-                    <p>{% if is_observation_only %}This assessment started from coach observations. You can still record checkpoint notes below; attach a swing video from Coaching Analysis when it becomes available.{% else %}After the Onform screenshot import, use this swing video only when you want manual P1-P10 timing and coach-verified shoulder/hip landmarks for Golf Coach calculations.{% endif %}</p>
+                    <p>{% if is_observation_only %}This assessment started from coach observations. You can still record checkpoint notes below; attach a swing video from Coaching Analysis when it becomes available.{% else %}Review the swing frame by frame, run pose-assisted P1–P10 candidate detection, then coach-confirm the timestamps and mark shoulder/hip landmarks. Confirmed timestamps are included in the lesson report.{% endif %}</p>
                 </div>
             </div>
 

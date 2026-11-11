@@ -109,3 +109,45 @@
     flex-wrap: wrap;
 }
 .p-sheet-card small { color: #5e7068; overflow-wrap: anywhere; }
+
+
+.p-sheet-analyze-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 4px 0 18px;
+}
+.p-sheet-analyze-form span,
+.p-sheet-analysis small,
+.p-sheet-limitations { color: #5e7068; }
+.p-sheet-analysis {
+    margin-top: 24px;
+    padding: 20px;
+    border: 1px solid #d7e2dd;
+    border-radius: 14px;
+    background: #f8fbf9;
+}
+.p-sheet-findings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+}
+.p-sheet-finding,
+.p-sheet-xfactor {
+    padding: 14px;
+    border: 1px solid #d7e2dd;
+    border-radius: 12px;
+    background: #fff;
+}
+.p-sheet-finding h3,
+.p-sheet-xfactor h3 { margin: 0; }
+.p-sheet-finding-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+}
+.p-sheet-finding small,
+.p-sheet-xfactor small { display: block; color: #5e7068; }
+.p-sheet-xfactor { margin-top: 14px; }

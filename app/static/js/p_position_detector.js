@@ -233,7 +233,7 @@
             quality,
             reason: reasons[index],
             sampleRate,
-            confidenceLabel: [0, 3, 9].includes(index) && quality >= 0.6 ? "Moderate cue" : "Low-confidence cue",
+            confidenceLabel: index === 6 ? "Impact proxy · verify contact frame" : "Timing candidate · coach review required",
         }));
     }
 
@@ -284,7 +284,6 @@
                         time_seconds: Number(candidate.time.toFixed(4)),
                         frame_number: candidate.frame,
                         measurement_source: "Pose-assisted · coach confirmed",
-                        confidence: Number(candidate.quality.toFixed(3)),
                         extra_metrics_json: JSON.stringify(extra),
                     }),
                 }
@@ -312,7 +311,7 @@
             const heading = document.createElement("strong");
             heading.textContent = `${candidate.position} · ${candidate.label}`;
             const detail = document.createElement("small");
-            detail.textContent = `${formatCandidate(candidate)} · ${candidate.confidenceLabel}. ${candidate.reason}.`;
+            detail.textContent = `${formatCandidate(candidate)} · Pose tracking visibility ${Math.round(candidate.quality * 100)}%. ${candidate.reason}.`;
             const actions = document.createElement("div");
             actions.className = "p-candidate-actions";
             const preview = document.createElement("button");

@@ -2,11 +2,11 @@
 Updated: 2026-11-10
 Project: WSBCO Golf Coach / Golf Coaching Intelligence Engine (GCIE)
 
-This is the numbered continuation of the GCDevLog beginning at #10. These are approved development-pipeline requirements, **not claims of implementation or deployment**. Preserve existing #1–9 numbering and statuses (most recently #4–5 In Progress; #9 Complete). Every item below begins as **Planned — in development pipeline**. Coach approval is required for instructional knowledge promotion.
+This is the numbered continuation of the GCDevLog beginning at #10. These are approved development-pipeline requirements, **not claims of implementation or deployment**. Preserve existing #1–9 numbering and statuses (most recently #4–5 In Progress; #9 Complete). Items begin as Planned; statuses reflect active development. Coach approval is required for instructional knowledge promotion.
 
 | # | Workstream | Status | Priority | Dependencies |
 |---|---|---|---|---|
-| 10 | FO/DTL Video Viewer & P-Position Utility | Planned — pipeline | P0 | Existing #4–5 |
+| 10 | FO/DTL Video Viewer & P-Position Utility | In Progress | P0 | Existing #4–5 |
 | 11 | Fixed and Dynamic Biomechanical Overlays | Planned — pipeline | P0 | #10 |
 | 12 | High-FPS Kinematic Sequence & Biomechanics | Planned — pipeline | P1 | #10–11 |
 | 13 | Golf Coaching Intelligence Engine (GCIE) | Planned — pipeline | P0 | Existing student/session workflow |

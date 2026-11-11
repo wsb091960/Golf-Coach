@@ -40,6 +40,24 @@ class PPositionSheet(Base):
     )
 
 
+class PPositionAnalysis(Base):
+    __tablename__ = "session_p_sheet_analyses"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    session_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("sessions.id", ondelete="CASCADE"),
+        index=True,
+    )
+    results_json: Mapped[str] = mapped_column(Text, nullable=False)
+    source_sheet_ids: Mapped[str] = mapped_column(Text, default="[]")
+    model_name: Mapped[str] = mapped_column(String(100), default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+    )
+
+
 class Student(Base):
     __tablename__ = "students"
 

@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.gcie.generated_models import SessionLesson
 from app.models import PPositionAnalysis, PPositionSheet, SessionScreenshot
 from app.services.p_sheet_analyzer import PSheetAnalysisError, analyze as analyze_p_sheets
 from app.store import add_session, add_shot, delete_session, delete_shot, get_session, get_session_shots, get_student, list_sessions, list_students, update_session, update_shot
@@ -49,6 +50,7 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
         p_sheet_analysis = json.loads(latest_p_sheet_analysis.results_json) if latest_p_sheet_analysis else None
     except (TypeError, ValueError):
         p_sheet_analysis = None
+    latest_lesson = db.query(SessionLesson).filter(SessionLesson.session_id == session_id).order_by(SessionLesson.created_at.desc()).first()
     included = [s for s in shots if s.get('included', True)]
     club_counts = Counter(
         str(row.get('club')).strip()
@@ -73,7 +75,7 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
         return round(sum(vals)/len(vals),2) if vals else None
     return templates.TemplateResponse(request=request, name='session_detail.html', context={
         'page_title':'Session Performance','active_page':'sessions','session':session,'student':student,
-        'session_shots':shots,'session_videos':videos,'session_screenshots':screenshots,
+        'session_shots':shots,'session_videos':videos,'session_screenshots':screenshots,'session_lesson':latest_lesson,
         'p_sheets': db.query(PPositionSheet).filter(PPositionSheet.session_id == session_id).order_by(PPositionSheet.created_at.desc()).all(),
         'p_sheet_analysis': p_sheet_analysis,
         'session_metrics':{'shots':len(included),'club_count':club_count,'club_summary':club_summary,'dominant_club':dominant_club,'carry':avg('carry_distance'),'ball_speed':avg('ball_speed'),'club_speed':avg('club_speed'),'smash':avg('smash_factor'),'attack':avg('attack_angle'),'path':avg('club_path'),'face':avg('club_face')}

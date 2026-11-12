@@ -133,7 +133,7 @@
                     <p>{{ student.name if student else "Student" }} · {{ session.session_date }} · {{ session.session_type }}</p>
                 </div>
                 <span class="overview-status-badge">
-                    {% if session_lesson %}Lesson notes saved{% elif session_screenshots %}Screenshots ready for review{% else %}Session in progress{% endif %}
+                    {% if session_lesson and lesson_needs_generation %}New screenshots to analyze{% elif session_lesson %}Lesson notes saved{% elif session_screenshots %}Screenshots ready for review{% else %}Session in progress{% endif %}
                 </span>
             </header>
 
@@ -197,7 +197,9 @@
             <div class="overview-next-step">
                 <div>
                     <span class="section-kicker">Next step</span>
-                    {% if session_lesson and not session_metrics.shots %}
+                    {% if session_lesson and lesson_needs_generation %}
+                    <p>New screenshots have been added since the last lesson. Create an updated analysis for this screenshot set.</p>
+                    {% elif session_lesson and not session_metrics.shots %}
                     <p>Review the paired lesson notes, then record shots when you want to check the ball-flight result.</p>
                     {% elif session_lesson %}
                     <p>Review the lesson notes alongside the saved shot readings to see how the session went.</p>
@@ -208,7 +210,9 @@
                     {% endif %}
                 </div>
                 <div class="overview-actions">
-                    {% if session_lesson %}
+                    {% if session_lesson and lesson_needs_generation %}
+                    <a class="button button-primary" href="/sessions/{{ session.id }}?tab=screenshots#onform-lesson">Create Updated Student Lesson</a>
+                    {% elif session_lesson %}
                     <a class="button button-primary" href="/sessions/{{ session.id }}?tab=notes">Open Session Notes</a>
                     {% elif session_screenshots %}
                     <a class="button button-primary" href="/sessions/{{ session.id }}?tab=screenshots#onform-lesson">Create Student Lesson</a>
@@ -542,12 +546,17 @@
 
             <div id="onform-lesson" class="performance-card" style="margin:18px 0;padding:18px;background:#f8fbf9;border:1px solid #d9e2d9;border-radius:12px;">
                 <div class="card-heading"><div><span class="section-kicker">GCIE · Onform Review</span><h2>Create a Lesson</h2></div></div>
-                <p>Review the screenshots, then create paired Student Notes and Coaches Notes. Both versions are saved as a draft in this session.</p>
+                <p>Creates paired Student Notes and Coaches Notes once for the current screenshot set. Add new screenshots to create an updated lesson.</p>
                 {% if request.query_params.get('lesson_error') == 'no_screenshots' %}<p role="alert">Add Onform screenshots before creating a lesson.</p>{% elif request.query_params.get('lesson_error') == 'analysis_failed' %}<p role="alert">Lesson generation failed. No lesson was saved. Check the Coaching Assistant setup and try again.</p>{% endif %}
-                {% if session_screenshots %}
-                <form method="post" action="/biomechanics/session/{{ session.id }}/lesson">
-                    <button class="button button-primary" type="submit">Create Student Lesson</button>
+                {% if request.query_params.get('lesson_already_exists') == '1' %}<p role="status">A lesson already exists for these screenshots. Add new screenshots to create an updated lesson.</p>{% endif %}
+                {% if session_screenshots and lesson_needs_generation %}
+                <form id="session-lesson-generation-form" method="post" action="/biomechanics/session/{{ session.id }}/lesson">
+                    <button class="button button-primary" type="submit">{% if session_lesson %}Create Updated Student Lesson{% else %}Create Student Lesson{% endif %}</button>
                 </form>
+                {% elif session_screenshots and session_lesson %}
+                <p role="status">Lesson already created for the current screenshots. Add new screenshots to enable another lesson.</p>
+                {% elif session_screenshots %}
+                <p role="status">Screenshots are ready for the first lesson.</p>
                 {% else %}
                 <button class="button button-secondary" type="button" disabled>Add screenshots to create a lesson</button>
                 {% endif %}
@@ -996,6 +1005,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const screenshotInput = document.getElementById("session-screenshot-files");
     const screenshotPasteArea = document.getElementById("screenshot-paste-area");
     const screenshotPasteStatus = document.getElementById("screenshot-paste-status");
+    const lessonGenerationForm = document.getElementById("session-lesson-generation-form");
+    if (lessonGenerationForm) {
+        lessonGenerationForm.addEventListener("submit", function () {
+            const button = lessonGenerationForm.querySelector('button[type="submit"]');
+            if (button) {
+                button.disabled = true;
+                button.textContent = "Creating Lesson…";
+            }
+        });
+    }
     const relatedDocs = document.getElementById("related-coaching-docs");
     const coachingNotes = document.querySelector('textarea[name="coaching_notes"]');
 

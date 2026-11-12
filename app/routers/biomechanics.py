@@ -79,13 +79,30 @@ def generate_biomechanics_lesson(session_id: str, db: Session = Depends(get_db))
     screenshot_rows = (
         db.query(SessionScreenshot)
         .filter(SessionScreenshot.session_id == session_id)
-        .order_by(SessionScreenshot.created_at.asc())
+        .order_by(SessionScreenshot.created_at.desc(), SessionScreenshot.id.desc())
         .limit(10)
         .all()
     )
+    screenshot_rows.reverse()
     if not screenshot_rows:
         return RedirectResponse(
             f"/sessions/{session_id}?tab=screenshots&lesson_error=no_screenshots#onform-lesson",
+            status_code=303,
+        )
+
+    previous_lesson = (
+        db.query(SessionLesson)
+        .filter(SessionLesson.session_id == session_id)
+        .order_by(SessionLesson.created_at.desc())
+        .first()
+    )
+    previously_analyzed_ids = {
+        str(value) for value in (previous_lesson.source_screenshot_ids or [])
+    } if previous_lesson else set()
+    current_screenshot_ids = {str(row.id) for row in screenshot_rows}
+    if previous_lesson and not (current_screenshot_ids - previously_analyzed_ids):
+        return RedirectResponse(
+            f"/sessions/{session_id}?tab=screenshots&lesson_already_exists=1#onform-lesson",
             status_code=303,
         )
 

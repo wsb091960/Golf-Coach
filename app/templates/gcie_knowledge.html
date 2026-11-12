@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block page_styles %}
+<style>
+.kb{max-width:1180px;margin:auto;padding:16px 20px 48px}.kb-hero{background:#173d32;color:#fff;border-radius:16px;padding:22px;margin:0 0 18px}.kb-hero p{color:#e5eee8;max-width:800px;line-height:1.6}
+.kb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}.kb-card{background:#fff;border:1px solid #d9e2d9;border-radius:14px;padding:18px;margin:0 0 16px}.kb-card h2{font-size:1.15rem;color:#174d39;margin:0 0 12px}.kb-form{display:grid;gap:10px}.kb-form label{font-weight:600;display:grid;gap:5px}.kb-form input,.kb-form select,.kb-form textarea,.kb-search input{font:inherit;padding:9px;border:1px solid #b7c5ba;border-radius:7px;box-sizing:border-box;width:100%}.kb-form textarea{min-height:88px}.kb-form button,.kb-button{background:#175b46;color:#fff;border:0;border-radius:8px;padding:10px 14px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}.kb-button--light{background:#e7eee8;color:#153b30}.kb-item{border-top:1px solid #e2e8e3;padding:12px 0}.kb-muted{color:#5c6a61;font-size:.92rem}.kb-label{display:inline-block;background:#e7eee8;border-radius:999px;padding:3px 8px;font-size:.8rem;margin:2px}.kb-search{display:flex;gap:8px}.kb-search button{flex:none}
+@media(max-width:800px){.kb-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="kb">
+<header class="kb-hero"><span>GCIE · KNOWLEDGE ACQUISITION + RETRIEVAL</span><h2>Knowledge Base</h2><p>Record where coaching knowledge came from, review it, then approve the specific reusable guidance. Drafts never enter the Coaching Assistant.</p></header>
+<section class="kb-card"><h2>Find approved knowledge</h2><form class="kb-search" method="get" action="/gcie/knowledge"><input name="q" value="{{ q }}" placeholder="Search setup, ball flight, P-positions, TGM, TPI…"><button class="kb-button" type="submit">Search</button></form>
+{% if q %}{% if search_results %}{% for result in search_results %}<article class="kb-item"><h3>{{ result.title }}</h3><p>{{ result.knowledge_text }}</p><p class="kb-muted">{{ result.category }} · {{ result.evidence_quality }} · Source: {{ result.source_title }}{% if result.citation %} — {{ result.citation }}{% endif %}{% if result.source_url %} · <a href="{{ result.source_url }}" target="_blank" rel="noopener noreferrer">Source link</a>{% endif %}</p></article>{% endfor %}{% else %}<p class="kb-muted">No approved entries matched that search.</p>{% endif %}{% endif %}</section>
+<div class="kb-grid">
+<section class="kb-card"><h2>1. Add a source for KAM review</h2><p class="kb-muted">Enter a source, coach observation, or generalized case pattern. Add a short summary and enough citation detail to trace it later.</p>
+<form class="kb-form" method="post" action="/gcie/knowledge/sources">
+<label>Source title<input name="title" maxlength="255" required></label>
+<label>Source type<select name="source_type" required><option value="pga_framework">PGA teaching framework</option><option value="coach_preference">Coach / student preference</option><option value="tgm">TGM</option><option value="tpi">TPI</option><option value="p_positions">P-Positions</option><option value="ball_flight">Ball flight</option><option value="coach_case_pattern">Generalized coach case pattern</option><option value="other">Other</option></select></label>
+<label>Citation / author / version<input name="citation" maxlength="2000" placeholder="Author, title, edition, page, or date"></label>
+<label>Source link<input type="url" name="source_url" maxlength="2000" placeholder="https://…"></label>
+<label>Summary or coach review notes<textarea name="summary" maxlength="5000" required></textarea></label>
+<label>Evidence label<select name="evidence_quality"><option value="unrated">Unrated</option><option value="coach_observation">Coach observation</option><option value="reference">Instructional reference</option><option value="research">Research</option></select></label>
+<button type="submit">Save source as candidate</button></form></section>
+<section class="kb-card"><h2>2. Add a KM entry</h2><p class="kb-muted">Write one clear, reusable coaching point. Keep student names, contact details, and session-specific notes in that student’s record.</p>
+{% if approved_sources %}<form class="kb-form" method="post" action="/gcie/knowledge/entries">
+<label>Approved source<select name="source_id" required>{% for source in approved_sources %}<option value="{{ source.id }}">{{ source.title }}</option>{% endfor %}</select></label>
+<label>Entry title<input name="title" maxlength="255" required></label>
+<label>Category<select name="category" required>{% for item in ['PGA framework','Teaching preference','Six Laws','Fourteen Principles','Nine Ball Flights','TGM','TPI','P-Positions','Biomechanics','Drill','Coach case pattern','Other'] %}<option>{{ item }}</option>{% endfor %}</select></label>
+<label>Teaching priority<select name="teaching_level"><option value="governing">PGA governing framework</option><option value="preference">Adaptable teaching preference</option><option value="supporting">Supporting tool or evidence</option></select></label>
+<label>Reusable guidance<textarea name="knowledge_text" maxlength="8000" required></textarea></label>
+<label>Search tags, separated by commas<input name="tags" maxlength="1000"></label>
+<label>Evidence label<select name="evidence_quality"><option value="unrated">Unrated</option><option value="coach_observation">Coach observation</option><option value="reference">Instructional reference</option><option value="research">Research</option></select></label>
+<button type="submit">Save as draft KM entry</button></form>{% else %}<p class="kb-muted">Approve a source before adding an entry to the KM.</p>{% endif %}</section>
+</div>
+<section class="kb-card"><h2>KAM source records</h2>{% if sources %}{% for source in sources %}<article class="kb-item"><h3>{{ source.title }} <span class="kb-label">{{ source.status }}</span></h3><p>{{ source.summary }}</p><p class="kb-muted">{{ source.source_type }} · {{ source.evidence_quality }}{% if source.citation %} · {{ source.citation }}{% endif %}{% if source.source_url %} · <a href="{{ source.source_url }}" target="_blank" rel="noopener noreferrer">Open source</a>{% endif %}</p>
+{% if source.status != 'approved' %}<form method="post" action="/gcie/knowledge/sources/{{ source.id }}/review" class="kb-form"><label>Review note<textarea name="review_notes" maxlength="5000">{{ source.review_notes }}</textarea></label><div><button name="decision" value="approved">Approve source</button> <button class="kb-button kb-button--light" name="decision" value="rejected">Reject source</button></div></form>{% elif source.review_notes %}<p class="kb-muted">Review note: {{ source.review_notes }}</p>{% endif %}</article>{% endfor %}{% else %}<p class="kb-muted">No sources recorded yet.</p>{% endif %}</section>
+<section class="kb-card"><h2>KM entries</h2>{% if entries %}{% for entry in entries %}<article class="kb-item"><h3>{{ entry.title }} <span class="kb-label">{{ entry.status }}</span></h3><p>{{ entry.knowledge_text }}</p><p class="kb-muted">{{ entry.category }} · {{ entry.teaching_level }} · {{ entry.evidence_quality }} · version {{ entry.version }}</p>
+{% if entry.status != 'approved' %}<form method="post" action="/gcie/knowledge/entries/{{ entry.id }}/approve"><button type="submit">Approve for IE retrieval</button></form>{% else %}<p class="kb-muted">Coach-approved{% if entry.reviewed_at %} · {{ entry.reviewed_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}</p>{% endif %}</article>{% endfor %}{% else %}<p class="kb-muted">No knowledge entries recorded yet.</p>{% endif %}</section>
+<p class="kb-muted">Approved entries are retrieved by keyword for the Coaching Assistant with their source citation. No automatic learning or student-case promotion occurs.</p>
+</div>
+{% endblock %}

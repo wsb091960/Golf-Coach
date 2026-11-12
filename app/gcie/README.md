@@ -1,9 +1,13 @@
-# GCIE Case Record Knowledge Base — development version
+# GCIE case records, KAM and KM
 
-Additive SQLAlchemy table `gcie_coaching_cases`; no existing student/session columns are altered.
-Endpoints: POST/GET /gcie/cases, GET/PUT /gcie/cases/{id}, POST /gcie/cases/{id}/approve, GET /gcie/knowledge/search?q=...
-All cases start in draft; approved cases are immutable and are the only cases eligible for knowledge search.
-Approval requires a documented problem, intervention, and outcome. Approval is restricted by the existing app owner-auth middleware; this is not yet a multi-user authorization system.
-This initial search uses keyword matching, **not** embeddings, RAG, or machine learning.
-Do not enter identifiable student data into an external model without permission.
-Deployment requires an independent database backup and staging tests. No production migration has been performed.
+The Golf Coach database uses additive SQLAlchemy tables for GCIE coaching cases, Knowledge Acquisition Model (KAM) source records, and structured Knowledge Model (KM) entries. Existing student/session tables and records remain separate.
+
+- KAM sources begin as candidates and require a coach decision with review notes before they can be approved.
+- KM entries begin as drafts, require an approved source record, and require separate coach approval before retrieval.
+- The GCIE Knowledge Base screen supports source capture, review, structured entries, and keyword retrieval.
+- The Coaching Assistant receives only approved KM entries that match the request. Retrieved entries include their source title, citation, evidence label, and source link.
+- KM entries are for generalized, reusable instruction. Keep identifiable student details and raw session notes in that student’s session record. Do not paste identifying student data into general knowledge entries.
+- Retrieval is transparent keyword matching. It is not embeddings, semantic RAG, or machine learning. Nothing is auto-approved or automatically learned from session notes.
+- Original videos and images remain in media storage. The database stores structured text, source metadata, approval history, measurements, and references.
+- The simulator’s MCP endpoint remains separate from student/session and KM database access.
+- The current migration adds tables only; it does not modify or delete existing student/session columns or rows.

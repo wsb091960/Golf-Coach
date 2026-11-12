@@ -15,6 +15,7 @@ from app.coach_assistant_models import CoachingAssistantCase, CoachingAssistantM
 from app.database import get_db
 from app.models import CoachingSession, SessionVideo, Shot, Student
 from app.services.coach_assistant_ai import generate, CoachingAIError
+from app.gcie.retrieval import retrieve_approved_knowledge
 
 APP_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
@@ -349,7 +350,7 @@ def analyze(student_id: str = Form(...), session_id: str = Form(...), goal: str 
         raise HTTPException(status_code=400, detail="Choose a session belonging to the selected student")
     observations = {"swing_characteristics": swing_characteristics, "mobility": mobility, "stability": stability, "balance": balance, "sequencing": sequencing, "p_positions": p_positions}
     try:
-        result = generate(goal, observations)
+        result = generate(goal, observations, knowledge_context=retrieve_approved_knowledge(db, goal + ' ' + json.dumps(observations)))
     except CoachingAIError as error:
         case = CoachingAssistantCase(id=str(uuid4()), student_id=student_id, session_id=session_id, goal=goal, observations_json=json.dumps(observations), status="ai_error")
         db.add(case)
@@ -372,7 +373,7 @@ def refine(case_id: str, garmin_evidence: str = Form(""), onform_evidence: str =
     evidence = {"garmin": garmin_evidence, "onform": onform_evidence, "coach_followup": coach_followup}
     case.evidence_json = json.dumps(evidence)
     try:
-        result = generate(case.goal, observations, evidence)
+        result = generate(case.goal, observations, evidence, knowledge_context=retrieve_approved_knowledge(db, case.goal + ' ' + json.dumps(observations) + ' ' + json.dumps(evidence)))
     except CoachingAIError as error:
         db.add(CoachingAssistantMessage(case_id=case.id, role="error", content=str(error)))
         db.commit()
@@ -391,7 +392,8 @@ def refine(case_id: str, garmin_evidence: str = Form(""), onform_evidence: str =
 def retry(case_id: str, db: Session = Depends(get_db)):
     case = _case_or_404(db, case_id)
     try:
-        result = generate(case.goal, json.loads(case.observations_json or "{}"))
+        observations = json.loads(case.observations_json or "{}")
+        result = generate(case.goal, observations, knowledge_context=retrieve_approved_knowledge(db, case.goal + ' ' + json.dumps(observations)))
     except CoachingAIError as error:
         db.add(CoachingAssistantMessage(case_id=case.id, role="error", content=str(error)))
     else:

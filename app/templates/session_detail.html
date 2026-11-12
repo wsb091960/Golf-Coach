@@ -483,6 +483,19 @@
             <p class="screenshot-empty">No screenshots are stored with this session yet.</p>
             {% endif %}
 
+            <div id="onform-lesson" class="performance-card" style="margin:18px 0;padding:18px;background:#f8fbf9;border:1px solid #d9e2d9;border-radius:12px;">
+                <div class="card-heading"><div><span class="section-kicker">GCIE · Onform Review</span><h2>Create a Lesson</h2></div></div>
+                <p>Review the screenshots, then create paired Student Notes and Coaches Notes. Both versions are saved as a draft in this session.</p>
+                {% if request.query_params.get('lesson_error') == 'no_screenshots' %}<p role="alert">Add Onform screenshots before creating a lesson.</p>{% elif request.query_params.get('lesson_error') == 'analysis_failed' %}<p role="alert">Lesson generation failed. No lesson was saved. Check the Coaching Assistant setup and try again.</p>{% endif %}
+                {% if session_screenshots %}
+                <form method="post" action="/biomechanics/session/{{ session.id }}/lesson">
+                    <button class="button button-primary" type="submit">Create Student Lesson</button>
+                </form>
+                {% else %}
+                <button class="button button-secondary" type="button" disabled>Add screenshots to create a lesson</button>
+                {% endif %}
+            </div>
+
             <details class="session-video-archive">
                 <summary>Swing videos · {{ session_videos|length }}</summary>
                 <p>Use these original swing clips for video analysis. Uploaded clips remain separate from the screenshot gallery.</p>
@@ -522,6 +535,17 @@
                     <h2>Session Notes</h2>
                 </div>
             </div>
+
+            {% if request.query_params.get('lesson_created') == '1' %}<p role="status">Paired lesson notes were saved to this session.</p>{% endif %}
+            {% if session_lesson %}
+            <section class="performance-card" style="margin:16px 0;padding:18px;border:1px solid #d9e2d9;border-radius:12px;background:#fff;">
+                <span class="section-kicker">GCIE · Draft · {{ session_lesson.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                <h3>Student Notes</h3>
+                <div style="white-space:pre-wrap;line-height:1.6">{{ session_lesson.student_notes }}</div>
+                <h3 style="margin-top:20px">Coaches Notes</h3>
+                <div style="white-space:pre-wrap;line-height:1.6">{{ session_lesson.coach_notes }}</div>
+            </section>
+            {% endif %}
 
             <form
                 method="post"

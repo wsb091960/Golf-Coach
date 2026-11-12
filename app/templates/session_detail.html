@@ -83,14 +83,12 @@
                     Add Shot Manually
                 </button>
 
-                <button
+                <a
                     class="button button-primary"
-                    type="button"
-                    data-open-video
-                    data-video-mode="original_swing"
+                    href="/sessions/{{ session.id }}?tab=screenshots#onform-video-links"
                 >
-                    Add Swing Video
-                </button>
+                    Link Onform Video
+                </a>
             </div>
         </header>
 
@@ -496,23 +494,34 @@
                 {% endif %}
             </div>
 
-            <details class="session-video-archive">
+            <details class="session-video-archive" id="onform-video-links">
                 <summary>Swing videos · {{ session_videos|length }}</summary>
-                <p>Use these original swing clips for video analysis. Uploaded clips remain separate from the screenshot gallery.</p>
-                <button class="button button-secondary" type="button" data-open-video data-video-mode="original_swing">Add Swing Video</button>
+                <p>Videos stay in Onform. Golf Coach saves the share link and session details, not another copy of the clip.</p>
+                <form method="post" action="/sessions/{{ session.id }}/videos/onform-link" class="screenshot-upload-form" style="margin:14px 0;padding:16px;border:1px solid #d9e2d9;border-radius:10px;background:#f8fbf9;">
+                    <label><span>Onform share link</span><input type="url" name="onform_url" placeholder="https://videoplayer.onform.com/…" required></label>
+                    <label><span>Video title</span><input name="title" value="Onform Swing Video" maxlength="255"></label>
+                    <label><span>Camera view</span><select name="camera_view"><option value="">Select view</option><option>Face On</option><option>Down the Line</option><option>Other</option></select></label>
+                    <label><span>Club</span><input name="club" maxlength="100" placeholder="Example: 7 Iron"></label>
+                    <label><span>Notes</span><input name="notes" maxlength="5000" placeholder="Optional clip or swing note"></label>
+                    <button class="button button-primary" type="submit">Save Onform Link</button>
+                </form>
                 <div class="video-grid">
                     {% for video in session_videos %}
                     {% if video.video_type == "original_swing" or not video.video_type %}
                     <article class="video-card original-swing-card">
-                        <div class="video-type-label">Original Swing</div>
+                        <div class="video-type-label">Onform Swing Video</div>
+                        {% if video.stored_filename %}
                         <video controls preload="metadata" src="/sessions/{{ session.id }}/videos/{{ video.id }}/stream"></video>
+                        {% elif video.onform_url %}
+                        <a class="button button-secondary" href="{{ video.onform_url }}" target="_blank" rel="noopener noreferrer">Open Onform Video ↗</a>
+                        {% endif %}
                         <div class="video-meta">
                             <div><strong>{{ video.title or "Swing Video" }}</strong><span>{{ video.camera_view or "View not specified" }}{% if video.club %} · {{ video.club }}{% endif %}{% if video.shot_number %} · Shot {{ video.shot_number }}{% endif %}</span></div>
                             {% if video.notes %}<p>{{ video.notes }}</p>{% endif %}
                             <div class="video-actions">
-                                <a class="table-action" href="/sessions/{{ session.id }}/videos/{{ video.id }}/download">Download / Share</a>
-                                <a class="table-action" href="/swing-analysis/video/{{ video.id }}/open">Open Swing Analysis</a>
-                                {% if video.onform_url %}<a class="table-action" href="{{ video.onform_url }}" target="_blank" rel="noopener">Onform Link</a>{% endif %}
+                                {% if video.stored_filename %}<a class="table-action" href="/sessions/{{ session.id }}/videos/{{ video.id }}/download">Download / Share</a>
+                                <a class="table-action" href="/swing-analysis/video/{{ video.id }}/open">Open Swing Analysis</a>{% endif %}
+                                {% if video.onform_url and video.stored_filename %}<a class="table-action" href="{{ video.onform_url }}" target="_blank" rel="noopener noreferrer">Open Onform Link</a>{% endif %}
                                 <form method="post" action="/sessions/{{ session.id }}/videos/{{ video.id }}/delete" onsubmit="return confirm('Delete this original swing?')">
                                     <button class="table-action" type="submit">Delete</button>
                                 </form>

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -10,6 +10,10 @@ from app.services.biomechanics import analyze_landmarks
 from app.services.biomechanics_x_factor import enrich_with_x_factor
 from app.services.biomechanics_shot_evidence import enrich_with_shot_evidence
 from app.store import get_session, get_session_shots, update_session
+from app.models import CoachingSession, SessionScreenshot, Student
+from app.gcie.generated_models import SessionLesson
+from app.services.coach_assistant_ai import generate_screenshot_lesson, CoachingAIError
+from app.gcie.retrieval import retrieve_approved_knowledge
 
 APP_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
@@ -64,3 +68,61 @@ async def analyze_biomechanics(request: Request) -> dict:
         return enrich_with_x_factor(result, payload)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/session/{session_id}/lesson", name="generate_biomechanics_lesson")
+def generate_biomechanics_lesson(session_id: str, db: Session = Depends(get_db)):
+    session = db.get(CoachingSession, session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    student = db.get(Student, session.student_id)
+    screenshot_rows = (
+        db.query(SessionScreenshot)
+        .filter(SessionScreenshot.session_id == session_id)
+        .order_by(SessionScreenshot.created_at.asc())
+        .limit(10)
+        .all()
+    )
+    if not screenshot_rows:
+        return RedirectResponse(
+            f"/sessions/{session_id}?tab=screenshots&lesson_error=no_screenshots#onform-lesson",
+            status_code=303,
+        )
+
+    screenshot_inputs = [{
+        "filename": row.original_filename,
+        "content_type": row.content_type,
+        "image_data": row.image_data,
+    } for row in screenshot_rows]
+    context = "\n".join(part for part in [
+        str(session.notes or "").strip(),
+        str(session.coaching_notes or "").strip(),
+    ] if part)
+    goal = "Create one practical, student-readable lesson from the session's Onform screenshots."
+    knowledge = retrieve_approved_knowledge(db, goal + " " + context, limit=6)
+    try:
+        result = generate_screenshot_lesson(
+            student_name=(student.name if student else "Student"),
+            session_context=context,
+            screenshots=screenshot_inputs,
+            knowledge_context=knowledge,
+        )
+    except CoachingAIError:
+        return RedirectResponse(
+            f"/sessions/{session_id}?tab=screenshots&lesson_error=analysis_failed#onform-lesson",
+            status_code=303,
+        )
+
+    lesson = SessionLesson(
+        session_id=session_id,
+        student_notes=result["student_notes"].strip(),
+        coach_notes=result["coach_notes"].strip(),
+        source_screenshot_ids=[row.id for row in screenshot_rows],
+        status="draft",
+    )
+    db.add(lesson)
+    db.commit()
+    return RedirectResponse(
+        f"/sessions/{session_id}?tab=notes&lesson_created=1",
+        status_code=303,
+    )

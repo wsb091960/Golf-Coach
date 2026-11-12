@@ -963,19 +963,19 @@ document.addEventListener("DOMContentLoaded", function () {
     const coachingNotes = document.querySelector('textarea[name="coaching_notes"]');
 
     if (relatedDocs && coachingNotes) {
-        const originalLines = coachingNotes.value.split(/\\r?\\n/);
+        const originalLines = coachingNotes.value.split(/\r?\n/);
         const docEntries = [];
         const remainingLines = [];
 
         originalLines.forEach(function (line) {
-            const match = line.match(/https?:\\/\\/docs\\.google\\.com\\/document\\/d\\/[^\\s]+/i);
+            const match = line.match(/https?:\/\/docs\.google\.com\/document\/d\/[^\s]+/i);
             if (!match) {
                 remainingLines.push(line);
                 return;
             }
 
             const url = match[0].replace(/[),.;]+$/, "");
-            const title = line.slice(0, match.index).replace(/^[\\s•–—:-]+|[\\s•–—:-]+$/g, "");
+            const title = line.slice(0, match.index).replace(/^[\s•–—:-]+|[\s•–—:-]+$/g, "");
             docEntries.push({
                 title: title || (docEntries.length === 0 ? "Related Google Doc" : "Related Google Doc " + (docEntries.length + 1)),
                 url: url
@@ -984,9 +984,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (docEntries.length) {
             const cleanLines = remainingLines.filter(function (line) {
-                return !/related\\s+google\\s+docs?/i.test(line);
+                return !/related\s+google\s+docs?/i.test(line);
             });
-            coachingNotes.value = cleanLines.join("\\n").replace(/^\\s+|\\s+$/g, "");
+            coachingNotes.value = cleanLines.join("\n").replace(/^\s+|\s+$/g, "");
 
             docEntries.forEach(function (doc) {
                 const link = document.createElement("a");
@@ -1022,7 +1022,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         coachingNotes.value.trim(),
                         "Related Google Docs:",
                         ...docLines
-                    ].filter(Boolean).join("\\n\\n");
+                    ].filter(Boolean).join("\n\n");
                 });
             }
         }

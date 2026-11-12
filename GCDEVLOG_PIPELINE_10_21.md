@@ -18,6 +18,7 @@ This is the numbered continuation of the GCDevLog beginning at #10. These are ap
 | 19 | Interactive 3D Ball-Flight Simulator & Teaching Recommendations | Planned — pipeline | P1 | #16–17 |
 | 20 | Student Lesson Report & Video Evidence Workflow | Planned — pipeline | P1 | #10–18 |
 | 21 | One-Click P-Sheet Analyzer & X-Factor Approximation | In Progress | P1 | #10, #12 |
+| 22 | STUMPY Swing Consistency & Pattern Analysis | Planned — pipeline | P1 | #10–12, #18, #21 |
 
 ## #10 — FO/DTL Video Viewer & P-Position Utility
 - Chromebook-first workflow; import uploaded videos and accessible Onform shared links (fallback to uploads if access/download restricted).
@@ -85,6 +86,16 @@ This is the numbered continuation of the GCDevLog beginning at #10. These are ap
 - Provide a low/medium/high qualitative estimate of relative thorax/shoulder-to-pelvis rotation near the top of the backswing when visible. Label it as a coarse, view-dependent approximation—not a measured 3D angle or a grade where high is automatically better.
 - Prefer matching FO/DTL views of the same swing, automatically phase-align them where possible, and show the supporting frames and assumptions. If the views are unsynchronized or camera geometry is inadequate, report a single-view proxy or “insufficient evidence” instead of fabricating a combined 3D value.
 - Include confidence and camera/2D limitations; allow the coach to accept or correct each finding. Apply the PGA framework before recommending instruction, and prioritize the smallest safe, testable change.
+
+## #22 — STUMPY Swing Consistency & Pattern Analysis
+- Use STUMPY’s matrix-profile methods to compare repeated swings and discover recurring movement subsequences (motifs) and unusual swings or swing phases (discords). Treat these as similarity and novelty measurements, not coaching grades.
+- Compare like with like: same golfer, club, camera view, and comparable capture conditions. Use P1–P10 timestamps to phase-align each swing where available; use normalized 2D landmark trajectories and supported angle/path proxies, tempo, and phase durations as candidate time series.
+- Report repeatability by swing phase and feature, identify the nearest matching swing segment, and flag a swing that differs from the golfer’s own set. Show the contributing swings/frames and capture-quality confidence so the coach can judge what changed.
+- An outlier means “different from this set,” not “bad.” STUMPY must not label an unusual movement as a fault or infer its cause. The coach interprets it under the PGA teaching framework and decides whether it matters.
+- Support within-session consistency and before/after lesson comparisons when there are enough comparable swings. Define minimum sample sizes and useful thresholds through validation; return “insufficient comparable swings” when the evidence is sparse or capture conditions do not match.
+- Store structured analysis results, source swing/frame references, normalization and window parameters, STUMPY/library version, and confidence in the application database. Keep original video and image payloads in their media storage, linked by database references.
+- Coach can accept, correct, or dismiss each finding. Preserve the raw measurements and coach edits separately; never silently promote an automated result into validated GCIE knowledge.
+- Begin with exploratory CPU analysis on existing saved swing evidence. Do not require GPU, cross-student comparisons, or a new analytics service for the first increment.
 
 ## Execution rules
 1. Status 'Planned — pipeline' means approved for future development, not completed.

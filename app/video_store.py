@@ -181,7 +181,7 @@ def delete_session_video(
     db.delete(row)
     db.commit()
 
-    if path.exists():
+    if row.stored_filename and path.is_file():
         path.unlink()
 
     return True

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from uuid import UUID, uuid4
+from urllib.parse import urlsplit
 
 from fastapi import (
     APIRouter,
@@ -175,6 +176,57 @@ def _chunk_directory(upload_id: str) -> Path:
         )
 
     return path
+
+
+# ============================================================
+# ONFORM LINK-ONLY RECORD
+# ============================================================
+
+@router.post(
+    "/{session_id}/videos/onform-link",
+    name="session_onform_link_create",
+)
+def create_onform_video_link(
+    session_id: str,
+    onform_url: str = Form(...),
+    title: str = Form("Onform Swing Video"),
+    camera_view: str = Form(""),
+    club: str = Form(""),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    coaching_session = _require_session(session_id, db)
+    url = onform_url.strip()
+    parsed = urlsplit(url)
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme != "https" or not (host == "onform.com" or host.endswith(".onform.com")):
+        raise HTTPException(422, "Enter a secure Onform share link.")
+    title = title.strip() or "Onform Swing Video"
+    if len(title) > 255 or len(camera_view) > 50 or len(club) > 100 or len(notes) > 5000:
+        raise HTTPException(422, "Check the title, view, club, and note lengths.")
+    create_session_video(
+        db,
+        session_id=str(session_id),
+        student_id=_student_id_from_session(coaching_session),
+        title=title,
+        camera_view=camera_view.strip(),
+        club=club.strip(),
+        shot_number=None,
+        notes=notes.strip(),
+        original_filename="",
+        stored_filename="",
+        content_type="text/uri-list",
+        source="Onform",
+        onform_url=url,
+        video_type="original_swing",
+        parent_video_id=None,
+        onform_processed=False,
+        analysis_status="ready",
+    )
+    return RedirectResponse(
+        f"/sessions/{session_id}?tab=screenshots#onform-video-links",
+        status_code=303,
+    )
 
 
 # ============================================================

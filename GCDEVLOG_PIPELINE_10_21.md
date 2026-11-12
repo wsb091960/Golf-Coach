@@ -1,8 +1,8 @@
 # GCDevLog — Design-to-Development Pipeline
-Updated: 2026-11-10
+Updated: 2026-11-12
 Project: WSBCO Golf Coach / Golf Coaching Intelligence Engine (GCIE)
 
-This is the numbered continuation of the GCDevLog beginning at #10. These are approved development-pipeline requirements, **not claims of implementation or deployment**. Preserve existing #1–9 numbering and statuses (most recently #4–5 In Progress; #9 Complete). Items begin as Planned; statuses reflect active development. Coach approval is required for instructional knowledge promotion.
+This is the numbered continuation of the GCDevLog beginning at #10. These are approved development-pipeline requirements, **not claims of implementation or deployment**. Preserve existing #1–9 numbering and statuses (most recently #4–5 In Progress; #9 Complete). Items begin as Planned; statuses reflect active development. Coaching cases are captured and reused automatically; coach corrections are feedback, not an approval gate.
 
 | # | Workstream | Status | Priority | Dependencies |
 |---|---|---|---|---|
@@ -14,7 +14,7 @@ This is the numbered continuation of the GCDevLog beginning at #10. These are ap
 | 15 | GCIE Structured Knowledge Model (KM) & Retrieval | Planned — pipeline | P0 | #13–14 |
 | 16 | PGA Teaching Framework, Preferences & Professional Values | Planned — pipeline | P0 | #13–15 |
 | 17 | TGM, TPI, P1–P10 & Ball-Flight Integration | Planned — pipeline | P0 | #16 |
-| 18 | Coach-Approved Case Learning & Outcome Analytics | Planned — pipeline | P1 | #14–17 |
+| 18 | Automatic Case Learning & Outcome Analytics | Planned — pipeline | P1 | #14–17 |
 | 19 | Interactive 3D Ball-Flight Simulator & Teaching Recommendations | Planned — pipeline | P1 | #16–17 |
 | 20 | Student Lesson Report & Video Evidence Workflow | Planned — pipeline | P1 | #10–18 |
 | 21 | One-Click P-Sheet Analyzer & X-Factor Approximation | In Progress | P1 | #10, #12 |
@@ -41,16 +41,16 @@ This is the numbered continuation of the GCDevLog beginning at #10. These are ap
 - Preserve existing FastAPI, database persistence and student/session OpenAI API workflow.
 - PGA-guided diagnostic reasoning: observe ball flight, identify applicable law/principle, test the smallest practical safe setup/preference change, measure outcome, escalate only as needed.
 - Provide a useful initial recommendation without requiring measured before/after data; refine as evidence arrives.
-- Keep separate simulator/MCP pathway distinct from student/session API pathway. Multi-coach-ready architecture with coach-level permissions/provenance; initially learn from the owner's approved cases.
+- Keep separate simulator/MCP pathway distinct from student/session API pathway. Multi-coach-ready architecture with coach-level permissions/provenance; automatically capture saved lessons and coaching cases for retrieval and future model training. No per-case approval gate; coach corrections update the record.
 
 ## #14 — Knowledge Acquisition Model (GCIE-KAM)
-- Acquire, evaluate, validate, version and incorporate coach-authorized instructional sources and cases.
-- Source provenance, quality ratings, competing hypotheses, human review and explicit approval before promoting knowledge.
-- Distinguish coach observations/hypotheses from independently verified biomechanics; do not silently treat external videos as validated ground truth.
+- Acquire, evaluate, version and incorporate permitted instructional references and saved coaching cases.
+- Preserve source provenance, quality ratings, competing hypotheses, and evidence labels. Automatically capture session cases; coach corrections update or remove mistaken entries without an approval step.
+- Distinguish AI-generated observations, coach corrections, and measured outcomes. Do not treat an external reference or an unmeasured lesson proposal as verified ground truth.
 
 ## #15 — Knowledge Model (GCIE-KM) & Retrieval
 - Structured, retrievable representation of PGA framework, teaching preferences, TGM/TPI, P-position evidence, ball-flight laws, interventions, tests, and outcomes.
-- RAG/semantic retrieval with citations and evidence strength; retrieve comparable approved cases and show alternatives.
+- RAG/semantic retrieval with citations and evidence strength; retrieve comparable session cases with their generated, corrected, and measured-outcome status, and show alternatives.
 - Design schema and vector search for scalability, longitudinal analytics and eventual validated predictive ranking, not premature causal claims.
 
 ## #16 — PGA Teaching Framework, Preferences & Professional Values
@@ -64,10 +64,10 @@ This is the numbered continuation of the GCDevLog beginning at #10. These are ap
 - Screen lead-hip IR, trail-hip ER, thoracic rotation, lead-leg balance and ankle mobility where relevant.
 - Keep interpretations testable and evidence-grounded. Include the coach's Adam Scott P5-to-P6 observation as a coach-authored hypothesis: hands AND club move nearly straight down rather than forward, with trail-arm external rotation associated with shallowing and face control; verify against actual frames before generalizing.
 
-## #18 — Coach-Approved Case Learning & Outcome Analytics
-- Structured Coaching Case Record: presenting issue, ball flight, setup, observations, metrics, video/P checkpoints, TPI findings, hypotheses, intervention, before/after results, follow-up and evidence quality.
-- Mandatory coach approval for validated case library; compare similar cases, track outcomes and revisions.
-- Only consider trained intervention-ranking models after adequate representative data, held-out validation and ongoing monitoring.
+## #18 — Automatic Case Learning & Outcome Analytics
+- Structured Coaching Case Record: presenting issue, ball flight, setup/preferences, observations, metrics, video/P checkpoints, TPI findings, hypotheses, intervention, before/after results, follow-up and evidence quality.
+- Save each generated lesson automatically for retrieval and future training. Preserve whether a statement is AI-generated, coach-corrected, or supported by a measured outcome; coach feedback corrects or withdraws entries without per-case approval.
+- Compare cases and track outcomes over time. Train GCIE’s model in batches after enough relevant examples accumulate; evaluate on held-out cases before using a new model version.
 
 ## #19 — Interactive 3D Ball-Flight Simulator & Teaching Recommendations
 - Visually engaging 3D ball-flight comparison based on manually entered simulator metrics, with before/after toggle and clear simulated/not-measured labeling.
@@ -78,7 +78,7 @@ This is the numbered continuation of the GCDevLog beginning at #10. These are ap
 - Integrate saved FO/DTL video, approved P1–P10 frames, overlays, Garmin R10 metrics, coach observations, diagnosis, smallest-change tests and before/after evidence.
 - Report follows PGA hierarchy, with distinct six laws, fourteen principles, nine ball flights, preferences, TGM/TPI and biomechanics as relevant.
 - Preserve existing print-pagination work: Visual Observation + Swing Problem together; five drills and three topic-matched video links; support persistent evidence and re-extraction.
-- Coach reviews/approves lesson conclusions and knowledge promotion.
+- Save lesson notes and cases automatically. Record coach corrections as feedback; keep proposed outcomes distinct from measured results. No approval step is required for capture or reuse.
 
 ## #21 — One-Click P-Sheet Analyzer & X-Factor Approximation
 - Analyze uploaded FO/DTL P-sheet images with automatic frame, body-landmark and club detection; do not require manual point marking.
@@ -91,14 +91,20 @@ This is the numbered continuation of the GCDevLog beginning at #10. These are ap
 - Use STUMPY’s matrix-profile methods to compare repeated swings and discover recurring movement subsequences (motifs) and unusual swings or swing phases (discords). Treat these as similarity and novelty measurements, not coaching grades.
 - Compare like with like: same golfer, club, camera view, and comparable capture conditions. Use P1–P10 timestamps to phase-align each swing where available; use normalized 2D landmark trajectories and supported angle/path proxies, tempo, and phase durations as candidate time series.
 - Report repeatability by swing phase and feature, identify the nearest matching swing segment, and flag a swing that differs from the golfer’s own set. Show the contributing swings/frames and capture-quality confidence so the coach can judge what changed.
-- An outlier means “different from this set,” not “bad.” STUMPY must not label an unusual movement as a fault or infer its cause. The coach interprets it under the PGA teaching framework and decides whether it matters.
+- An outlier means “different from this set,” not “bad.” STUMPY must not label an unusual movement as a fault or infer its cause. The coach interprets it under the PGA teaching framework.
 - Support within-session consistency and before/after lesson comparisons when there are enough comparable swings. Define minimum sample sizes and useful thresholds through validation; return “insufficient comparable swings” when the evidence is sparse or capture conditions do not match.
 - Store structured analysis results, source swing/frame references, normalization and window parameters, STUMPY/library version, and confidence in the application database. Keep original video and image payloads in their media storage, linked by database references.
-- Coach can accept, correct, or dismiss each finding. Preserve the raw measurements and coach edits separately; never silently promote an automated result into validated GCIE knowledge.
+- Capture findings automatically with their evidence status. Preserve raw measurements separately from coach corrections so feedback can improve later analyses.
 - Begin with exploratory CPU analysis on existing saved swing evidence. Do not require GPU, cross-student comparisons, or a new analytics service for the first increment.
+
+## #23 — Student Session Comparison & Longitudinal Analysis
+- Compare a student’s sessions to show what changed, what stayed consistent, which coaching change was tried, and whether the intended swing or ball-flight result followed.
+- Bring together session goals, coach observations, setup preferences, P1–P10 checkpoints, biomechanics screenshots, linked swing video, Garmin R10 metrics, lesson notes and recorded outcomes.
+- Link conclusions to the frames and measurements behind them. Call out missing or non-comparable evidence (such as a different club, camera view, or capture setup); do not present an unmeasured change as a successful result.
+- Start with within-student comparisons. Automatically save comparison cases for GCIE retrieval and future model training, distinguishing generated analysis, coach corrections and measured outcomes.
 
 ## Execution rules
 1. Status 'Planned — pipeline' means approved for future development, not completed.
-2. No production deployment, data migration or automatic student-data learning is authorized by this planning file.
+2. Automatic capture and retrieval of saved coaching cases is authorized. Build model updates as versioned batches and evaluate them against held-out cases before using a new version.
 3. Preserve earlier GCDevLog numbers; cross-reference #4–5 rather than overwriting.
-4. Promote items through Planned → In Progress → Verification → Complete with test evidence and coach sign-off.
+4. Promote items through Planned → In Progress → Verification → Complete with implementation and validation evidence; capture coach corrections where provided, without requiring per-case sign-off for saved lessons or knowledge reuse.

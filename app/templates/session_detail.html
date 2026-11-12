@@ -10,6 +10,12 @@
     <link rel="stylesheet" href="/static/css/topdown_flight.css?v=5.3O">
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
+    <style>
+        .related-doc-links{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 12px}
+        .related-doc-link{display:inline-flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid #d9e2d9;border-radius:10px;background:#f8fbf9;color:#174f40;font-weight:700;text-decoration:none}
+        .related-doc-link:hover,.related-doc-link:focus-visible{border-color:#175a46;background:#edf6f0;outline:2px solid transparent}
+        .related-doc-link svg{width:22px;height:22px;flex:none;color:#c79a35}
+    </style>
 </head>
 
 <body>
@@ -592,6 +598,7 @@
 
                     <input type="hidden" name="notes" value="{{ session.notes or '' }}">
 
+                    <div id="related-coaching-docs" class="related-doc-links" aria-label="Related Google Docs" hidden></div>
                     <textarea
                         name="coaching_notes"
                         placeholder="Coaching observations, priorities and drills"
@@ -952,6 +959,74 @@ document.addEventListener("DOMContentLoaded", function () {
     const screenshotInput = document.getElementById("session-screenshot-files");
     const screenshotPasteArea = document.getElementById("screenshot-paste-area");
     const screenshotPasteStatus = document.getElementById("screenshot-paste-status");
+    const relatedDocs = document.getElementById("related-coaching-docs");
+    const coachingNotes = document.querySelector('textarea[name="coaching_notes"]');
+
+    if (relatedDocs && coachingNotes) {
+        const originalLines = coachingNotes.value.split(/\\r?\\n/);
+        const docEntries = [];
+        const remainingLines = [];
+
+        originalLines.forEach(function (line) {
+            const match = line.match(/https?:\\/\\/docs\\.google\\.com\\/document\\/d\\/[^\\s]+/i);
+            if (!match) {
+                remainingLines.push(line);
+                return;
+            }
+
+            const url = match[0].replace(/[),.;]+$/, "");
+            const title = line.slice(0, match.index).replace(/^[\\s•–—:-]+|[\\s•–—:-]+$/g, "");
+            docEntries.push({
+                title: title || (docEntries.length === 0 ? "Related Google Doc" : "Related Google Doc " + (docEntries.length + 1)),
+                url: url
+            });
+        });
+
+        if (docEntries.length) {
+            const cleanLines = remainingLines.filter(function (line) {
+                return !/related\\s+google\\s+docs?/i.test(line);
+            });
+            coachingNotes.value = cleanLines.join("\\n").replace(/^\\s+|\\s+$/g, "");
+
+            docEntries.forEach(function (doc) {
+                const link = document.createElement("a");
+                link.className = "related-doc-link";
+                link.href = doc.url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.setAttribute("aria-label", "Open " + doc.title);
+
+                const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                icon.setAttribute("viewBox", "0 0 24 24");
+                icon.setAttribute("fill", "none");
+                icon.setAttribute("stroke", "currentColor");
+                icon.setAttribute("stroke-width", "1.8");
+                icon.setAttribute("stroke-linecap", "round");
+                icon.setAttribute("stroke-linejoin", "round");
+                icon.setAttribute("aria-hidden", "true");
+                icon.innerHTML = '<path d="M7 3.5h7l5 5V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 6 20V5a1.5 1.5 0 0 1 1-1.5Z"/><path d="M14 3.5V9h5"/><path d="M9 13h6M9 16.5h6"/>';
+                const label = document.createElement("span");
+                label.textContent = doc.title;
+                link.append(icon, label);
+                relatedDocs.appendChild(link);
+            });
+            relatedDocs.hidden = false;
+
+            const notesForm = coachingNotes.closest("form");
+            if (notesForm) {
+                notesForm.addEventListener("submit", function () {
+                    const docLines = docEntries.map(function (doc) {
+                        return doc.title + " — " + doc.url;
+                    });
+                    coachingNotes.value = [
+                        coachingNotes.value.trim(),
+                        "Related Google Docs:",
+                        ...docLines
+                    ].filter(Boolean).join("\\n\\n");
+                });
+            }
+        }
+    }
 
     function addScreenshotFiles(files) {
         if (!screenshotInput) return 0;

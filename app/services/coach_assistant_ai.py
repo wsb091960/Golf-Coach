@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import base64
 import os
 import urllib.error
 import urllib.request
@@ -208,3 +209,87 @@ def generate(goal: str, observations: dict[str, str], evidence: dict[str, str] |
     except (ValueError, KeyError, TypeError):
         raise CoachingAIError("OpenAI returned an unreadable response. No new plan was saved.") from None
     raise CoachingAIError("OpenAI returned no usable coaching plan. No new plan was saved.")
+
+
+def generate_screenshot_lesson(
+    student_name: str,
+    session_context: str,
+    screenshots: list[dict[str, str]],
+    knowledge_context: list[dict[str, str]] | None = None,
+) -> dict[str, str]:
+    """Create paired student and coach notes from the session's Onform screenshots."""
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        raise CoachingAIError("API key is missing from the running server.")
+    if not screenshots:
+        raise CoachingAIError("No Onform screenshots are attached to this session.")
+
+    content = [{
+        "type": "input_text",
+        "text": (
+            "Review the supplied Onform swing screenshots and create a practical lesson. "
+            "Use only what is visible and the coach context supplied. Separate direct visual "
+            "observations from interpretations. Do not invent angles, measurements, ball flight, "
+            "or causes. If a screenshot is ambiguous, say so briefly. Keep the PGA teaching "
+            "framework in charge; use TGM, TPI, P-positions, and approved GCIE knowledge as "
+            "supporting tools. Return two versions with the SAME observations, goal, priority, "
+            "drill, dosage, and success test. Student Notes must be plain and easy to follow. "
+            "Coach Notes may use P-position and teaching terms but must not add new conclusions.\n\n"
+            f"Student: {student_name}\nCoach/session context: {session_context or 'No additional coach notes.'}\n"
+            f"Approved GCIE knowledge: {json.dumps(knowledge_context or [], ensure_ascii=False)}"
+        ),
+    }]
+    for item in screenshots[:10]:
+        raw = item.get("image_data")
+        if not raw:
+            continue
+        encoded = base64.b64encode(raw).decode("ascii")
+        mime = item.get("content_type") or "image/jpeg"
+        content.append({"type": "input_text", "text": f"Screenshot: {item.get('filename') or 'Onform frame'}"})
+        content.append({"type": "input_image", "image_url": f"data:{mime};base64,{encoded}"})
+
+    payload = {
+        "model": os.getenv("OPENAI_COACH_MODEL", "gpt-5.6-luna"),
+        "input": [
+            {"role": "system", "content": "You are a careful PGA-aligned golf coach. Produce practical, accurate lesson notes from supplied swing images."},
+            {"role": "user", "content": content},
+        ],
+        "text": {
+            "format": {
+                "type": "json_schema",
+                "name": "paired_golf_lesson_notes",
+                "strict": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "student_notes": {"type": "string"},
+                        "coach_notes": {"type": "string"},
+                    },
+                    "required": ["student_notes", "coach_notes"],
+                    "additionalProperties": False,
+                },
+            }
+        },
+    }
+    request = urllib.request.Request(
+        "https://api.openai.com/v1/responses",
+        data=json.dumps(payload).encode(),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=90) as response:
+            body = json.loads(response.read().decode())
+        for output in body.get("output", []):
+            for part in output.get("content", []):
+                if part.get("type") == "output_text":
+                    result = json.loads(part.get("text", "{}"))
+                    if result.get("student_notes") and result.get("coach_notes"):
+                        return result
+    except urllib.error.HTTPError as error:
+        raise CoachingAIError(f"OpenAI lesson generation failed (HTTP {error.code}).") from None
+    except (urllib.error.URLError, TimeoutError):
+        raise CoachingAIError("The OpenAI connection failed or timed out. No lesson was saved.") from None
+    except (ValueError, KeyError, TypeError):
+        raise CoachingAIError("OpenAI returned an unreadable lesson. No lesson was saved.") from None
+    raise CoachingAIError("OpenAI returned no usable lesson. No lesson was saved.")

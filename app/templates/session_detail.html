@@ -16,6 +16,26 @@
         .related-doc-link:hover,.related-doc-link:focus-visible{border-color:#175a46;background:#edf6f0;outline:2px solid transparent}
         .related-doc-link svg{width:22px;height:22px;flex:none;color:#c79a35}
         .session-meta-static{box-sizing:border-box;display:flex;align-items:center;min-height:44px;padding:10px;border:1px solid #d7e1dd;border-radius:9px;background:#f3f5f1;color:#17332c}
+        .session-overview{display:grid;gap:14px}
+        .session-overview-header{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:22px 24px;border-radius:15px;background:linear-gradient(115deg,#123e33,#1d624b);color:#fff}
+        .session-overview-header h2{margin:5px 0;font-size:24px}
+        .session-overview-header p{margin:0;color:#d6e6df}
+        .overview-eyebrow{color:#e2c064;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+        .overview-status-badge{flex:none;padding:9px 12px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(255,255,255,.1);font-size:12px;font-weight:700}
+        .overview-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+        .overview-card{min-width:0;padding:18px;border:1px solid #d7e0dc;border-radius:13px;background:#fff}
+        .overview-card h3{margin:8px 0;color:#174f40;font-size:17px}
+        .overview-card p{margin:8px 0 0;color:#43534c;line-height:1.55;white-space:pre-wrap}
+        .overview-note-preview{max-height:8.5em;overflow:hidden}
+        .overview-evidence{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+        .overview-evidence a{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid #d7e0dc;border-radius:12px;background:#f8fbf9;color:#174f40;text-decoration:none}
+        .overview-evidence a:hover{border-color:#175a46;background:#eff7f2}
+        .overview-evidence strong{font-size:22px}
+        .overview-evidence span{font-size:12px;font-weight:700}
+        .overview-next-step{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:17px 18px;border:1px solid #d7e0dc;border-radius:13px;background:#fff}
+        .overview-next-step p{margin:5px 0 0;color:#43534c;line-height:1.45}
+        .overview-actions{display:flex;flex:none;gap:8px;flex-wrap:wrap}
+        @media(max-width:760px){.session-overview-header,.overview-next-step{align-items:flex-start;flex-direction:column}.overview-cards{grid-template-columns:1fr}.overview-evidence{grid-template-columns:1fr}}
     </style>
 </head>
 
@@ -104,69 +124,101 @@
         <nav class="workspace-tabs" role="tablist" data-workspace-tabs="session-detail" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="charts">Simulator</button><button type="button" role="tab" data-workspace-tab="shots">Shots</button><button type="button" role="tab" data-workspace-tab="screenshots">Biomechanics</button><button type="button" role="tab" data-workspace-tab="notes">Notes</button></nav>
 
 
-        <section class="performance-kpis" data-workspace-panel="overview" data-workspace-group="session-detail">
-            <div class="kpi">
-                <span>Shots</span>
-                <strong>{{ session_metrics.shots }}</strong>
+        <section class="session-overview" data-workspace-panel="overview" data-workspace-group="session-detail">
+            {% set focus_text = session.notes if session.notes and 'docs.google.com' not in session.notes else '' %}
+            <header class="session-overview-header">
+                <div>
+                    <span class="overview-eyebrow">30,000 ft session overview</span>
+                    <h2>{{ session.name or "Session Overview" }}</h2>
+                    <p>{{ student.name if student else "Student" }} · {{ session.session_date }} · {{ session.session_type }}</p>
+                </div>
+                <span class="overview-status-badge">
+                    {% if session_lesson %}Lesson notes saved{% elif session_screenshots %}Screenshots ready for review{% else %}Session in progress{% endif %}
+                </span>
+            </header>
+
+            <div class="overview-cards">
+                <article class="overview-card">
+                    <span class="section-kicker">Session focus</span>
+                    <h3>{{ session.name or "Not recorded" }}</h3>
+                    {% if focus_text %}
+                    <p>{{ focus_text|truncate(360, true, "…") }}</p>
+                    {% else %}
+                    <p>The session focus is recorded in the lesson notes below.</p>
+                    {% endif %}
+                </article>
+
+                <article class="overview-card">
+                    <span class="section-kicker">Coach’s read</span>
+                    {% if session_lesson and session_lesson.coach_notes %}
+                    <p class="overview-note-preview">{{ session_lesson.coach_notes|trim|truncate(520, true, "…") }}</p>
+                    {% else %}
+                    <p>No screenshot-based coach analysis has been saved for this session yet.</p>
+                    {% endif %}
+                </article>
+
+                <article class="overview-card">
+                    <span class="section-kicker">Student takeaway</span>
+                    {% if session_lesson and session_lesson.student_notes %}
+                    <p class="overview-note-preview">{{ session_lesson.student_notes|trim|truncate(420, true, "…") }}</p>
+                    {% else %}
+                    <p>A student-facing lesson note has not been created yet.</p>
+                    {% endif %}
+                </article>
+
+                <article class="overview-card overview-result-card">
+                    <span class="section-kicker">Result so far</span>
+                    {% if session_metrics.shots %}
+                    <h3>{{ session_metrics.shots }} simulator shot{% if session_metrics.shots != 1 %}s{% endif %} recorded</h3>
+                    <p>
+                        {% if session_metrics.carry is not none %}Average carry: {{ "%.1f"|format(session_metrics.carry) }} yd. {% endif %}
+                        {% if session_metrics.club_speed is not none %}Club speed: {{ "%.1f"|format(session_metrics.club_speed) }} mph. {% endif %}
+                        Use the Shots tab for the full readings.
+                    </p>
+                    {% else %}
+                    <h3>Ball-flight result not recorded yet</h3>
+                    <p>No Garmin or manual shots are saved in this session, so the lesson’s effect on the ball flight has not been checked here.</p>
+                    {% endif %}
+                </article>
             </div>
 
-            <div class="kpi">
-                <span>Primary Club</span>
-                <strong>{{ session.primary_club or "—" }}</strong>
+            <div class="overview-evidence" aria-label="Session evidence">
+                <a href="/sessions/{{ session.id }}?tab=shots">
+                    <strong>{{ session_metrics.shots }}</strong><span>Simulator shots</span>
+                </a>
+                <a href="/sessions/{{ session.id }}?tab=screenshots">
+                    <strong>{{ session_screenshots|length }}</strong><span>Biomechanics screenshots</span>
+                </a>
+                <a href="/sessions/{{ session.id }}?tab=screenshots#onform-video-links">
+                    <strong>{{ session_videos|length }}</strong><span>Linked swing videos</span>
+                </a>
             </div>
 
-            <div class="kpi">
-                <span>Avg Carry</span>
-                <strong>
-                    {{ "%.1f"|format(session_metrics.carry)
-                       if session_metrics.carry is not none else "—" }}
-                </strong>
-                <small>yd</small>
-            </div>
-
-            <div class="kpi">
-                <span>Ball Speed</span>
-                <strong>
-                    {{ "%.1f"|format(session_metrics.ball_speed)
-                       if session_metrics.ball_speed is not none else "—" }}
-                </strong>
-                <small>mph</small>
-            </div>
-
-            <div class="kpi">
-                <span>Club Speed</span>
-                <strong>
-                    {{ "%.1f"|format(session_metrics.club_speed)
-                       if session_metrics.club_speed is not none else "—" }}
-                </strong>
-                <small>mph</small>
-            </div>
-
-            <div class="kpi">
-                <span>Attack</span>
-                <strong>
-                    {{ "%.1f"|format(session_metrics.attack)
-                       if session_metrics.attack is not none else "—" }}
-                </strong>
-                <small>°</small>
-            </div>
-
-            <div class="kpi">
-                <span>Path</span>
-                <strong>
-                    {{ "%.1f"|format(session_metrics.path)
-                       if session_metrics.path is not none else "—" }}
-                </strong>
-                <small>°</small>
-            </div>
-
-            <div class="kpi">
-                <span>Face</span>
-                <strong>
-                    {{ "%.1f"|format(session_metrics.face)
-                       if session_metrics.face is not none else "—" }}
-                </strong>
-                <small>°</small>
+            <div class="overview-next-step">
+                <div>
+                    <span class="section-kicker">Next step</span>
+                    {% if session_lesson and not session_metrics.shots %}
+                    <p>Review the paired lesson notes, then record shots when you want to check the ball-flight result.</p>
+                    {% elif session_lesson %}
+                    <p>Review the lesson notes alongside the saved shot readings to see how the session went.</p>
+                    {% elif session_screenshots %}
+                    <p>Create the student lesson from the saved biomechanics screenshots.</p>
+                    {% else %}
+                    <p>Add swing screenshots or a video link to build this session’s review.</p>
+                    {% endif %}
+                </div>
+                <div class="overview-actions">
+                    {% if session_lesson %}
+                    <a class="button button-primary" href="/sessions/{{ session.id }}?tab=notes">Open Session Notes</a>
+                    {% elif session_screenshots %}
+                    <a class="button button-primary" href="/sessions/{{ session.id }}?tab=screenshots#onform-lesson">Create Student Lesson</a>
+                    {% else %}
+                    <a class="button button-primary" href="/sessions/{{ session.id }}?tab=screenshots">Open Biomechanics</a>
+                    {% endif %}
+                    {% if not session_metrics.shots %}
+                    <a class="button button-secondary" href="/sessions/{{ session.id }}?tab=shots">Add Session Shots</a>
+                    {% endif %}
+                </div>
             </div>
         </section>
 

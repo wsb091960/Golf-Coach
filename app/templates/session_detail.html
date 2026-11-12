@@ -15,6 +15,7 @@
         .related-doc-link{display:inline-flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid #d9e2d9;border-radius:10px;background:#f8fbf9;color:#174f40;font-weight:700;text-decoration:none}
         .related-doc-link:hover,.related-doc-link:focus-visible{border-color:#175a46;background:#edf6f0;outline:2px solid transparent}
         .related-doc-link svg{width:22px;height:22px;flex:none;color:#c79a35}
+        .session-meta-static{box-sizing:border-box;display:flex;align-items:center;min-height:44px;padding:10px;border:1px solid #d7e1dd;border-radius:9px;background:#f3f5f1;color:#17332c}
     </style>
 </head>
 
@@ -98,7 +99,7 @@
             </div>
         </header>
 
-        <div style="margin:12px 0"><a class="button button-secondary" href="/gcie/sessions/{{ session.id }}/lesson-plan">GCIE Lesson Plan · View / Print / Record Results</a></div>
+        <div style="margin:12px 0"><a class="button button-secondary" href="/sessions/{{ session.id }}?tab=notes">Open Session Notes · Student and Coach</a></div>
 
         <nav class="workspace-tabs" role="tablist" data-workspace-tabs="session-detail" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="charts">Simulator</button><button type="button" role="tab" data-workspace-tab="shots">Shots</button><button type="button" role="tab" data-workspace-tab="screenshots">Biomechanics</button><button type="button" role="tab" data-workspace-tab="notes">Notes</button></nav>
 
@@ -543,7 +544,7 @@
         </section>
 
 
-        <section class="performance-card coaching-card" data-workspace-panel="notes" data-workspace-group="session-detail" hidden>
+        <section id="session-notes-panel" class="performance-card coaching-card" data-workspace-panel="notes" data-workspace-group="session-detail" hidden>
             <div class="card-heading">
                 <div>
                     <span class="section-kicker">Coach</span>
@@ -568,27 +569,11 @@
             >
                 <div class="coaching-form">
 
-                    <input
-                        type="date"
-                        name="session_date"
-                        value="{{ session.session_date }}"
-                        required
-                    >
+                    <input type="hidden" name="session_date" value="{{ session.session_date }}">
+                    <div class="session-meta-static" aria-label="Session date">{{ session.session_date }}</div>
 
-                    <select name="session_type">
-                        {% for option in [
-                            "Coaching Session",
-                            "Practice",
-                            "Playing Lesson",
-                            "Club Evaluation"
-                        ] %}
-                        <option
-                            {% if session.session_type == option %}selected{% endif %}
-                        >
-                            {{ option }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <input type="hidden" name="session_type" value="{{ session.session_type }}">
+                    <div class="session-meta-static" aria-label="Session type">{{ session.session_type }}</div>
 
                     <input
                         name="name"

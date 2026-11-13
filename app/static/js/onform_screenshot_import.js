@@ -63,13 +63,15 @@
     { key: "torso_sway", aliases: ["TORSO SWAY"], keepDirection: true },
     { key: "pelvis_sway", aliases: ["PELVIS SWAY"], keepDirection: true },
     { key: "pelvis_lift", aliases: ["PELVIS LIFT"], keepDirection: true },
+    { key: "torso_lift", aliases: ["TORSO LIFT"], keepDirection: true },
+    { key: "torso_forward_bend", aliases: ["TORSO FORWARD BEND", "FORWARD BEND"], keepDirection: true },
     { key: "shoulder_tilt", aliases: ["SHOULDER TILT"] },
     { key: "hip_tilt", aliases: ["HIP TILT", "PELVIS TILT"] },
     { key: "spine_tilt", aliases: ["SPINE TILT"] },
     { key: "shaft_angle", aliases: ["SHAFT ANGLE"] }
   ];
 
-  const directionWords = new Set(["LEFT", "RIGHT", "UP", "DOWN", "OPEN", "CLOSED", "AWAY", "TOWARDS", "TOWARD"]);
+  const directionWords = new Set(["LEFT", "RIGHT", "UP", "DOWN", "OPEN", "CLOSED", "AWAY", "TOWARDS", "TOWARD", "FORWARD", "BACKWARD"]);
 
   function normalizeText(value) {
     return String(value || "")
@@ -327,6 +329,39 @@
         input.value = metrics[input.dataset.onformMetric];
       }
     });
+    renderMetricTiles(metrics, { verified: false, conflicts: [] });
+  }
+
+  const bodyTileDefinitions = [
+    { label: "Torso turn", key: "torso_rotation", unit: "°", direction: "torso_rotation_direction" },
+    { label: "Pelvis turn", key: "pelvis_rotation", unit: "°", direction: "pelvis_rotation_direction" },
+    { label: "X-Factor", key: "x_factor", unit: "°", direction: null, defaultDirection: "Torso-hip" },
+    { label: "Torso sway", key: "torso_sway", unit: '"', direction: "torso_sway_direction" },
+    { label: "Pelvis sway", key: "pelvis_sway", unit: '"', direction: "pelvis_sway_direction" },
+    { label: "Pelvis lift", key: "pelvis_lift", unit: '"', direction: "pelvis_lift_direction" },
+    { label: "Torso lift", key: "torso_lift", unit: '"', direction: "torso_lift_direction" },
+    { label: "Torso forward bend", key: "torso_forward_bend", unit: "°", direction: "torso_forward_bend_direction", defaultDirection: "Forward bend" },
+  ];
+
+  function renderMetricTiles(metrics = {}, options = {}) {
+    const tileRoot = document.getElementById("onformMetricTiles");
+    if (!tileRoot) return;
+    const checkpointLabel = document.getElementById("onformTileCheckpoint");
+    if (checkpointLabel) checkpointLabel.textContent = String(options.checkpoint || checkpointSelect?.value || "P7").toUpperCase();
+    const conflicts = new Set((options.conflicts || []).map((item) => item.key));
+    tileRoot.innerHTML = bodyTileDefinitions.map((item) => {
+      const raw = metrics[item.key];
+      const hasValue = raw !== null && raw !== undefined && raw !== "" && Number.isFinite(Number(raw));
+      const value = hasValue ? Number(raw) : null;
+      const formatted = value === null ? "—" : `${Number.isInteger(value) ? value : value.toFixed(1)}${item.unit}`;
+      const status = conflicts.has(item.key) ? "bad" : options.verified && hasValue ? "good" : "warning";
+      const direction = item.direction && metrics[item.direction] ? metrics[item.direction] : item.defaultDirection || (hasValue ? "Reading needs review" : "Awaiting screenshot");
+      return `<article class="onform-metric-tile" data-status="${status}">
+        <label>${item.label}</label>
+        <strong>${formatted}</strong>
+        <span class="tile-direction">${String(direction).toUpperCase()}</span>
+      </article>`;
+    }).join("");
   }
 
   function showConflicts(items) {
@@ -514,7 +549,10 @@
   }
 
   function hydrateSavedImport() {
-    if (!savedImport) return;
+    if (!savedImport) {
+      renderMetricTiles({});
+      return;
+    }
     const metrics = savedImport.metrics || {};
     Object.entries(metrics).forEach(([key, value]) => {
       if (value === null || value === undefined || value === "") return;
@@ -534,6 +572,11 @@
     status.textContent = savedImport.verified
       ? "Saved verified Onform metrics and screenshot evidence loaded."
       : "Saved draft metrics and screenshot evidence loaded — awaiting Shot Table verification.";
+    renderMetricTiles(metrics, {
+      verified: Boolean(savedImport.verified),
+      conflicts: savedImport.conflicts_at_extraction || [],
+      checkpoint: savedImport.checkpoint_position,
+    });
     updateCoachingGoalRead();
   }
 
@@ -566,9 +609,19 @@
 
   if (typeof root.addEventListener === "function") {
     root.addEventListener("input", (event) => {
-      if (event.target.matches("[data-onform-metric], [data-onform-sequence]")) updateCoachingGoalRead();
+      if (event.target.matches("[data-onform-metric], [data-onform-sequence]")) {
+        updateCoachingGoalRead();
+        renderMetricTiles(collectMetrics(), { verified: false, conflicts });
+      }
     });
   }
+  checkpointSelect?.addEventListener("change", () => {
+    renderMetricTiles(collectMetrics(), {
+      verified: false,
+      conflicts,
+      checkpoint: checkpointSelect.value,
+    });
+  });
 
   function buildImportForm(verifiedValue) {
     const first = file1.files?.[0];
@@ -595,6 +648,11 @@
   function applySavedImport(payload) {
     if (!payload?.saved_import) return;
     savedImport = payload.saved_import;
+    renderMetricTiles(savedImport.metrics || {}, {
+      verified: Boolean(savedImport.verified),
+      conflicts: savedImport.conflicts_at_extraction || [],
+      checkpoint: savedImport.checkpoint_position,
+    });
 
     // File inputs cannot retain files across reloads. Once server evidence is
     // confirmed, clear the local selections so subsequent saves reuse the
@@ -667,6 +725,11 @@
       const combined = mergeMetrics(one.metrics, two.metrics);
       fillMetrics(combined.merged);
       showConflicts(combined.disagreement);
+      renderMetricTiles(combined.merged, {
+        verified: false,
+        conflicts: combined.disagreement,
+        checkpoint: checkpointSelect.value,
+      });
 
       const count = Object.keys(combined.merged).filter((k) => !k.endsWith("_direction")).length;
       const conflictText = combined.disagreement.length

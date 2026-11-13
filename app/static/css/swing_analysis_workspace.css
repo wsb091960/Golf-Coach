@@ -339,6 +339,30 @@
 .onform-metric-group h3 { margin:0 0 10px; font-size:1rem; }
 .onform-conflicts { margin-top:14px; border:1px solid #b7791f; background:#fff8e7; border-radius:10px; padding:10px 12px; color:#6b4f12; }
 .metric-conflict { border-color:#b7791f !important; background:#fff8e7 !important; }
+
+/* OnForm body metrics overview */
+.onform-tile-panel{margin-top:20px;padding:16px;border:1px solid #dfe7e2;border-radius:14px;background:#f7faf8}
+.onform-tile-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.onform-tile-heading h3{margin:3px 0 0;font-size:1.1rem;color:#174936}
+.onform-tile-source{padding:5px 9px;border-radius:99px;background:#fff1d4;color:#815d19;font-size:10px;font-weight:800}
+.onform-metric-tiles{display:grid;grid-template-columns:repeat(8,minmax(95px,1fr));gap:7px;overflow-x:auto}
+.onform-metric-tile{min-width:95px;padding:10px 7px 9px;border:1px solid #e0e7e3;border-radius:9px;background:#fff;text-align:center}
+.onform-metric-tile label{display:block;min-height:28px;color:#31453c;font-size:9px;font-weight:900;line-height:1.25;text-transform:uppercase}
+.onform-metric-tile strong{display:block;margin-top:4px;color:#77857e;font-size:18px;line-height:1.1;white-space:nowrap}
+.onform-metric-tile .tile-direction{display:block;min-height:20px;margin-top:4px;color:#68776f;font-size:9px;font-weight:700;line-height:1.2;text-transform:uppercase}
+.onform-metric-tile[data-status="good"] strong{color:#22804e}
+.onform-metric-tile[data-status="warning"] strong{color:#a97812}
+.onform-metric-tile[data-status="bad"] strong{color:#b63e3c}
+.onform-metric-tile[data-status="good"]{border-bottom:3px solid #43a46d}
+.onform-metric-tile[data-status="warning"]{border-bottom:3px solid #e0b448}
+.onform-metric-tile[data-status="bad"]{border-bottom:3px solid #d76a63}
+.onform-tile-key{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:12px;color:#617168;font-size:10px}
+.onform-tile-key span{display:inline-flex;align-items:center;gap:5px}
+.tile-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.tile-status-dot--good{background:#43a46d}.tile-status-dot--warning{background:#e0b448}.tile-status-dot--bad{background:#d76a63}
+.onform-tile-note{margin:8px 0 0;color:#6c7a73;font-size:10px;line-height:1.45}
+@media(max-width:1050px){.onform-metric-tiles{grid-template-columns:repeat(4,minmax(105px,1fr))}}
+@media(max-width:580px){.onform-tile-heading{align-items:flex-start;flex-direction:column}.onform-metric-tiles{grid-template-columns:repeat(2,minmax(110px,1fr))}}
 @media (max-width:1000px) {
     .onform-screenshot-pair,
     .onform-import-controls { grid-template-columns:1fr; }

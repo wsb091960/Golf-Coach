@@ -94,7 +94,7 @@
                 <button
                     type="button"
                     class="button button-primary"
-                    id="save-analysis"
+                    id="save-analysis-legacy"
                     {% if is_preview %}disabled title="Read-only demo preview"{% endif %}
                 >
                     Save Analysis
@@ -115,7 +115,7 @@
 <section class="gcie-review" aria-label="Swing review and biomechanics metrics">
     <div class="gcie-review-heading">
         <div><span class="section-kicker">GCIE SWING REVIEW</span><h2>{{ analysis.original_video.title or "Swing Review" }}</h2><p>{{ analysis.original_video.camera_view or analysis.camera_view or "Camera view not set" }}{% if analysis.club %} · {{ analysis.club }}{% endif %}</p></div>
-        <a class="button button-secondary" href="/swing-analysis/{{ analysis.id }}/onform-import">Add Onform Screenshots</a>
+        <div class="gcie-review-actions"><a class="button button-secondary" href="/sessions/{{ analysis.session_id }}">Back to Session</a><a class="button button-secondary" href="/swing-analysis/{{ analysis.id }}/onform-import">Add Onform Screenshots</a><button type="button" class="button button-primary" id="save-analysis" {% if is_preview %}disabled title="Read-only demo preview"{% endif %}>Save Analysis</button></div>
     </div>
     <div class="gcie-review-grid">
         <article class="gcie-review-card gcie-video-card">

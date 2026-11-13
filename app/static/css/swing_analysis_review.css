@@ -1,5 +1,7 @@
-.gcie-review{display:grid;gap:14px;margin:18px 0 22px;color:#153d32}
+.swing-analysis-page>.analysis-header,.swing-analysis-page>#analysis-workflow{display:none}
+.gcie-review{display:grid;gap:14px;margin:6px 0 22px;color:#153d32}
 .gcie-review-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:2px 2px 4px}
+.gcie-review-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .gcie-review-heading h2{margin:3px 0;font-size:24px}.gcie-review-heading p{margin:3px 0;color:#65776f}
 .gcie-review-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.9fr);gap:14px;align-items:stretch}
 .gcie-review-card{min-width:0;padding:16px;border:1px solid #d8e2dc;border-radius:17px;background:#fff;box-shadow:0 8px 22px rgba(19,57,46,.045)}

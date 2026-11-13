@@ -127,6 +127,7 @@
                 >
                     Link Onform Video
                 </a>
+                <button class="button button-secondary" type="button" data-open-video data-video-title="Onform Swing Video">Upload Onform MP4</button>
             </div>
         </header>
 
@@ -603,7 +604,7 @@
 
             <details class="session-video-archive" id="onform-video-links">
                 <summary>Swing videos · {{ session_videos|length }}</summary>
-                <p>Videos stay in Onform. Golf Coach saves the share link and session details, not another copy of the clip.</p>
+                <p>Save an Onform share link without copying the video, or upload an exported .mp4 clip for frame review in Golf Coach.</p>
                 <form method="post" action="/sessions/{{ session.id }}/videos/onform-link" class="screenshot-upload-form" style="margin:14px 0;padding:16px;border:1px solid #d9e2d9;border-radius:10px;background:#f8fbf9;">
                     <label><span>Onform share link</span><input type="url" name="onform_url" placeholder="https://videoplayer.onform.com/…" required></label>
                     <label><span>Video title</span><input name="title" value="Onform Swing Video" maxlength="255"></label>
@@ -911,7 +912,7 @@
         <div class="modal-heading">
             <div>
                 <span class="section-kicker">Onform</span>
-                <h2>Add Swing Video for P-Position Analysis</h2>
+                <h2>Add Swing Video or Onform MP4 for P-Position Analysis</h2>
             </div>
 
             <button
@@ -933,7 +934,7 @@
             <div class="video-form-grid">
 
                 <label>
-                    <span>Swing Video File · MP4 / MOV / M4V / WEBM</span>
+                    <span>Video file · MP4 / MOV / M4V / WEBM</span>
                     <input
                         id="original-swing-video-file"
                         type="file"
@@ -999,7 +1000,7 @@
             </div>
 
             <div class="manual-shot-help">
-                This video is the visual source for manual P1–P10 timing and landmark measurements. Onform PNG/JPG metric screenshots are added later inside Swing Analysis; do not upload screenshots here.
+                Onform exports in .mp4 format are supported. Uploaded video is stored with session media for frame review; use “Link Onform Video” if you prefer to save only the share link. Onform metric screenshots are added separately inside Swing Analysis.
             </div>
 
             <button
@@ -1164,6 +1165,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const originalModal = document.getElementById("video-modal");
     const uploadForm = document.getElementById("original-swing-upload-form");
+    const uploadTitle = uploadForm?.querySelector('input[name="title"]');
     const uploadFile = document.getElementById("original-swing-video-file");
     const uploadButton = document.getElementById("original-swing-upload-button");
     const progressWrap = document.getElementById("original-swing-upload-progress-wrap");
@@ -1172,6 +1174,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.querySelectorAll("[data-open-video]").forEach(function (button) {
         button.addEventListener("click", function () {
+            if (uploadTitle && button.dataset.videoTitle) {
+                uploadTitle.value = button.dataset.videoTitle;
+            }
             if (originalModal) {
                 originalModal.hidden = false;
             }

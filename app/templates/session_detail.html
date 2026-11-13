@@ -628,7 +628,7 @@
                             {% if video.notes %}<p>{{ video.notes }}</p>{% endif %}
                             <div class="video-actions">
                                 {% if video.stored_filename %}<a class="table-action" href="/sessions/{{ session.id }}/videos/{{ video.id }}/download">Download / Share</a>
-                                <a class="table-action" href="/swing-analysis/video/{{ video.id }}/open">Open Swing Analysis</a>{% endif %}
+                                <a class="table-action" href="/swing-analysis/video/{{ video.id }}/open">Open GCIE Swing Review</a>{% endif %}
                                 {% if video.onform_url and video.stored_filename %}<a class="table-action" href="{{ video.onform_url }}" target="_blank" rel="noopener noreferrer">Open Onform Link</a>{% endif %}
                                 <form method="post" action="/sessions/{{ session.id }}/videos/{{ video.id }}/delete" onsubmit="return confirm('Delete this original swing?')">
                                     <button class="table-action" type="submit">Delete</button>

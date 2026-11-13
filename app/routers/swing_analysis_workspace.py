@@ -319,7 +319,7 @@ def swing_analysis_workspace(
 ):
     _workspace_context(db, analysis_id)
     return RedirectResponse(
-        url=f"/swing-analysis/{analysis_id}/onform-import",
+        url=f"/swing-analysis/{analysis_id}/coaching",
         status_code=303,
     )
 

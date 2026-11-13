@@ -13,8 +13,8 @@ from fastapi.responses import Response
 router = APIRouter(prefix="/media-assets/mediapipe", tags=["MediaPipe assets"])
 
 PACKAGE_ROOTS = (
-    "https://unpkg.com/@mediapipe/tasks-vision@0.10.22",
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22",
+    "https://unpkg.com/@mediapipe/tasks-vision",
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision",
 )
 MODEL_URL = (
     "https://storage.googleapis.com/mediapipe-models/pose_landmarker/"

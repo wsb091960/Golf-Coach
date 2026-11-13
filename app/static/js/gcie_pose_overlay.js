@@ -26,30 +26,42 @@
   }
 
   async function loadModel() {
-    const { FilesetResolver, PoseLandmarker } = await import(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs"
-    );
-    const files = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
-    );
     const modelAssetPath = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
-    try {
-      return await PoseLandmarker.createFromOptions(files, {
-        baseOptions: { modelAssetPath, delegate: "GPU" },
-        runningMode: "VIDEO", numPoses: 1,
-        minPoseDetectionConfidence: 0.35,
-        minPosePresenceConfidence: 0.35,
-        minTrackingConfidence: 0.35,
-      });
-    } catch (_) {
-      return await PoseLandmarker.createFromOptions(files, {
-        baseOptions: { modelAssetPath, delegate: "CPU" },
-        runningMode: "VIDEO", numPoses: 1,
-        minPoseDetectionConfidence: 0.35,
-        minPosePresenceConfidence: 0.35,
-        minTrackingConfidence: 0.35,
-      });
+    const cdns = [
+      {
+        bundle: "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs",
+        wasm: "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm",
+      },
+      {
+        bundle: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs",
+        wasm: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm",
+      },
+    ];
+    let lastError;
+    for (const cdn of cdns) {
+      try {
+        const { FilesetResolver, PoseLandmarker } = await import(cdn.bundle);
+        const files = await FilesetResolver.forVisionTasks(cdn.wasm);
+        const options = {
+          runningMode: "VIDEO", numPoses: 1,
+          minPoseDetectionConfidence: 0.35,
+          minPosePresenceConfidence: 0.35,
+          minTrackingConfidence: 0.35,
+        };
+        try {
+          return await PoseLandmarker.createFromOptions(files, {
+            ...options, baseOptions: { modelAssetPath, delegate: "GPU" },
+          });
+        } catch (_) {
+          return await PoseLandmarker.createFromOptions(files, {
+            ...options, baseOptions: { modelAssetPath, delegate: "CPU" },
+          });
+        }
+      } catch (error) {
+        lastError = error;
+      }
     }
+    throw new Error("Body tracking could not load from either available source. Check the connection and try again.", { cause: lastError });
   }
 
   function canvasSize() {

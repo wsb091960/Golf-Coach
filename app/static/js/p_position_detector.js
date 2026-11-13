@@ -172,15 +172,11 @@
     async function loadVision() {
         if (visionTask) return visionTask;
         visionTask = (async () => {
-            const model = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+            const model = "/media-assets/mediapipe/pose_landmarker_lite.task";
             const cdns = [
                 {
-                    bundle: "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs",
-                    wasm: "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm",
-                },
-                {
-                    bundle: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs",
-                    wasm: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm",
+                    bundle: "/media-assets/mediapipe/vision_bundle.mjs",
+                    wasm: "/media-assets/mediapipe/wasm",
                 },
             ];
             let lastError;
@@ -210,7 +206,7 @@
                     lastError = error;
                 }
             }
-            throw new Error("Body tracking could not load from either available source. Check the connection and try again.", { cause: lastError });
+            throw new Error("Body tracking assets could not be loaded by the app. Refresh and try again.", { cause: lastError });
         })();
         try {
             return await visionTask;

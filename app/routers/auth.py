@@ -111,6 +111,8 @@ def service_endpoint(path, method):
         return True
     if path.startswith('/static/') and method in {'GET', 'HEAD'}:
         return True
+    if path.startswith('/media-assets/mediapipe/') and method in {'GET', 'HEAD'}:
+        return True
     return False
 
 

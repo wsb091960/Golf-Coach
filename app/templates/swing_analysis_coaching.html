@@ -121,7 +121,8 @@
         <article class="gcie-review-card gcie-video-card">
             <div class="gcie-video-topline"><span>{{ (analysis.original_video.camera_view or analysis.camera_view or "SWING VIDEO")|upper }}</span><span>{% if latest_onform_import and latest_onform_import.screenshots %}{{ latest_onform_import.screenshots|length }} saved screenshot{{ "s" if latest_onform_import.screenshots|length != 1 else "" }}{% else %}Onform screenshots not added{% endif %}</span></div>
             {% if not is_observation_only and analysis.original_video and analysis.original_video.id %}
-            <div class="gcie-video-stage"><video id="gcie-review-video" controls preload="metadata" src="/sessions/{{ analysis.session_id }}/videos/{{ analysis.original_video.id }}/stream"></video></div>
+            <div class="gcie-video-stage"><video id="gcie-review-video" controls playsinline preload="metadata" src="/sessions/{{ analysis.session_id }}/videos/{{ analysis.original_video.id }}/stream"></video><canvas id="gcie-pose-canvas" aria-label="On-device body landmark overlay"></canvas><span class="gcie-pose-label" id="gcie-pose-label" hidden></span></div>
+            <div class="gcie-overlay-controls"><button type="button" class="button button-secondary" id="gcie-pose-toggle" aria-pressed="false">Show body overlay</button><span id="gcie-pose-status" role="status">Overlay is off. Turn it on to see estimated landmarks on the video.</span></div>
             {% elif is_preview %}
             <div class="gcie-video-stage gcie-video-placeholder"><div class="gcie-placeholder-golfer" aria-hidden="true"><i class="head"></i><i class="body"></i><i class="arm"></i><i class="club"></i><i class="leg lead"></i><i class="leg trail"></i></div><span>Illustrative swing frame · sample only</span></div>
             {% else %}
@@ -831,6 +832,7 @@
 
 <script src="/static/js/swing_analysis_workspace.js?v=5.2.6"></script>
 <script src="/static/js/swing_analysis_review.js?v=1"></script>
+<script src="/static/js/gcie_pose_overlay.js?v=1"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 </body>

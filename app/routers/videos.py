@@ -17,6 +17,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models import SwingAnalysis
 from app.store import get_session
 from app.video_store import (
     ALLOWED_EXTENSIONS,
@@ -691,6 +692,17 @@ async def finalize_chunked_video(
 
     parent = None
 
+    swing_analysis_id = str(
+        payload.get("swing_analysis_id") or ""
+    ).strip()
+    swing_analysis = None
+    if swing_analysis_id:
+        swing_analysis = db.get(SwingAnalysis, swing_analysis_id)
+        if swing_analysis is None or swing_analysis.session_id != str(session_id):
+            raise HTTPException(400, "Swing analysis does not belong to this session")
+        if video_type != "original_swing":
+            raise HTTPException(400, "Only an original swing MP4 can be attached to this analysis")
+
     if video_type == "onform_analysis":
         if not parent_video_id:
             raise HTTPException(
@@ -761,7 +773,7 @@ async def finalize_chunked_video(
             if shot_number is None:
                 shot_number = parent.shot_number
 
-        create_session_video(
+        saved_video = create_session_video(
             db,
             session_id=str(session_id),
             student_id=_student_id_from_session(
@@ -806,6 +818,12 @@ async def finalize_chunked_video(
             ),
         )
 
+        if swing_analysis is not None:
+            swing_analysis.original_video_id = saved_video["id"]
+            swing_analysis.camera_view = camera_view or swing_analysis.camera_view
+            swing_analysis.club = club or swing_analysis.club
+            db.commit()
+
     except Exception:
         if destination.exists():
             destination.unlink()
@@ -822,7 +840,9 @@ async def finalize_chunked_video(
             except OSError:
                 pass
 
-    return {
-        "redirect_url":
-            f"/sessions/{session_id}?video_added=1"
-    }
+    redirect_url = (
+        f"/swing-analysis/{swing_analysis.id}/coaching?video_uploaded=1"
+        if swing_analysis is not None
+        else f"/sessions/{session_id}?video_added=1"
+    )
+    return {"redirect_url": redirect_url}

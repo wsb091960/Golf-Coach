@@ -17,6 +17,76 @@
     });
   });
 
+  const uploadButton = document.getElementById("gcie-upload-video-button");
+  const uploadInput = document.getElementById("gcie-upload-video-file");
+  const uploadStatus = document.getElementById("gcie-upload-status");
+  if (uploadButton && uploadInput) {
+    uploadButton.addEventListener("click", () => uploadInput.click());
+    uploadInput.addEventListener("change", async () => {
+      const file = uploadInput.files?.[0];
+      if (!file) return;
+      if (!file.name.toLowerCase().endsWith(".mp4")) {
+        if (uploadStatus) {
+          uploadStatus.hidden = false;
+          uploadStatus.textContent = "Choose an MP4 exported from Onform.";
+        }
+        uploadInput.value = "";
+        return;
+      }
+      const sessionId = uploadButton.dataset.sessionId;
+      const analysisId = uploadButton.dataset.analysisId;
+      const progress = message => {
+        if (uploadStatus) {
+          uploadStatus.hidden = false;
+          uploadStatus.textContent = message;
+        }
+      };
+      uploadButton.disabled = true;
+      progress("Preparing video upload…");
+      try {
+        const initResponse = await fetch(`/sessions/${encodeURIComponent(sessionId)}/videos/chunked/init`, {
+          method: "POST", credentials: "same-origin",
+        });
+        const setup = await initResponse.json();
+        if (!initResponse.ok) throw new Error(setup.detail || "Could not start the video upload.");
+        const chunkBytes = Number(setup.chunk_bytes) || 512 * 1024;
+        const totalChunks = Math.ceil(file.size / chunkBytes);
+        for (let index = 0; index < totalChunks; index += 1) {
+          const chunkResponse = await fetch(
+            `/sessions/${encodeURIComponent(sessionId)}/videos/chunked/${encodeURIComponent(setup.upload_id)}/part/${index}`,
+            { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/octet-stream" }, body: file.slice(index * chunkBytes, Math.min(file.size, (index + 1) * chunkBytes)) },
+          );
+          if (!chunkResponse.ok) {
+            const error = await chunkResponse.json().catch(() => ({}));
+            throw new Error(error.detail || `Video upload failed at ${Math.round((index + 1) / totalChunks * 100)}%.`);
+          }
+          progress(`Uploading Onform MP4 · ${Math.round((index + 1) / totalChunks * 100)}%`);
+        }
+        progress("Attaching video to this swing review…");
+        const finalResponse = await fetch(
+          `/sessions/${encodeURIComponent(sessionId)}/videos/chunked/${encodeURIComponent(setup.upload_id)}/finalize`,
+          {
+            method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              filename: file.name, content_type: file.type || "video/mp4", total_chunks: totalChunks,
+              title: file.name.replace(/\.[^.]+$/, "") || "Onform Swing Video",
+              camera_view: uploadButton.dataset.cameraView || "",
+              club: uploadButton.dataset.club || "",
+              video_type: "original_swing", swing_analysis_id: analysisId,
+            }),
+          },
+        );
+        const result = await finalResponse.json();
+        if (!finalResponse.ok) throw new Error(result.detail || "Could not attach the Onform MP4.");
+        window.location.assign(result.redirect_url);
+      } catch (error) {
+        progress(error.message || "Video upload failed. Try again.");
+        uploadButton.disabled = false;
+        uploadInput.value = "";
+      }
+    });
+  }
+
   const chart = document.getElementById("gcie-turn-chart");
   const historyNode = document.getElementById("gcie-onform-history");
   if (!chart || !historyNode) return;

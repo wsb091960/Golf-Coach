@@ -8,7 +8,11 @@
 @media (max-width:620px) { .coaching-list__heading { align-items:flex-start; flex-direction:column; } }
 .coaching-list__grid { display: grid; gap: 14px; }
 .coaching-card { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 18px; align-items: center; padding: 20px 22px; border: 1px solid #dce7e2; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgba(19,72,57,.05); text-decoration: none; color: inherit; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.coaching-card { text-decoration:none; }
 .coaching-card:hover { transform: translateY(-2px); border-color: #9cc3b3; box-shadow: 0 12px 28px rgba(19,72,57,.10); }
+.coaching-card__actions { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:8px; }
+.coaching-card__action { display:inline-flex; align-items:center; justify-content:center; padding:8px 11px; border:1px solid #d7e4dd; border-radius:9px; background:#f0f6f2; color:#174c39; font-size:.78rem; font-weight:800; text-decoration:none; white-space:nowrap; }
+.coaching-card__action--primary { border-color:#14523f; background:#14523f; color:#fff; }
 .coaching-card__title { margin: 0 0 7px; color: #153f33; font-size: 1.15rem; }
 .coaching-card__meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; color: #65746f; font-size: .9rem; }
 .coaching-card__summary { margin: 12px 0 0; color: #314a42; }
@@ -17,7 +21,7 @@
 .coaching-list__empty h2 { margin-top: 0; color: #153f33; }
 .coaching-list__empty p { color: #64736e; }
 .coaching-list__button { display: inline-flex; margin-top: 8px; padding: 11px 16px; border-radius: 10px; background: #14523f; color: white; font-weight: 700; text-decoration: none; }
-@media (max-width: 620px) { .coaching-card { grid-template-columns: 1fr; } .coaching-card__status { justify-self: start; } }
+@media (max-width: 760px) { .coaching-card { grid-template-columns: 1fr; } .coaching-card__actions { justify-content:flex-start; } }
 </style>
 {% endblock %}
 
@@ -35,7 +39,7 @@
         {% for analysis in analyses %}
         {% set session = analysis.session %}
         {% set student = session.student if session and session.student else none %}
-        <a class="coaching-card" href="/swing-analysis/{{ analysis.id }}/coaching">
+        <article class="coaching-card">
             <div>
                 <h2 class="coaching-card__title">{% if analysis.original_video and analysis.original_video.title %}{{ analysis.original_video.title }}{% elif analysis.club %}{{ analysis.club }} swing{% else %}Swing analysis{% endif %}</h2>
                 <p class="coaching-card__meta">
@@ -48,8 +52,12 @@
                 <p class="coaching-card__summary">{{ analysis.primary_finding or analysis.primary_priority }}</p>
                 {% endif %}
             </div>
-            <span class="coaching-card__status">{{ (analysis.status or 'draft')|replace('_', ' ')|title }}</span>
-        </a>
+            <div class="coaching-card__actions">
+                <span class="coaching-card__status">{{ (analysis.status or 'draft')|replace('_', ' ')|title }}</span>
+                <a class="coaching-card__action" href="/swing-analysis/{{ analysis.id }}/onform-import">OnForm Metrics</a>
+                <a class="coaching-card__action coaching-card__action--primary" href="/swing-analysis/{{ analysis.id }}/coaching">Open Analysis</a>
+            </div>
+        </article>
         {% endfor %}
     </div>
     {% else %}

@@ -35,6 +35,17 @@
         .overview-next-step{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:17px 18px;border:1px solid #d7e0dc;border-radius:13px;background:#fff}
         .overview-next-step p{margin:5px 0 0;color:#43534c;line-height:1.45}
         .overview-actions{display:flex;flex:none;gap:8px;flex-wrap:wrap}
+        .session-swing-analyses{margin:0 0 18px;padding:18px;border:1px solid #d7e0dc;border-radius:13px;background:#f8fbf9}
+        .session-swing-analyses .card-heading{margin-bottom:12px}
+        .session-swing-analyses .card-heading h2{margin:4px 0;font-size:20px}
+        .session-swing-analyses .card-heading p{margin:4px 0 0;color:#62736b}
+        .session-swing-analysis-list{display:grid;gap:9px}
+        .session-swing-analysis-card{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid #dbe5df;border-radius:10px;background:#fff}
+        .session-swing-analysis-card>div{display:grid;gap:4px}
+        .session-swing-analysis-card strong{color:#174f40}
+        .session-swing-analysis-card span{color:#687971;font-size:12px}
+        .session-swing-analysis-empty{margin:0;padding:12px;border-radius:9px;background:#fff;color:#687971}
+        @media(max-width:620px){.session-swing-analysis-card{align-items:flex-start;flex-direction:column}.session-swing-analysis-card .button{width:100%;text-align:center}}
         @media(max-width:760px){.session-overview-header,.overview-next-step{align-items:flex-start;flex-direction:column}.overview-cards{grid-template-columns:1fr}.overview-evidence{grid-template-columns:1fr}}
     </style>
 </head>
@@ -221,6 +232,9 @@
                     {% endif %}
                     {% if not session_metrics.shots %}
                     <a class="button button-secondary" href="/sessions/{{ session.id }}?tab=shots">Add Session Shots</a>
+                    {% endif %}
+                    {% if session_swing_analyses %}
+                    <a class="button button-secondary" href="/sessions/{{ session.id }}?tab=screenshots#session-swing-analyses">Open Swing Analysis</a>
                     {% endif %}
                 </div>
             </div>
@@ -503,6 +517,31 @@
 
 
         <section class="performance-card screenshot-section" data-workspace-panel="screenshots" data-workspace-group="session-detail" hidden>
+            <section class="session-swing-analyses" id="session-swing-analyses">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">Session-linked Swing Analysis</span>
+                        <h2>OnForm Metrics &amp; Swing Analysis</h2>
+                        <p>Open the analysis records connected to this session to view or add their OnForm metric tiles.</p>
+                    </div>
+                </div>
+                {% if session_swing_analyses %}
+                <div class="session-swing-analysis-list">
+                    {% for analysis in session_swing_analyses %}
+                    <article class="session-swing-analysis-card">
+                        <div>
+                            <strong>{% if analysis.original_video and analysis.original_video.title and analysis.original_video.title != 'Observation-only assessment' %}{{ analysis.original_video.title }}{% elif analysis.club %}{{ analysis.club }} swing{% else %}Swing analysis{% endif %}</strong>
+                            <span>{{ analysis.camera_view or (analysis.original_video.camera_view if analysis.original_video else 'View not specified') }}{% if analysis.club %} · {{ analysis.club }}{% endif %} · {{ (analysis.status or 'draft')|replace('_', ' ')|title }}</span>
+                        </div>
+                        <a class="button button-primary" href="/swing-analysis/{{ analysis.id }}/onform-import">Open OnForm Metrics</a>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="session-swing-analysis-empty">No separate Swing Analysis records are linked to this session yet. The screenshots below remain available for the session’s Student and Coaches Notes workflow.</p>
+                {% endif %}
+            </section>
+
             <div class="card-heading">
                 <div>
                     <span class="section-kicker">Session Screenshots</span>

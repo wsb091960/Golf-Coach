@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.gcie.generated_models import SessionLesson
-from app.models import PPositionAnalysis, PPositionSheet, SessionScreenshot
+from app.models import PPositionAnalysis, PPositionSheet, SessionScreenshot, SwingAnalysis
 from app.services.p_sheet_analyzer import PSheetAnalysisError, analyze as analyze_p_sheets
 from app.store import add_session, add_shot, delete_session, delete_shot, get_session, get_session_shots, get_student, list_sessions, list_students, update_session, update_shot
 from app.video_store import list_session_videos
@@ -45,6 +45,7 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
     _backfill_manual_estimates(shots, db)
     videos = list_session_videos(db, session_id)
     screenshots = db.query(SessionScreenshot).filter(SessionScreenshot.session_id == session_id).order_by(SessionScreenshot.created_at.desc()).all()
+    swing_analyses = db.query(SwingAnalysis).filter(SwingAnalysis.session_id == session_id).order_by(SwingAnalysis.updated_at.desc()).all()
     latest_p_sheet_analysis = db.query(PPositionAnalysis).filter(PPositionAnalysis.session_id == session_id).order_by(PPositionAnalysis.created_at.desc()).first()
     try:
         p_sheet_analysis = json.loads(latest_p_sheet_analysis.results_json) if latest_p_sheet_analysis else None
@@ -84,6 +85,7 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
     return templates.TemplateResponse(request=request, name='session_detail.html', context={
         'page_title':'Session Performance','active_page':'sessions','session':session,'student':student,
         'session_shots':shots,'session_videos':videos,'session_screenshots':screenshots,'session_lesson':latest_lesson,
+        'session_swing_analyses':swing_analyses,
         'lesson_needs_generation':lesson_needs_generation,
         'p_sheets': db.query(PPositionSheet).filter(PPositionSheet.session_id == session_id).order_by(PPositionSheet.created_at.desc()).all(),
         'p_sheet_analysis': p_sheet_analysis,

@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="stylesheet" href="/static/css/swing_analysis_workspace.css">
     <link rel="stylesheet" href="/static/css/swing_analysis_assist.css">
+    <link rel="stylesheet" href="/static/css/swing_analysis_review.css?v=1">
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
 </head>
@@ -110,6 +111,64 @@
         </nav>
         </div>
         {% if is_preview %}<div class="gc-preview-banner" role="status"><strong>READ-ONLY PREVIEW</strong><span>Demo golfer and launch readings are synthetic. Changes are disabled and nothing is saved.</span></div>{% endif %}
+
+<section class="gcie-review" aria-label="Swing review and biomechanics metrics">
+    <div class="gcie-review-heading">
+        <div><span class="section-kicker">GCIE SWING REVIEW</span><h2>{{ analysis.original_video.title or "Swing Review" }}</h2><p>{{ analysis.original_video.camera_view or analysis.camera_view or "Camera view not set" }}{% if analysis.club %} · {{ analysis.club }}{% endif %}</p></div>
+        <a class="button button-secondary" href="/swing-analysis/{{ analysis.id }}/onform-import">Add Onform Screenshots</a>
+    </div>
+    <div class="gcie-review-grid">
+        <article class="gcie-review-card gcie-video-card">
+            <div class="gcie-video-topline"><span>{{ (analysis.original_video.camera_view or analysis.camera_view or "SWING VIDEO")|upper }}</span><span>{% if latest_onform_import and latest_onform_import.screenshots %}{{ latest_onform_import.screenshots|length }} saved screenshot{{ "s" if latest_onform_import.screenshots|length != 1 else "" }}{% else %}Onform screenshots not added{% endif %}</span></div>
+            {% if not is_observation_only and analysis.original_video and analysis.original_video.id %}
+            <div class="gcie-video-stage"><video id="gcie-review-video" controls preload="metadata" src="/sessions/{{ analysis.session_id }}/videos/{{ analysis.original_video.id }}/stream"></video></div>
+            {% elif is_preview %}
+            <div class="gcie-video-stage gcie-video-placeholder"><div class="gcie-placeholder-golfer" aria-hidden="true"><i class="head"></i><i class="body"></i><i class="arm"></i><i class="club"></i><i class="leg lead"></i><i class="leg trail"></i></div><span>Illustrative swing frame · sample only</span></div>
+            {% else %}
+            <div class="gcie-video-stage gcie-video-empty"><strong>No swing video attached</strong><span>Add a video to review it alongside the Onform measurements.</span></div>
+            {% endif %}
+            <div class="gcie-checkpoint-bar" aria-label="Swing checkpoints">
+                {% for point in ["P1", "P4", "P5", "P6", "P7", "P10"] %}
+                {% set cp = (analysis.checkpoints | selectattr('position', 'equalto', point) | list | first) if analysis.checkpoints else none %}
+                <button type="button" class="gcie-checkpoint" data-checkpoint-time="{{ cp.time_seconds if cp and cp.time_seconds is not none else '' }}"><b>{{ point }}</b><span>{% if cp and cp.time_seconds is not none %}{{ "%.2f"|format(cp.time_seconds) }}s{% else %}Set frame{% endif %}</span></button>
+                {% endfor %}
+            </div>
+            <p class="gcie-video-help">Select a saved checkpoint to jump to that moment in the swing.</p>
+        </article>
+        <div class="gcie-review-side">
+            <article class="gcie-review-card gcie-evidence-card">
+                <div class="gcie-card-heading"><div><span class="section-kicker">REVIEW STATUS</span><h3>Evidence at a glance</h3></div></div>
+                <div class="gcie-evidence-row"><span>Body landmarks</span><strong class="status-review">{% if latest_onform_import and latest_onform_import.verified %}Coach verified{% else %}Needs review{% endif %}</strong><small>Onform screenshot measurements</small></div>
+                <div class="gcie-evidence-row"><span>Club path</span><strong>{% if analysis.shot and analysis.shot.club_path is not none %}{{ "%.1f"|format(analysis.shot.club_path) }}°{% else %}Not recorded{% endif %}</strong><small>Garmin R10, if linked</small></div>
+                <div class="gcie-evidence-row"><span>Checkpoint timing</span><strong>{% set timed_points = analysis.checkpoints|selectattr('time_seconds')|list if analysis.checkpoints else [] %}{{ timed_points|length }} recorded</strong><small>P1–P10 coach review</small></div>
+                {% if latest_onform_import and latest_onform_import.screenshots %}<div class="gcie-screenshot-links"><span>Saved Onform evidence</span>{% for item in latest_onform_import.screenshots %}{% if item.available %}<a href="{{ item.url }}" target="_blank" rel="noopener">Open screenshot {{ loop.index }} ↗</a>{% endif %}{% endfor %}</div>{% endif %}
+            </article>
+            <article class="gcie-review-card gcie-observation-card">
+                <div class="gcie-card-heading"><div><span class="section-kicker">COACH REVIEW</span><h3>Coach observations</h3></div><a href="#analysis-workflow" class="gcie-edit-link">Edit below</a></div>
+                <p>{% if analysis.coaching_observations %}{{ analysis.coaching_observations }}{% elif analysis.primary_finding %}{{ analysis.primary_finding }}{% else %}No coach observation has been saved yet.{% endif %}</p>
+                {% if analysis.primary_priority %}<div class="gcie-priority-note"><b>Current focus</b><span>{{ analysis.primary_priority }}</span></div>{% endif %}
+            </article>
+        </div>
+    </div>
+
+    {% set metric_values = latest_onform_import.metrics if latest_onform_import and latest_onform_import.metrics else {} %}
+    {% set conflicts = latest_onform_import.conflicts_at_extraction if latest_onform_import and latest_onform_import.conflicts_at_extraction else [] %}
+    <article class="gcie-review-card gcie-metrics-card">
+        <div class="gcie-card-heading gcie-metrics-heading"><div><span class="section-kicker">GCIE BIOMECHANICS METRICS</span><h3>Movement through the swing</h3><p>{% if latest_onform_import %}{{ latest_onform_import.checkpoint_position or "P7" }} · Onform screenshot data{% else %}Upload Onform screenshots to show measured values here.{% endif %}</p></div><span class="gcie-data-badge">{% if latest_onform_import and latest_onform_import.verified %}COACH VERIFIED{% elif latest_onform_import %}REVIEW NEEDED{% else %}AWAITING DATA{% endif %}</span></div>
+        <div class="gcie-metrics-layout">
+            <div class="gcie-metric-tiles">
+                {% for key,label,unit,direction in [("torso_rotation","Torso turn","°","torso_rotation_direction"),("pelvis_rotation","Pelvis turn","°","pelvis_rotation_direction"),("x_factor","X-Factor","°",none),("torso_sway","Torso sway"," in","torso_sway_direction"),("pelvis_sway","Pelvis sway"," in","pelvis_sway_direction"),("pelvis_lift","Pelvis lift"," in","pelvis_lift_direction"),("torso_lift","Torso lift"," in","torso_lift_direction"),("torso_forward_bend","Torso forward bend","°","torso_forward_bend_direction")] %}
+                {% set value = metric_values.get(key) %}
+                {% set conflict = conflicts|selectattr('key','equalto',key)|list|length > 0 %}
+                <div class="gcie-metric-tile" data-state="{% if conflict %}bad{% elif latest_onform_import and latest_onform_import.verified and value is not none %}good{% else %}warning{% endif %}"><span>{{ label }}</span><strong>{% if value is not none %}{{ value }}{{ unit }}{% else %}—{% endif %}</strong><small>{% if direction and metric_values.get(direction) %}{{ metric_values.get(direction) }}{% elif conflict %}Conflict · compare screenshot{% elif value is not none and latest_onform_import.verified %}Verified reading{% elif value is not none %}Check reading{% else %}Awaiting value{% endif %}</small></div>
+                {% endfor %}
+            </div>
+            <div class="gcie-metrics-chart-wrap"><div class="gcie-card-heading"><div><span class="section-kicker">CHECKPOINT TREND</span><h4>Turns &amp; separation</h4></div><small>Onform imports</small></div><svg id="gcie-turn-chart" viewBox="0 0 500 205" role="img" aria-label="Chart of pelvis turn, torso turn, and X-Factor across imported swing checkpoints"></svg><div class="gcie-chart-legend"><span><i class="pelvis"></i>Pelvis turn</span><span><i class="torso"></i>Torso turn</span><span><i class="separation"></i>X-Factor</span></div><p class="gcie-chart-note">Values appear at checkpoints where Onform screenshots were saved. No missing points are estimated.</p></div>
+        </div>
+        <div class="gcie-status-legend"><span><i data-state="good"></i>Good · verified reading</span><span><i data-state="warning"></i>Warning · review needed</span><span><i data-state="bad"></i>Bad · conflicting screenshots</span></div>
+        <script id="gcie-onform-history" type="application/json">{{ onform_import_history|tojson }}</script>
+    </article>
+</section>
 
 <nav class="workspace-tabs" role="tablist" data-workspace-tabs="coaching-analysis" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="flight">Ball Flight</button><button type="button" role="tab" data-workspace-tab="tgm">TGM</button><button type="button" role="tab" data-workspace-tab="tpi">TPI</button><button type="button" role="tab" data-workspace-tab="measurements">Measurements</button><button type="button" role="tab" data-workspace-tab="priorities">Priorities</button></nav>
 
@@ -771,6 +830,7 @@
 </div>
 
 <script src="/static/js/swing_analysis_workspace.js?v=5.2.6"></script>
+<script src="/static/js/swing_analysis_review.js?v=1"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 </body>

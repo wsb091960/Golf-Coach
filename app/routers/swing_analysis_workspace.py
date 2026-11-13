@@ -157,6 +157,7 @@ def _workspace_context(db: Session, analysis_id: str) -> dict[str, Any]:
         "analysis": analysis_to_dict(analysis),
         "shots": [_shot_dict(shot) for shot in shots],
         "latest_onform_import": latest_onform_import,
+        "onform_import_history": _onform_import_history(analysis),
         "primary_goal": primary_goal,
         "is_observation_only": observation_only,
         "available_original_videos": available_original_videos,
@@ -486,6 +487,7 @@ def swing_analysis_coaching(
             context={
                 "page_title": "Coaching Analysis Preview",
                 "is_preview": True,
+                "onform_import_history": [],
                 **context,
             },
         )
@@ -743,6 +745,25 @@ def _latest_onform_import(analysis: SwingAnalysis) -> dict[str, Any] | None:
         else {}
     )
     return result
+
+
+def _onform_import_history(analysis: SwingAnalysis) -> list[dict[str, Any]]:
+    """Return saved checkpoint imports for the swing overview chart."""
+    try:
+        extra = json.loads(analysis.extra_metrics_json or "{}")
+    except (TypeError, json.JSONDecodeError):
+        return []
+    imports = extra.get("onform_screenshot_imports", []) if isinstance(extra, dict) else []
+    history = []
+    for item in imports:
+        if not isinstance(item, dict) or not isinstance(item.get("metrics"), dict):
+            continue
+        history.append({
+            "checkpoint": str(item.get("checkpoint_position") or "P7").upper(),
+            "metrics": item["metrics"],
+            "verified": bool(item.get("verified")),
+        })
+    return history
 
 
 def _metric_float(value: Any) -> float | None:

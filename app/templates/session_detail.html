@@ -518,31 +518,6 @@
 
 
         <section class="performance-card screenshot-section" data-workspace-panel="screenshots" data-workspace-group="session-detail" hidden>
-            <section class="session-swing-analyses" id="session-swing-analyses">
-                <div class="card-heading">
-                    <div>
-                        <span class="section-kicker">Session-linked Swing Analysis</span>
-                        <h2>OnForm Metrics &amp; Swing Analysis</h2>
-                        <p>Open the analysis records connected to this session to view or add their OnForm metric tiles.</p>
-                    </div>
-                </div>
-                {% if session_swing_analyses %}
-                <div class="session-swing-analysis-list">
-                    {% for analysis in session_swing_analyses %}
-                    <article class="session-swing-analysis-card">
-                        <div>
-                            <strong>{% if analysis.original_video and analysis.original_video.title and analysis.original_video.title != 'Observation-only assessment' %}{{ analysis.original_video.title }}{% elif analysis.club %}{{ analysis.club }} swing{% else %}Swing analysis{% endif %}</strong>
-                            <span>{{ analysis.camera_view or (analysis.original_video.camera_view if analysis.original_video else 'View not specified') }}{% if analysis.club %} · {{ analysis.club }}{% endif %} · {{ (analysis.status or 'draft')|replace('_', ' ')|title }}</span>
-                        </div>
-                        <a class="button button-primary" href="/swing-analysis/{{ analysis.id }}/onform-import">Open OnForm Metrics</a>
-                    </article>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="session-swing-analysis-empty">No separate Swing Analysis records are linked to this session yet. The screenshots below remain available for the session’s Student and Coaches Notes workflow.</p>
-                {% endif %}
-            </section>
-
             <div class="card-heading">
                 <div>
                     <span class="section-kicker">Session Screenshots</span>

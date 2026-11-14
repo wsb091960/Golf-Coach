@@ -1135,7 +1135,7 @@ async def onform_p_position_metrics(
     try:
         extra = json.loads(analysis.extra_metrics_json or "{}")
         imports = extra.get("onform_screenshot_imports", [])
-        if not imports or imports[-1].get("status") not in ("position_bundle_saved", "position_metrics_review"):
+        if not imports or imports[-1].get("status") not in ("position_bundle_saved", "position_metrics_review", "position_metrics_verified"):
             raise HTTPException(409, "Upload a P-position screenshot bundle first")
         item = imports[-1]
         item["position_metrics"] = position_metrics

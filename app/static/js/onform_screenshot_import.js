@@ -23,6 +23,7 @@
   const positionZip = document.getElementById("onform-p-position-zip");
   const positionExtract = document.getElementById("onform-p-position-extract");
   const positionSave = document.getElementById("onform-p-position-save");
+  const positionReread = document.getElementById("onform-p-position-reread");
   const positionStatus = document.getElementById("onform-p-position-status");
   const positionPreviews = document.getElementById("onform-p-position-previews");
   let positionMetrics = {};
@@ -75,7 +76,7 @@
     { key: "pelvis_sway", aliases: ["PELVIS SWAY"], keepDirection: true },
     { key: "pelvis_lift", aliases: ["PELVIS LIFT"], keepDirection: true },
     { key: "torso_lift", aliases: ["TORSO LIFT"], keepDirection: true },
-    { key: "torso_forward_bend", aliases: ["TORSO FORWARD BEND", "FORWARD BEND"], keepDirection: true },
+    { key: "torso_forward_bend", aliases: ["TORSO FORWARD BEND", "TORSO FORWARD"], keepDirection: true },
     { key: "shoulder_tilt", aliases: ["SHOULDER TILT"] },
     { key: "hip_tilt", aliases: ["HIP TILT", "PELVIS TILT"] },
     { key: "spine_tilt", aliases: ["SPINE TILT"] },
@@ -771,6 +772,47 @@
     positionStatus.textContent = "ZIP selected. Include between one and ten screenshots; each image should show its P-position and Onform metrics.";
     positionSave.disabled = true;
   });
+  async function rereadSavedPositions() {
+    const screenshots = (savedImport?.screenshots || [])
+      .filter((item) => item && item.available !== false && /^P(?:[1-9]|10)$/.test(String(item.position || "").toUpperCase()))
+      .sort((a, b) => Number(String(a.position).slice(1)) - Number(String(b.position).slice(1)));
+    if (!screenshots.length) {
+      positionStatus.textContent = "No saved P-position screenshots are available to re-read.";
+      return;
+    }
+    positionReread.disabled = true;
+    positionSave.disabled = true;
+    try {
+      positionMetrics = {};
+      positionSequenceText = {};
+      for (let index = 0; index < screenshots.length; index += 1) {
+        const item = screenshots[index];
+        const position = String(item.position).toUpperCase();
+        positionStatus.textContent = `Re-reading OCR for ${position} (${index + 1} of ${screenshots.length})…`;
+        const response = await fetch(item.url, { credentials: "same-origin" });
+        if (!response.ok) throw new Error(`Could not load saved screenshot ${position}.`);
+        const blob = await response.blob();
+        const extension = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+        const file = new File([blob], `${position}.${extension}`, { type: blob.type || "image/jpeg" });
+        const result = await readScreenshot(file, position);
+        positionMetrics[position] = result.metrics;
+        positionSequenceText[position] = result.text;
+      }
+      await postPositionMetrics(false);
+      positionSave.disabled = !Object.keys(positionMetrics).length;
+      positionStatus.textContent = "OCR re-read and saved for the existing screenshots. Review the values, then verify.";
+      window.setTimeout(() => window.location.reload(), 450);
+    } catch (error) {
+      console.error(error);
+      positionStatus.textContent = error.message || "Unable to re-read saved screenshots.";
+      positionSave.disabled = false;
+    } finally {
+      positionReread.disabled = false;
+    }
+  }
+
+  positionReread?.addEventListener("click", rereadSavedPositions);
+
   positionSave?.addEventListener("click", async () => {
     positionSave.disabled = true;
     positionStatus.textContent = "Saving coach-verified P-position metrics…";

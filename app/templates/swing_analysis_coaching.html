@@ -164,6 +164,7 @@
         <div class="onform-import-actions" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px">
             <button type="button" class="button button-primary" id="onform-p-position-extract">Upload, extract &amp; read OCR</button>
             <button type="button" class="button button-secondary" id="onform-p-position-save" disabled>Verify OCR values</button>
+            <button type="button" class="button button-secondary" id="onform-p-position-reread">Re-read OCR from saved screenshots</button>
         </div>
         <p id="onform-p-position-status" class="field-help" aria-live="polite">After OCR runs, this page will reload with the P-position screenshots and matching metrics.</p>
         <strong id="onform-screenshot-status" hidden></strong>
@@ -848,6 +849,6 @@
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 <script src="/media-assets/tesseract/tesseract.min.js"></script>
 <script id="onform-saved-import" type="application/json">{{ latest_onform_import | tojson if latest_onform_import else "null" }}</script>
-<script src="/static/js/onform_screenshot_import.js?v=5.2.8G"></script>
+<script src="/static/js/onform_screenshot_import.js?v=5.2.8H"></script>
 </body>
 </html>

@@ -492,6 +492,7 @@ def swing_analysis_coaching(
                 "onform_import_history": [],
                 **context,
             },
+            headers={"Cache-Control": "no-store"},
         )
 
     context = _workspace_context(db, analysis_id)
@@ -503,6 +504,7 @@ def swing_analysis_coaching(
             "is_preview": False,
             **context,
         },
+        headers={"Cache-Control": "no-store"},
     )
 
 @router.patch(
@@ -1042,7 +1044,7 @@ def onform_p_position_delete(
 
     analysis.extra_metrics_json = json.dumps(extra)
     db.commit()
-    return RedirectResponse(f"/swing-analysis/{analysis_id}/coaching", status_code=303)
+    return RedirectResponse(f"/swing-analysis/{analysis_id}/coaching", status_code=303, headers={"Cache-Control": "no-store"})
 
 @router.post("/{analysis_id}/workspace/onform-p-position-clear", name="onform_p_position_clear")
 def onform_p_position_clear(

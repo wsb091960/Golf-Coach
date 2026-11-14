@@ -114,8 +114,8 @@
       const valueNode = tile.querySelector("[data-metric-value]"), detail = tile.querySelector("[data-metric-detail]");
       if (valueNode) valueNode.textContent = has ? `${numberText(raw)}${unit}` : "—";
       const direction = directionKey ? vals[directionKey] : "";
-      if (detail) detail.textContent = !has ? "Not read in this screenshot" : direction ? String(direction).replaceAll("_", " ").toLowerCase() : "OCR reading · review";
-      tile.dataset.state = has ? (review.dataset.verified === "true" ? "good" : "warning") : "warning";
+      if (detail) detail.textContent = !has ? "Not read in this screenshot" : direction ? String(direction).replaceAll("_", " ").toLowerCase() : (review.dataset.verified === "true" ? "OCR reading checked" : "Review OCR reading");
+      tile.dataset.state = has ? (review.dataset.verified === "true" ? "verified" : "warning") : "missing";
     });
   }
 

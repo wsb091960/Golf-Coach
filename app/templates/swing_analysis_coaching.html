@@ -38,6 +38,13 @@
         .coaching-onform-summary-item{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:baseline;padding:5px 8px;border:1px solid #e1e8e3;border-radius:8px;background:#fff;font-size:10px}
         .coaching-onform-summary-item b{color:#62736b;font-weight:700}
         .coaching-onform-summary-item strong{color:#174f3c;font-size:11px}
+
+        .gcie-metric-tile[data-state="verified"] strong{color:#287b83}
+        .gcie-metric-tile[data-state="missing"] strong{color:#89968f}
+        .gcie-metric-tile[data-state="conflict"] strong{color:#b83c35}
+.gcie-status-legend i[data-state="verified"]{background:#287b83}
+        .gcie-status-legend i[data-state="warning"]{background:#d6a239}
+        .gcie-status-legend i[data-state="conflict"]{background:#cc544b}
 </style>
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
@@ -202,12 +209,12 @@
                 {% for key,label,unit,direction in [("torso_rotation","Torso turn","°","torso_rotation_direction"),("pelvis_rotation","Pelvis turn","°","pelvis_rotation_direction"),("x_factor","X-Factor","°",none),("torso_sway","Torso sway"," in","torso_sway_direction"),("pelvis_sway","Pelvis sway"," in","pelvis_sway_direction"),("pelvis_lift","Pelvis lift"," in","pelvis_lift_direction"),("torso_lift","Torso lift"," in","torso_lift_direction"),("torso_forward_bend","Torso forward bend","°","torso_forward_bend_direction"),("shoulder_tilt","Shoulder tilt","°",none),("hip_tilt","Hip / pelvis tilt","°",none),("spine_tilt","Spine tilt","°",none),("shaft_angle","Shaft angle","°",none)] %}
                 {% set value = metric_values.get(key) %}
                 {% set conflict = conflicts|selectattr('key','equalto',key)|list|length > 0 %}
-                <div class="gcie-metric-tile" data-metric-tile="{{ key }}" data-state="{% if conflict %}bad{% elif latest_onform_import and latest_onform_import.verified and value is not none %}good{% else %}warning{% endif %}"><span>{{ label }}</span><strong data-metric-value>{% if value is not none %}{{ value }}{{ unit }}{% else %}—{% endif %}</strong><small data-metric-detail>{% if direction and metric_values.get(direction) %}{{ metric_values.get(direction) }}{% elif conflict %}Conflict · compare screenshot{% elif value is not none and latest_onform_import.verified %}Verified reading{% elif value is not none %}Check reading{% else %}Awaiting value{% endif %}</small></div>
+                <div class="gcie-metric-tile" data-metric-tile="{{ key }}" data-state="{% if conflict %}conflict{% elif latest_onform_import and latest_onform_import.verified and value is not none %}verified{% elif value is not none %}warning{% else %}missing{% endif %}"><span>{{ label }}</span><strong data-metric-value>{% if value is not none %}{{ value }}{{ unit }}{% else %}—{% endif %}</strong><small data-metric-detail>{% if direction and metric_values.get(direction) %}{{ metric_values.get(direction) }}{% elif conflict %}Conflict · compare screenshot{% elif value is not none and latest_onform_import.verified %}Verified reading{% elif value is not none %}Check reading{% else %}Awaiting value{% endif %}</small></div>
                 {% endfor %}
             </div>
             <div class="gcie-metrics-chart-wrap"><div class="gcie-card-heading"><div><span class="section-kicker">CHECKPOINT TREND</span><h4>Turns &amp; separation</h4></div><small>Onform imports</small></div><svg id="gcie-turn-chart" viewBox="0 0 500 205" role="img" aria-label="Chart of pelvis turn, torso turn, and X-Factor across imported swing checkpoints"></svg><div class="gcie-chart-legend"><span><i class="pelvis"></i>Pelvis turn</span><span><i class="torso"></i>Torso turn</span><span><i class="separation"></i>X-Factor</span></div><p class="gcie-chart-note">Values appear at checkpoints where Onform screenshots were saved. No missing points are estimated.</p></div>
         </div>
-        <div class="gcie-status-legend"><span><i data-state="good"></i>Good · verified reading</span><span><i data-state="warning"></i>Warning · review needed</span><span><i data-state="bad"></i>Bad · conflicting screenshots</span></div>
+        <div class="gcie-status-legend"><span><i data-state="verified"></i>Verified · OCR reading checked</span><span><i data-state="warning"></i>Review · verify this OCR reading</span><span><i data-state="conflict"></i>Conflict · compare against screenshot</span></div>
         <script id="gcie-onform-history" type="application/json">{{ onform_import_history|tojson }}</script>
         {% if latest_onform_import %}<script id="gcie-onform-position-metrics" type="application/json">{{ latest_onform_import.position_metrics|tojson }}</script><script id="gcie-onform-position-images" type="application/json">{{ latest_onform_import.screenshots|tojson }}</script>{% endif %}
     </article>
@@ -836,7 +843,7 @@
 
 <script src="/static/js/swing_analysis_workspace.js?v=5.2.6"></script>
 <script src="/static/js/swing_analysis_review.js?v=2"></script>
-<script src="/static/js/coaching_onform_positions.js?v=5.2.10B"></script>
+<script src="/static/js/coaching_onform_positions.js?v=5.2.10C"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 <script src="/media-assets/tesseract/tesseract.min.js"></script>

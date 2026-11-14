@@ -923,7 +923,7 @@ def onform_p_position_delete(
     position: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    """Delete one P-position image and its OCR values from the latest ZIP set."""
+    """Delete one P-position image and close the numbering gap in the saved set."""
     position = position.strip().upper()
     if not re.fullmatch(r"P[1-8]", position):
         raise HTTPException(422, "Choose a P-position from P1 through P8")
@@ -939,58 +939,106 @@ def onform_p_position_delete(
         raise HTTPException(404, "No P-position screenshot set is saved")
     saved_import = imports[-1]
     screenshots = saved_import.get("screenshots", [])
-    item = next((entry for entry in screenshots if isinstance(entry, dict) and str(entry.get("position", "")).upper() == position), None)
-    if item is None:
+    p_screenshots = [
+        entry for entry in screenshots
+        if isinstance(entry, dict) and re.fullmatch(r"P[1-8]", str(entry.get("position", "")).upper())
+    ]
+    ordered = sorted(p_screenshots, key=lambda entry: int(str(entry["position"])[1:]))
+    deleted = next((entry for entry in ordered if str(entry["position"]).upper() == position), None)
+    if deleted is None:
         raise HTTPException(404, f"{position} screenshot was not found")
 
-    stored_name = str(item.get("stored_filename") or "")
+    stored_name = str(deleted.get("stored_filename") or "")
     if stored_name and Path(stored_name).name == stored_name and stored_name.startswith(f"{analysis.session_id}_{analysis.id}_"):
         (ONFORM_SCREENSHOT_DIR / stored_name).unlink(missing_ok=True)
-    screenshot_id = item.get("session_screenshot_id")
+    screenshot_id = deleted.get("session_screenshot_id")
     screenshot = db.get(SessionScreenshot, str(screenshot_id)) if screenshot_id else None
     if screenshot and screenshot.session_id == analysis.session_id:
         db.delete(screenshot)
-    elif item.get("original_filename"):
-        # Remove the legacy duplicate stored in the session gallery, if present.
+    elif deleted.get("original_filename"):
         candidates = db.scalars(select(SessionScreenshot).where(
             SessionScreenshot.session_id == analysis.session_id,
         ).order_by(SessionScreenshot.created_at.desc())).all()
         for candidate in candidates:
-            base_name = Path(candidate.original_filename or "").stem.upper()
-            if base_name == position:
+            if Path(candidate.original_filename or "").stem.upper() == position:
                 db.delete(candidate)
 
-    saved_import["screenshots"] = [entry for entry in screenshots if entry is not item]
-    metrics = saved_import.get("position_metrics")
-    if isinstance(metrics, dict):
-        metrics.pop(position, None)
-    sequence = saved_import.get("kinematic_sequence")
-    if isinstance(sequence, dict) and isinstance(sequence.get("ocr_text_by_position"), dict):
-        sequence["ocr_text_by_position"].pop(position, None)
+    old_metrics = saved_import.get("position_metrics")
+    old_metrics = old_metrics if isinstance(old_metrics, dict) else {}
+    old_sequence = saved_import.get("kinematic_sequence")
+    old_sequence = old_sequence if isinstance(old_sequence, dict) else {}
+    old_sequence_text = old_sequence.get("ocr_text_by_position")
+    old_sequence_text = old_sequence_text if isinstance(old_sequence_text, dict) else {}
+
+    renumbered = []
+    new_metrics = {key: value for key, value in old_metrics.items() if not re.fullmatch(r"P[1-8]", str(key).upper())}
+    new_sequence_text = {key: value for key, value in old_sequence_text.items() if not re.fullmatch(r"P[1-8]", str(key).upper())}
+    for number, entry in enumerate((item for item in ordered if item is not deleted), start=1):
+        old_position = str(entry.get("position", "")).upper()
+        new_position = f"P{number}"
+        updated = dict(entry)
+        updated["position"] = new_position
+        if "label" in updated:
+            updated["label"] = new_position
+        renumbered.append(updated)
+        if old_position in old_metrics:
+            new_metrics[new_position] = old_metrics[old_position]
+        if old_position in old_sequence_text:
+            new_sequence_text[new_position] = old_sequence_text[old_position]
+
+    other_screenshots = [entry for entry in screenshots if entry not in p_screenshots]
+    saved_import["screenshots"] = renumbered + other_screenshots
+    saved_import["position_metrics"] = new_metrics
+    old_sequence["ocr_text_by_position"] = new_sequence_text
+    saved_import["kinematic_sequence"] = old_sequence
     saved_import["verified"] = False
     saved_import["status"] = "position_metrics_review"
 
-    checkpoint = db.scalar(select(SwingCheckpoint).where(
-        SwingCheckpoint.analysis_id == analysis.id,
-        SwingCheckpoint.position == position,
-    ))
-    if checkpoint and checkpoint.measurement_source == "Onform Screenshot OCR":
+    # Keep checkpoint records aligned with the newly numbered screenshot set.
+    for number in range(1, 9):
+        checkpoint = db.scalar(select(SwingCheckpoint).where(
+            SwingCheckpoint.analysis_id == analysis.id,
+            SwingCheckpoint.position == f"P{number}",
+        ))
+        if checkpoint and checkpoint.measurement_source == "Onform Screenshot OCR":
+            for field in CHECKPOINT_SCREENSHOT_FIELDS:
+                setattr(checkpoint, field, None)
+            try:
+                checkpoint_extra = json.loads(checkpoint.extra_metrics_json or "{}")
+            except (TypeError, json.JSONDecodeError):
+                checkpoint_extra = {}
+            if isinstance(checkpoint_extra, dict):
+                checkpoint_extra.pop("onform_metrics", None)
+                checkpoint.extra_metrics_json = json.dumps(checkpoint_extra)
+            checkpoint.measurement_source = "Manual"
+            checkpoint.confidence = None
+
+    for number in range(1, len(renumbered) + 1):
+        checkpoint = db.scalar(select(SwingCheckpoint).where(
+            SwingCheckpoint.analysis_id == analysis.id,
+            SwingCheckpoint.position == f"P{number}",
+        ))
+        values = new_metrics.get(f"P{number}")
+        if checkpoint is None or not isinstance(values, dict):
+            continue
         for field in CHECKPOINT_SCREENSHOT_FIELDS:
-            setattr(checkpoint, field, None)
+            value = _metric_float(values.get(field))
+            if value is not None:
+                setattr(checkpoint, field, value)
         try:
             checkpoint_extra = json.loads(checkpoint.extra_metrics_json or "{}")
+            if not isinstance(checkpoint_extra, dict):
+                checkpoint_extra = {}
         except (TypeError, json.JSONDecodeError):
             checkpoint_extra = {}
-        if isinstance(checkpoint_extra, dict):
-            checkpoint_extra.pop("onform_metrics", None)
-            checkpoint.extra_metrics_json = json.dumps(checkpoint_extra)
-        checkpoint.measurement_source = "Manual"
-        checkpoint.confidence = None
+        checkpoint_extra["onform_metrics"] = values
+        checkpoint.extra_metrics_json = json.dumps(checkpoint_extra)
+        checkpoint.measurement_source = "Onform Screenshot OCR"
+        checkpoint.confidence = 1.0
 
     analysis.extra_metrics_json = json.dumps(extra)
     db.commit()
     return RedirectResponse(f"/swing-analysis/{analysis_id}/coaching", status_code=303)
-
 
 @router.post("/{analysis_id}/workspace/onform-p-position-clear", name="onform_p_position_clear")
 def onform_p_position_clear(

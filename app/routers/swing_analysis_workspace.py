@@ -740,6 +740,7 @@ def _latest_onform_import(analysis: SwingAnalysis) -> dict[str, Any] | None:
         )
         saved["available"] = (ONFORM_SCREENSHOT_DIR / stored_name).is_file()
         screenshots.append(saved)
+    screenshots.sort(key=lambda item: int(str(item.get("position") or "P99")[1:]) if str(item.get("position") or "").startswith("P") and str(item.get("position") or "P")[1:].isdigit() else item["slot"])
     result["screenshots"] = screenshots
     result["metrics"] = latest.get("metrics") if isinstance(latest.get("metrics"), dict) else {}
     result["position_metrics"] = latest.get("position_metrics") if isinstance(latest.get("position_metrics"), dict) else {}
@@ -748,6 +749,7 @@ def _latest_onform_import(analysis: SwingAnalysis) -> dict[str, Any] | None:
         if isinstance(latest.get("kinematic_sequence"), dict)
         else {}
     )
+    result["sequence_text_by_position"] = result["kinematic_sequence"].get("ocr_text_by_position", {})
     return result
 
 
@@ -760,11 +762,11 @@ def _onform_import_history(analysis: SwingAnalysis) -> list[dict[str, Any]]:
     imports = extra.get("onform_screenshot_imports", []) if isinstance(extra, dict) else []
     history = []
     for item in imports:
-        if not isinstance(item, dict) or not isinstance(item.get("metrics"), dict):
+        if not isinstance(item, dict) or not (isinstance(item.get("metrics"), dict) or isinstance(item.get("position_metrics"), dict)):
             continue
         history.append({
             "checkpoint": str(item.get("checkpoint_position") or "P7").upper(),
-            "metrics": item["metrics"],
+            "metrics": item.get("metrics", {}),
             "position_metrics": item.get("position_metrics", {}),
             "verified": bool(item.get("verified")),
         })

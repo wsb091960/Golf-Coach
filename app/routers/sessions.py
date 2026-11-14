@@ -46,42 +46,6 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
     videos = list_session_videos(db, session_id)
     screenshots = db.query(SessionScreenshot).filter(SessionScreenshot.session_id == session_id).order_by(SessionScreenshot.created_at.desc(), SessionScreenshot.original_filename.asc()).all()
     swing_analyses = db.query(SwingAnalysis).filter(SwingAnalysis.session_id == session_id).order_by(SwingAnalysis.updated_at.desc()).all()
-    onform_position_imports = []
-    for swing_analysis in swing_analyses:
-        try:
-            analysis_extra = json.loads(swing_analysis.extra_metrics_json or "{}")
-        except (TypeError, ValueError):
-            analysis_extra = {}
-        for import_record in analysis_extra.get("onform_screenshot_imports", []) if isinstance(analysis_extra, dict) else []:
-            if not isinstance(import_record, dict):
-                continue
-            position_metrics = import_record.get("position_metrics")
-            if not isinstance(position_metrics, dict) or not position_metrics:
-                continue
-            position_images = []
-            for evidence in import_record.get("screenshots", []):
-                if not isinstance(evidence, dict) or not evidence.get("stored_filename"):
-                    continue
-                position = str(evidence.get("position") or "")
-                if not position.startswith("P"):
-                    continue
-                position_images.append({
-                    "position": position,
-                    "label": evidence.get("label") or position,
-                    "url": f"/swing-analysis/{swing_analysis.id}/workspace/onform-screenshot/{evidence['stored_filename']}",
-                })
-            position_images.sort(key=lambda image: int(image["position"][1:]) if image["position"][1:].isdigit() else 99)
-            sequence = import_record.get("kinematic_sequence") or {}
-            sequence_text = sequence.get("ocr_text_by_position") if isinstance(sequence, dict) else {}
-            onform_position_imports.append({
-                "title": (swing_analysis.original_video.title if swing_analysis.original_video and swing_analysis.original_video.title else "Onform swing"),
-                "camera_view": swing_analysis.camera_view or (swing_analysis.original_video.camera_view if swing_analysis.original_video else ""),
-                "status": import_record.get("status", ""),
-                "verified": bool(import_record.get("verified")),
-                "position_metrics": position_metrics,
-                "position_images": position_images,
-                "sequence_text": sequence_text if isinstance(sequence_text, dict) else {},
-            })
     latest_p_sheet_analysis = db.query(PPositionAnalysis).filter(PPositionAnalysis.session_id == session_id).order_by(PPositionAnalysis.created_at.desc()).first()
     try:
         p_sheet_analysis = json.loads(latest_p_sheet_analysis.results_json) if latest_p_sheet_analysis else None
@@ -122,7 +86,6 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
         'page_title':'Session Performance','active_page':'sessions','session':session,'student':student,
         'session_shots':shots,'session_videos':videos,'session_screenshots':screenshots,'session_lesson':latest_lesson,
         'session_swing_analyses':swing_analyses,
-        'onform_position_imports': onform_position_imports,
         'lesson_needs_generation':lesson_needs_generation,
         'p_sheets': db.query(PPositionSheet).filter(PPositionSheet.session_id == session_id).order_by(PPositionSheet.created_at.desc()).all(),
         'p_sheet_analysis': p_sheet_analysis,

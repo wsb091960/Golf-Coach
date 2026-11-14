@@ -28,7 +28,12 @@
         .coaching-onform-position-selector .gcie-checkpoint.is-selected b,.coaching-onform-metric-selector .gcie-checkpoint.is-selected b{color:#fff}
         .coaching-onform-sequence{font-size:11px;line-height:1.45;overflow-wrap:anywhere}
         @media(max-width:620px){.coaching-onform-viewer .gcie-card-heading{align-items:flex-start;flex-direction:column}.coaching-onform-image-link{min-height:130px}}
-    </style>
+    
+        .gcie-review-grid{grid-template-columns:minmax(0,1fr)}
+        .gcie-review-side{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto;align-items:stretch}
+        .coaching-onform-metric-selector{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0 12px}
+        .coaching-onform-metric-selector .gcie-checkpoint{display:inline-flex;justify-content:center;align-items:center;width:auto;min-width:42px;min-height:36px;padding:7px 10px;text-align:center}
+</style>
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
 </head>
@@ -179,20 +184,7 @@
             </section>
             {% endif %}
         </article>
-        <div class="gcie-review-side">
-            <article class="gcie-review-card gcie-evidence-card">
-                <div class="gcie-card-heading"><div><span class="section-kicker">REVIEW STATUS</span><h3>Evidence at a glance</h3></div></div>
-                <div class="gcie-evidence-row"><span>Body landmarks</span><strong class="status-review">{% if latest_onform_import and latest_onform_import.verified %}Coach verified{% else %}Needs review{% endif %}</strong><small>Onform screenshot measurements</small></div>
-                {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-evidence-row"><span>OCR body values</span><strong data-coaching-ocr-count>Reading P1…</strong><small>Read from the selected P-position screenshot</small></div><div class="gcie-evidence-row"><span>Kinematic sequence</span><strong data-coaching-sequence-status>Checking P1…</strong><small>OCR sequence text for the selected image</small></div><div class="gcie-priority-note coaching-onform-sequence"><b>Sequence · <span data-coaching-sequence-position>P1</span></b><span data-coaching-sequence-text>Loading sequence text…</span></div>{% endif %}
-                <div class="gcie-evidence-row"><span>Club path</span><strong>{% if analysis.shot and analysis.shot.club_path is not none %}{{ "%.1f"|format(analysis.shot.club_path) }}°{% else %}Not recorded{% endif %}</strong><small>Garmin R10, if linked</small></div>
-                <div class="gcie-evidence-row"><span>Checkpoint timing</span><strong>{% set timed_points = analysis.checkpoints|selectattr('time_seconds')|list if analysis.checkpoints else [] %}{{ timed_points|length }} recorded</strong><small>P1–P10 coach review</small></div>
-            </article>
-            <article class="gcie-review-card gcie-observation-card">
-                <div class="gcie-card-heading"><div><span class="section-kicker">COACH REVIEW</span><h3>Coach observations</h3></div><a href="#analysis-workflow" class="gcie-edit-link">Edit below</a></div>
-                <p>{% if analysis.coaching_observations %}{{ analysis.coaching_observations }}{% elif analysis.primary_finding %}{{ analysis.primary_finding }}{% else %}No coach observation has been saved yet.{% endif %}</p>
-                {% if analysis.primary_priority %}<div class="gcie-priority-note"><b>Current focus</b><span>{{ analysis.primary_priority }}</span></div>{% endif %}
-            </article>
-        </div>
+
     </div>
 
     {% set metric_values = latest_onform_import.metrics if latest_onform_import and latest_onform_import.metrics else {} %}
@@ -214,6 +206,20 @@
         <script id="gcie-onform-history" type="application/json">{{ onform_import_history|tojson }}</script>
         {% if latest_onform_import %}<script id="gcie-onform-position-metrics" type="application/json">{{ latest_onform_import.position_metrics|tojson }}</script><script id="gcie-onform-position-images" type="application/json">{{ latest_onform_import.screenshots|tojson }}</script><script id="gcie-onform-sequence-text" type="application/json">{{ (latest_onform_import.kinematic_sequence.ocr_text_by_position if latest_onform_import.kinematic_sequence else {})|tojson }}</script>{% endif %}
     </article>
+            <div class="gcie-review-side">
+            <article class="gcie-review-card gcie-evidence-card">
+                <div class="gcie-card-heading"><div><span class="section-kicker">REVIEW STATUS</span><h3>Evidence at a glance</h3></div></div>
+                <div class="gcie-evidence-row"><span>Body landmarks</span><strong class="status-review">{% if latest_onform_import and latest_onform_import.verified %}Coach verified{% else %}Needs review{% endif %}</strong><small>Onform screenshot measurements</small></div>
+                {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-evidence-row"><span>OCR body values</span><strong data-coaching-ocr-count>Reading P1…</strong><small>Read from the selected P-position screenshot</small></div><div class="gcie-evidence-row"><span>Kinematic sequence</span><strong data-coaching-sequence-status>Checking P1…</strong><small>OCR sequence text for the selected image</small></div><div class="gcie-priority-note coaching-onform-sequence"><b>Sequence · <span data-coaching-sequence-position>P1</span></b><span data-coaching-sequence-text>Loading sequence text…</span></div>{% endif %}
+                <div class="gcie-evidence-row"><span>Club path</span><strong>{% if analysis.shot and analysis.shot.club_path is not none %}{{ "%.1f"|format(analysis.shot.club_path) }}°{% else %}Not recorded{% endif %}</strong><small>Garmin R10, if linked</small></div>
+                <div class="gcie-evidence-row"><span>Checkpoint timing</span><strong>{% set timed_points = analysis.checkpoints|selectattr('time_seconds')|list if analysis.checkpoints else [] %}{{ timed_points|length }} recorded</strong><small>P1–P10 coach review</small></div>
+            </article>
+            <article class="gcie-review-card gcie-observation-card">
+                <div class="gcie-card-heading"><div><span class="section-kicker">COACH REVIEW</span><h3>Coach observations</h3></div><a href="#analysis-workflow" class="gcie-edit-link">Edit below</a></div>
+                <p>{% if analysis.coaching_observations %}{{ analysis.coaching_observations }}{% elif analysis.primary_finding %}{{ analysis.primary_finding }}{% else %}No coach observation has been saved yet.{% endif %}</p>
+                {% if analysis.primary_priority %}<div class="gcie-priority-note"><b>Current focus</b><span>{{ analysis.primary_priority }}</span></div>{% endif %}
+            </article>
+        </div>
 </section>
 
 <nav class="workspace-tabs" role="tablist" data-workspace-tabs="coaching-analysis" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="flight">Ball Flight</button><button type="button" role="tab" data-workspace-tab="tgm">TGM</button><button type="button" role="tab" data-workspace-tab="tpi">TPI</button><button type="button" role="tab" data-workspace-tab="measurements">Measurements</button><button type="button" role="tab" data-workspace-tab="priorities">Priorities</button></nav>

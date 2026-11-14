@@ -133,22 +133,13 @@
 
 <section class="gcie-review" aria-label="Swing review and biomechanics metrics" data-coaching-onform-package>
     <div class="gcie-review-heading">
-        <div><span class="section-kicker">GCIE SWING REVIEW</span><h2>{{ analysis.original_video.title or "Swing Review" }}</h2><p>{{ analysis.original_video.camera_view or analysis.camera_view or "Camera view not set" }}{% if analysis.club %} · {{ analysis.club }}{% endif %}</p></div>
-        <div class="gcie-review-actions"><a class="button button-secondary" href="/sessions/{{ analysis.session_id }}">Back to Session</a><button type="button" class="button button-secondary" id="gcie-upload-video-button" data-session-id="{{ analysis.session_id }}" data-analysis-id="{{ analysis.id }}" data-camera-view="{{ analysis.original_video.camera_view or analysis.camera_view or '' }}" data-club="{{ analysis.club or '' }}" {% if is_preview %}disabled title="Read-only demo preview"{% endif %}>Upload / Replace Onform MP4</button><input id="gcie-upload-video-file" type="file" accept="video/mp4,.mp4" hidden><a class="button button-secondary" href="/swing-analysis/{{ analysis.id }}/onform-import">Add Onform Screenshots</a><button type="button" class="button button-primary" id="save-analysis" {% if is_preview %}disabled title="Read-only demo preview"{% endif %}>Save Analysis</button></div>
+        <div><span class="section-kicker">GCIE SCREENSHOT REVIEW</span><h2>Swing Analysis · Onform Screenshots</h2><p>{{ analysis.original_video.camera_view or analysis.camera_view or "Review the saved P-position screenshots" }}{% if analysis.club %} · {{ analysis.club }}{% endif %}</p></div>
+        <div class="gcie-review-actions"><a class="button button-secondary" href="/sessions/{{ analysis.session_id }}">Back to Session</a><a class="button button-secondary" href="/swing-analysis/{{ analysis.id }}/onform-import">Add Onform Screenshots</a><button type="button" class="button button-primary" id="save-analysis" {% if is_preview %}disabled title="Read-only demo preview"{% endif %}>Save Analysis</button></div>
     </div>
     <div class="gcie-review-grid">
         <article class="gcie-review-card gcie-video-card">
-            <div class="gcie-video-topline"><span>{{ (analysis.original_video.camera_view or analysis.camera_view or "SWING VIDEO")|upper }}</span><span>{% if latest_onform_import and latest_onform_import.screenshots %}{{ latest_onform_import.screenshots|length }} P-position screenshot{{ "s" if latest_onform_import.screenshots|length != 1 else "" }}{% else %}Screenshot metrics optional{% endif %}</span></div>
-            {% if not is_observation_only and analysis.original_video and analysis.original_video.id %}
-            <div class="gcie-video-stage"><video id="gcie-review-video" controls playsinline preload="metadata" src="/sessions/{{ analysis.session_id }}/videos/{{ analysis.original_video.id }}/stream"></video><canvas id="gcie-pose-canvas" aria-label="On-device body landmark overlay"></canvas><span class="gcie-pose-label" id="gcie-pose-label" hidden></span></div>
-            <div class="gcie-overlay-controls"><button type="button" class="button button-secondary" id="gcie-pose-toggle" aria-pressed="false">Show body overlay</button><span id="gcie-pose-status" role="status">Overlay is off. Turn it on to see estimated landmarks on the video.</span><span id="gcie-upload-status" class="gcie-upload-status" role="status" hidden></span></div>
-            {% elif is_preview %}
-            <div class="gcie-video-stage gcie-video-placeholder"><div class="gcie-placeholder-golfer" aria-hidden="true"><i class="head"></i><i class="body"></i><i class="arm"></i><i class="club"></i><i class="leg lead"></i><i class="leg trail"></i></div><span>Illustrative swing frame · sample only</span></div>
-            {% else %}
-            <div class="gcie-video-stage gcie-video-empty"><strong>No swing video loaded</strong><span>Use “Upload / Replace Onform MP4” above to add a clip. Screenshot import is a separate step.</span></div>
-            {% endif %}
             {% set p_images = latest_onform_import.screenshots|selectattr('position')|list if latest_onform_import else [] %}
-            {% if latest_onform_import and latest_onform_import.position_metrics %}
+            {% if latest_onform_import and (latest_onform_import.position_metrics or p_images) %}
             <section class="coaching-onform-viewer" aria-label="Onform P-position screenshot review">
                 <div class="gcie-card-heading"><div><span class="section-kicker">ONFORM SCREENSHOT REVIEW</span><h3>Review each P-position</h3><p>OCR values below change with the selected screenshot.</p></div><span class="gcie-data-badge">{{ p_images|length }} P-position images</span></div>
                 {% if p_images %}
@@ -164,13 +155,6 @@
                 {% else %}<p class="gcie-video-help">No P-position screenshots are attached to this OCR set yet.</p>{% endif %}
             </section>
             {% endif %}
-            <div class="gcie-checkpoint-bar" aria-label="Swing checkpoints">
-                {% for point in ["P1", "P4", "P5", "P6", "P7", "P10"] %}
-                {% set cp = (analysis.checkpoints | selectattr('position', 'equalto', point) | list | first) if analysis.checkpoints else none %}
-                <button type="button" class="gcie-checkpoint" {% if point != "P10" %}data-position="{{ point }}"{% endif %} data-checkpoint-time="{{ cp.time_seconds if cp and cp.time_seconds is not none else '' }}"><b>{{ point }}</b><span>{% if cp and cp.time_seconds is not none %}{{ "%.2f"|format(cp.time_seconds) }}s{% else %}Set frame{% endif %}</span></button>
-                {% endfor %}
-            </div>
-            <p class="gcie-video-help">Select a saved checkpoint to jump to that moment in the swing.</p>
         </article>
         <div class="gcie-review-side">
             <article class="gcie-review-card gcie-evidence-card">
@@ -215,62 +199,10 @@
     <div class="gc-overview-main">
         <article class="analysis-card gc-overview-video">
             <div class="gc-overview-card-head">
-                <div><span class="section-kicker">{% if is_observation_only %}Coach observation · No video{% else %}Swing video · Coach reviewed{% endif %}</span><h2>{% if is_observation_only %}Observation-led assessment{% else %}Movement through impact{% endif %}</h2></div>
-                <a class="gc-text-link" href="/swing-analysis/{{ analysis.id }}/p-position">Review P1–P10 ↗</a>
+                <div><span class="section-kicker">Onform screenshots</span><h2>Review the swing positions</h2></div>
+                <a class="gc-text-link" href="/swing-analysis/{{ analysis.id }}/onform-import">Add or replace screenshots ↗</a>
             </div>
-            {% if not is_observation_only and analysis.original_video and analysis.original_video.id %}
-            <div class="gc-video-frame">
-                <video controls preload="metadata" src="/sessions/{{ analysis.session_id }}/videos/{{ analysis.original_video.id }}/stream"></video>
-            </div>
-            {% elif is_observation_only %}
-            <div class="gc-video-empty">
-                <strong>No swing video attached · observation-only assessment</strong>
-                <span>Your assessment can proceed from coach observations, available launch data and manual P-position notes.</span>
-                {% if available_original_videos %}
-                <form method="post" action="/swing-analysis/{{ analysis.id }}/workspace/original-video" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px">
-                    <label for="attach-original-video" class="gc-data-label">Attach a session video later</label>
-                    <select id="attach-original-video" name="video_id" required>
-                        {% for video in available_original_videos %}
-                        <option value="{{ video.id }}">{{ video.title }}{% if video.camera_view %} · {{ video.camera_view }}{% endif %}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" class="button button-secondary">Attach Video</button>
-                </form>
-                {% else %}
-                <span>Upload a swing video to this session, then return here to attach it.</span>
-                {% endif %}
-            </div>
-            {% else %}
-            {% if is_preview %}
-            <div class="gc-preview-video" aria-label="Illustrative swing-video frame">
-                <svg viewBox="0 0 520 280" role="img" aria-label="Illustrative golfer at finish with lead elbow highlighted">
-                    <defs><linearGradient id="preview-course" x2="0" y2="1"><stop stop-color="#dce9e1"/><stop offset="1" stop-color="#a9c2b0"/></linearGradient></defs>
-                    <rect width="520" height="280" fill="url(#preview-course)"/><path d="M0 198 Q110 168 245 199 T520 187 V280 H0Z" fill="#78977e"/><path d="M0 232 Q130 208 260 232 T520 216 V280 H0Z" fill="#5f8067"/>
-                    <circle cx="270" cy="58" r="20" fill="#202a25"/><path d="M249 81 Q268 70 292 84 L314 149 L283 178 L244 158 L230 111Z" fill="#25332c"/>
-                    <path d="M246 93 L200 80 L171 104 L151 93" fill="none" stroke="#25332c" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M230 112 L278 121 L317 100 L350 83" fill="none" stroke="#25332c" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M350 83 L427 48" stroke="#29312d" stroke-width="5" stroke-linecap="round"/><path d="M420 42 Q451 37 468 50 Q449 62 424 57Z" fill="#29312d"/>
-                    <path d="M246 157 L225 226 L203 249 M282 173 L311 224 L334 247" fill="none" stroke="#25332c" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M151 93 L171 104 L200 80" fill="none" stroke="#d2a83e" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-                    <text x="20" y="26" fill="#244735" font-family="Arial,sans-serif" font-size="13" font-weight="700">ILLUSTRATIVE FINISH FRAME · NOT VIDEO TRACKING</text>
-                </svg>
-            </div>
-            {% else %}<div class="gc-video-empty"><strong>No swing video attached</strong><span>Use P-Position Analysis to add or review swing video.</span></div>{% endif %}
-            {% endif %}
-            <div class="gc-position-track" aria-label="P-position review points">
-                {% for point in ["P6", "P7", "P8", "P9", "P10"] %}
-                <a href="/swing-analysis/{{ analysis.id }}/p-position" class="gc-position-point">
-                    <span class="gc-position-dot {% if analysis.checkpoints and (analysis.checkpoints | selectattr('position', 'equalto', point) | list | length) %}is-recorded{% endif %}"></span>
-                    <strong>{{ point }}</strong>
-                    <small>{% set cp = (analysis.checkpoints | selectattr('position', 'equalto', point) | list | first) if analysis.checkpoints else none %}{% if cp and cp.time_seconds is not none %}{{ "%.2f"|format(cp.time_seconds) }}s{% else %}Review{% endif %}</small>
-                </a>
-                {% endfor %}
-            </div>
-            <div class="gc-observation-box">
-                <span class="gc-data-label">Observed pattern</span>
-                <p>{% if analysis.primary_finding %}{{ analysis.primary_finding }}{% elif analysis.coaching_observations %}{{ analysis.coaching_observations }}{% else %}Add the swing observation in Priorities. An observation is not a diagnosis by itself.{% endif %}</p>
-                <span class="gc-source-badge gc-source-video">Video / coach observation</span>
-            </div>
+            <p class="gc-overview-note">P1–P8 screenshots and their OCR readings are shown above. Select a position to review its numeric values, direction, and sequence text.</p>
         </article>
 
         <article class="analysis-card gc-integrated-card">
@@ -871,7 +803,6 @@
 <script src="/static/js/swing_analysis_workspace.js?v=5.2.6"></script>
 <script src="/static/js/swing_analysis_review.js?v=2"></script>
 <script src="/static/js/coaching_onform_positions.js?v=5.2.10B"></script>
-<script src="/static/js/gcie_pose_overlay.js?v=2"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 </body>

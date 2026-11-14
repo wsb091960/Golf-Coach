@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import os
+import io
+import re
+import zipfile
 from typing import Any
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
@@ -739,6 +742,7 @@ def _latest_onform_import(analysis: SwingAnalysis) -> dict[str, Any] | None:
         screenshots.append(saved)
     result["screenshots"] = screenshots
     result["metrics"] = latest.get("metrics") if isinstance(latest.get("metrics"), dict) else {}
+    result["position_metrics"] = latest.get("position_metrics") if isinstance(latest.get("position_metrics"), dict) else {}
     result["kinematic_sequence"] = (
         latest.get("kinematic_sequence")
         if isinstance(latest.get("kinematic_sequence"), dict)
@@ -761,6 +765,7 @@ def _onform_import_history(analysis: SwingAnalysis) -> list[dict[str, Any]]:
         history.append({
             "checkpoint": str(item.get("checkpoint_position") or "P7").upper(),
             "metrics": item["metrics"],
+            "position_metrics": item.get("position_metrics", {}),
             "verified": bool(item.get("verified")),
         })
     return history
@@ -799,6 +804,180 @@ async def _store_onform_screenshot(
         "original_filename": upload.filename or f"onform-screenshot-{slot}",
         "content_type": content_type,
     }
+
+
+def _store_onform_image_bytes(
+    data: bytes,
+    *,
+    filename: str,
+    content_type: str,
+    session_id: str,
+    analysis_id: str,
+    label: str,
+    position: str | None = None,
+) -> dict[str, str]:
+    if content_type not in ALLOWED_SCREENSHOT_TYPES:
+        raise HTTPException(415, "Use PNG, JPG/JPEG, or WEBP screenshots")
+    if not data or len(data) > MAX_SCREENSHOT_BYTES:
+        raise HTTPException(413, "Each image must be between 1 byte and 15 MB")
+    suffix = ALLOWED_SCREENSHOT_TYPES[content_type]
+    safe_label = re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_")
+    stored_name = f"{session_id}_{analysis_id}_{safe_label}_{uuid4().hex}{suffix}"
+    (ONFORM_SCREENSHOT_DIR / stored_name).write_bytes(data)
+    result = {
+        "stored_filename": stored_name,
+        "original_filename": filename,
+        "content_type": content_type,
+        "label": label,
+        "kind": "p_position" if position else "kinematic_sequence",
+    }
+    if position:
+        result["position"] = position
+    return result
+
+
+def _natural_filename_key(name: str) -> list[Any]:
+    return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", name)]
+
+
+@router.post("/{analysis_id}/workspace/onform-p-position-bundle", name="onform_p_position_bundle")
+async def onform_p_position_bundle(
+    analysis_id: str,
+    bundle: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """Unpack one Onform ZIP containing P1–P8 captures and a sequence image."""
+    analysis = get_analysis(db, analysis_id)
+    if analysis is None:
+        raise HTTPException(404, "Swing analysis not found")
+    if not (bundle.filename or "").lower().endswith(".zip"):
+        raise HTTPException(415, "Choose a ZIP file containing the Onform screenshots")
+    archive_data = await bundle.read()
+    if not archive_data or len(archive_data) > 120 * 1024 * 1024:
+        raise HTTPException(413, "The ZIP must be smaller than 120 MB")
+
+    image_exts = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
+    try:
+        archive = zipfile.ZipFile(io.BytesIO(archive_data))
+        entries = [
+            item for item in archive.infolist()
+            if not item.is_dir() and os.path.splitext(item.filename)[1].lower() in image_exts
+        ]
+        if len(entries) not in (8, 9):
+            raise HTTPException(422, "The ZIP must contain eight P-position screenshots and one kinematic-sequence screenshot")
+        if any(item.file_size > MAX_SCREENSHOT_BYTES for item in entries) or sum(item.file_size for item in entries) > 120 * 1024 * 1024:
+            raise HTTPException(413, "A screenshot is over 15 MB or the extracted bundle is too large")
+        images = [(item.filename, archive.read(item), image_exts[os.path.splitext(item.filename)[1].lower()]) for item in entries]
+    except zipfile.BadZipFile as exc:
+        raise HTTPException(422, "This ZIP file could not be opened") from exc
+
+    sequence = [item for item in images if re.search(r"kinematic|sequence", item[0], re.I)]
+    positions = [item for item in images if item not in sequence]
+    # If the ninth image has no descriptive filename, retain it as the sequence image.
+    if len(positions) == 9 and not sequence:
+        sequence = [positions.pop()]
+    if len(positions) != 8 or len(sequence) != 1:
+        raise HTTPException(422, "Include eight swing-position images and one image named with ‘kinematic’ or ‘sequence’")
+
+    explicit = {}
+    for item in positions:
+        match = re.search(r"(?:^|[^a-z])p\s*[-_ ]?([1-8])(?:[^0-9]|$)", os.path.basename(item[0]), re.I)
+        if match:
+            explicit[int(match.group(1))] = item
+    if len(explicit) == 8:
+        ordered = [explicit[index] for index in range(1, 9)]
+    else:
+        ordered = sorted(positions, key=lambda item: _natural_filename_key(os.path.basename(item[0])))
+
+    created = []
+    try:
+        for index, (filename, data, content_type) in enumerate(ordered, start=1):
+            created.append(_store_onform_image_bytes(data, filename=filename, content_type=content_type, session_id=analysis.session_id, analysis_id=analysis.id, label=f"P{index}", position=f"P{index}"))
+        filename, data, content_type = sequence[0]
+        created.append(_store_onform_image_bytes(data, filename=filename, content_type=content_type, session_id=analysis.session_id, analysis_id=analysis.id, label="Kinematic Sequence"))
+
+        try:
+            extra = json.loads(analysis.extra_metrics_json or "{}")
+            if not isinstance(extra, dict): extra = {}
+        except (TypeError, json.JSONDecodeError):
+            extra = {}
+        imports = extra.setdefault("onform_screenshot_imports", [])
+        imports.append({
+            "phase": "5.2.8",
+            "status": "position_bundle_saved",
+            "screenshots": created,
+            "position_metrics": {},
+            "metrics": {},
+            "kinematic_sequence": {},
+            "verified": False,
+        })
+        analysis.extra_metrics_json = json.dumps(extra)
+        db.commit()
+    except Exception:
+        db.rollback()
+        for item in created:
+            (ONFORM_SCREENSHOT_DIR / item["stored_filename"]).unlink(missing_ok=True)
+        raise
+    refreshed = get_analysis(db, analysis.id) or analysis
+    return {"ok": True, "saved_import": _latest_onform_import(refreshed)}
+
+
+@router.post("/{analysis_id}/workspace/onform-p-position-metrics", name="onform_p_position_metrics")
+async def onform_p_position_metrics(
+    analysis_id: str,
+    position_metrics_json: str = Form("{}"),
+    sequence_ocr_text: str = Form(""),
+    verified: str = Form("false"),
+    db: Session = Depends(get_db),
+):
+    analysis = get_analysis(db, analysis_id)
+    if analysis is None:
+        raise HTTPException(404, "Swing analysis not found")
+    try:
+        position_metrics = json.loads(position_metrics_json or "{}")
+    except json.JSONDecodeError as exc:
+        raise HTTPException(422, "Invalid P-position metrics") from exc
+    if not isinstance(position_metrics, dict):
+        raise HTTPException(422, "P-position metrics must be an object")
+    try:
+        extra = json.loads(analysis.extra_metrics_json or "{}")
+        imports = extra.get("onform_screenshot_imports", [])
+        if not imports or imports[-1].get("status") not in ("position_bundle_saved", "position_metrics_review"):
+            raise HTTPException(409, "Upload a P1–P8 screenshot bundle first")
+        item = imports[-1]
+        item["position_metrics"] = position_metrics
+        item["kinematic_sequence"] = {"ocr_text": sequence_ocr_text[:12000]}
+        is_verified = verified.lower() == "true"
+        item["verified"] = is_verified
+        item["status"] = "position_metrics_verified" if is_verified else "position_metrics_review"
+        if is_verified:
+            for position in (f"P{i}" for i in range(1, 9)):
+                values = position_metrics.get(position)
+                if not isinstance(values, dict):
+                    continue
+                checkpoint = db.scalar(select(SwingCheckpoint).where(SwingCheckpoint.analysis_id == analysis.id, SwingCheckpoint.position == position))
+                if checkpoint is None:
+                    continue
+                for field in CHECKPOINT_SCREENSHOT_FIELDS:
+                    value = _metric_float(values.get(field))
+                    if value is not None:
+                        setattr(checkpoint, field, value)
+                try:
+                    checkpoint_extra = json.loads(checkpoint.extra_metrics_json or "{}")
+                    if not isinstance(checkpoint_extra, dict): checkpoint_extra = {}
+                except (TypeError, json.JSONDecodeError):
+                    checkpoint_extra = {}
+                checkpoint_extra["onform_metrics"] = values
+                checkpoint.extra_metrics_json = json.dumps(checkpoint_extra)
+                checkpoint.measurement_source = "Onform Screenshot OCR"
+                checkpoint.confidence = 1.0
+        analysis.extra_metrics_json = json.dumps(extra)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    refreshed = get_analysis(db, analysis.id) or analysis
+    return {"ok": True, "saved_import": _latest_onform_import(refreshed)}
 
 
 @router.post("/{analysis_id}/workspace/onform-screenshot", name="onform_screenshot_import")

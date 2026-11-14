@@ -20,6 +20,14 @@
   const conflictsBox = document.getElementById("onform-screenshot-conflicts");
   const savedImportNode = document.getElementById("onform-saved-import");
   const primaryGoalNode = document.getElementById("student-primary-goal");
+  const positionZip = document.getElementById("onform-p-position-zip");
+  const positionExtract = document.getElementById("onform-p-position-extract");
+  const positionSave = document.getElementById("onform-p-position-save");
+  const positionStatus = document.getElementById("onform-p-position-status");
+  const positionPreviews = document.getElementById("onform-p-position-previews");
+  let positionMetrics = {};
+  let positionFiles = [];
+  let sequenceFile = null;
   let primaryGoal = "";
   try {
     primaryGoal = primaryGoalNode ? JSON.parse(primaryGoalNode.textContent || '""') : "";
@@ -38,6 +46,7 @@
   let ocrText1 = "";
   let ocrText2 = "";
   let ocrText3 = "";
+  let ocrWorkerPromise = null;
   let conflicts = [];
 
   const definitions = [
@@ -70,6 +79,30 @@
     { key: "spine_tilt", aliases: ["SPINE TILT"] },
     { key: "shaft_angle", aliases: ["SHAFT ANGLE"] }
   ];
+
+  async function getOcrWorker() {
+    if (!window.Tesseract || typeof window.Tesseract.createWorker !== "function") {
+      throw new Error("OCR library did not load. Refresh the page and try again.");
+    }
+    if (!ocrWorkerPromise) {
+      ocrWorkerPromise = window.Tesseract.createWorker("eng", 1, {
+        workerPath: "/media-assets/tesseract/worker.min.js",
+        corePath: "/media-assets/tesseract/core",
+        langPath: "/media-assets/tesseract/lang/",
+        logger: (message) => {
+          if (message.status === "recognizing text") {
+            status.textContent = `Reading Onform text… ${Math.round((message.progress || 0) * 100)}%`;
+          } else if (message.status) {
+            status.textContent = `Preparing OCR… ${message.status}`;
+          }
+        },
+      }).catch((error) => {
+        ocrWorkerPromise = null;
+        throw error;
+      });
+    }
+    return ocrWorkerPromise;
+  }
 
   const directionWords = new Set(["LEFT", "RIGHT", "UP", "DOWN", "OPEN", "CLOSED", "AWAY", "TOWARDS", "TOWARD", "FORWARD", "BACKWARD"]);
 
@@ -259,12 +292,11 @@
 
   async function ribbonCanvas(file) {
     const bitmap = await createImageBitmap(file);
-    // Onform's metric ribbon occupies roughly the bottom 10-12% of the screenshots.
-    // Keep a small margin above it, but exclude the swing image/body-overlay numbers.
-    const cropRatio = 0.15;
-    const sourceY = Math.max(0, Math.floor(bitmap.height * (1 - cropRatio)));
-    const sourceH = bitmap.height - sourceY;
-    const scale = 2.5;
+    // Keep the whole image when the coach has already cropped it to the metric panel.
+    const croppedMetricPanel = bitmap.height / bitmap.width <= 0.75;
+    const sourceY = croppedMetricPanel ? 0 : Math.max(0, Math.floor(bitmap.height * 0.82));
+    const sourceH = croppedMetricPanel ? bitmap.height : bitmap.height - sourceY;
+    const scale = Math.min(2.5, 3000 / bitmap.width);
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bitmap.width * scale);
     canvas.height = Math.round(sourceH * scale);
@@ -289,13 +321,9 @@
 
   async function readScreenshot(file, number) {
     const canvas = await ribbonCanvas(file);
-    const result = await window.Tesseract.recognize(canvas, "eng", {
-      logger: (m) => {
-        if (m.status === "recognizing text") {
-          status.textContent = `Reading screenshot ${number}… ${Math.round((m.progress || 0) * 100)}%`;
-        }
-      }
-    });
+    const worker = await getOcrWorker();
+    status.textContent = `Reading screenshot ${number}…`;
+    const result = await worker.recognize(canvas);
     const text = result?.data?.text || "";
     const spatial = parseSpatialWords(result?.data?.words || [], canvas.width);
     // 5.2.5B safety rule: never fall back to row-order or plain-text inference.
@@ -330,6 +358,11 @@
       }
     });
     renderMetricTiles(metrics, { verified: false, conflicts: [] });
+  }
+
+  function fillPositionMetrics(metrics) {
+    root.querySelectorAll("[data-onform-metric]").forEach((input) => { input.value = ""; });
+    fillMetrics(metrics || {});
   }
 
   const bodyTileDefinitions = [
@@ -402,7 +435,8 @@
 
   async function readSequenceScreenshot(file) {
     if (!window.Tesseract) return "";
-    const result = await Tesseract.recognize(file, "eng");
+    const worker = await getOcrWorker();
+    const result = await worker.recognize(file);
     return result?.data?.text || "";
   }
 
@@ -578,7 +612,173 @@
       checkpoint: savedImport.checkpoint_position,
     });
     updateCoachingGoalRead();
+    if (savedImport.position_metrics) {
+      positionMetrics = savedImport.position_metrics;
+      showPositionEvidence(savedImport.screenshots || []);
+      positionSave.disabled = !Object.keys(positionMetrics).length;
+      positionStatus.textContent = savedImport.verified
+        ? "Saved P1–P8 screenshot set and verified OCR measurements loaded."
+        : "Saved P1–P8 screenshots loaded. Review the OCR values, then verify and save.";
+      const selectedPosition = checkpointSelect?.value || "P7";
+      if (positionMetrics[selectedPosition]) fillPositionMetrics(positionMetrics[selectedPosition]);
+    }
   }
+
+  function naturalSortName(a, b) {
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+  }
+
+  async function unzipImages(file) {
+    const buffer = await file.arrayBuffer();
+    const view = new DataView(buffer);
+    let eocd = -1;
+    for (let i = buffer.byteLength - 22; i >= Math.max(0, buffer.byteLength - 65557); i -= 1) {
+      if (view.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error("This ZIP file is missing its directory index.");
+    const count = view.getUint16(eocd + 10, true);
+    let cursor = view.getUint32(eocd + 16, true);
+    const decoder = new TextDecoder();
+    const images = [];
+    for (let i = 0; i < count; i += 1) {
+      if (view.getUint32(cursor, true) !== 0x02014b50) throw new Error("The ZIP contains an unreadable file entry.");
+      const flags = view.getUint16(cursor + 8, true);
+      const method = view.getUint16(cursor + 10, true);
+      const compressedSize = view.getUint32(cursor + 20, true);
+      const filenameLength = view.getUint16(cursor + 28, true);
+      const extraLength = view.getUint16(cursor + 30, true);
+      const commentLength = view.getUint16(cursor + 32, true);
+      const localOffset = view.getUint32(cursor + 42, true);
+      const name = decoder.decode(new Uint8Array(buffer, cursor + 46, filenameLength));
+      cursor += 46 + filenameLength + extraLength + commentLength;
+      if (name.endsWith("/")) continue;
+      const extension = name.split(".").pop().toLowerCase();
+      if (!["png", "jpg", "jpeg", "webp"].includes(extension)) continue;
+      if (flags & 1) throw new Error("The ZIP is password-protected; upload an unencrypted ZIP.");
+      const localNameLength = view.getUint16(localOffset + 26, true);
+      const localExtraLength = view.getUint16(localOffset + 28, true);
+      const dataStart = localOffset + 30 + localNameLength + localExtraLength;
+      const compressed = new Uint8Array(buffer, dataStart, compressedSize);
+      let bytes;
+      if (method === 0) bytes = compressed;
+      else if (method === 8 && window.DecompressionStream) {
+        const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+        bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+      } else throw new Error("This ZIP compression method is not supported. Re-compress it using the standard ZIP option.");
+      const mime = extension === "png" ? "image/png" : extension === "webp" ? "image/webp" : "image/jpeg";
+      images.push({ name: name.split("/").pop(), file: new File([bytes], name.split("/").pop(), { type: mime }) });
+    }
+    return images;
+  }
+
+  function showPositionEvidence(items) {
+    if (!positionPreviews) return;
+    positionPreviews.innerHTML = "";
+    items.slice().sort((a, b) => {
+        const ai = Number(String(a.position || a.label || "P99").replace(/\D/g, "")) || 99;
+        const bi = Number(String(b.position || b.label || "P99").replace(/\D/g, "")) || 99;
+        return ai - bi;
+      }).forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "onform-screenshot-slot compact-evidence-card";
+        const image = document.createElement("img");
+        image.alt = `${item.label || item.position || "Onform evidence"} preview`;
+        image.src = item.url || URL.createObjectURL(item.file);
+        image.style.width = "100%";
+        image.style.maxHeight = "160px";
+        image.style.objectFit = "contain";
+        const title = document.createElement("strong");
+        title.textContent = item.label || item.position || "Kinematic Sequence";
+        card.append(image, title);
+        positionPreviews.append(card);
+      });
+  }
+
+  async function postPositionMetrics(verifiedValue) {
+    const form = new FormData();
+    form.append("position_metrics_json", JSON.stringify(positionMetrics));
+    form.append("sequence_ocr_text", ocrText3);
+    form.append("verified", verifiedValue ? "true" : "false");
+    const response = await fetch(`/swing-analysis/${analysisId}/workspace/onform-p-position-metrics`, {
+      method: "POST", body: form, credentials: "same-origin",
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || "Unable to save P-position OCR values");
+    savedImport = payload.saved_import;
+    return payload;
+  }
+
+  async function processPositionZip() {
+    const zipFile = positionZip?.files?.[0];
+    if (!zipFile) { positionStatus.textContent = "Choose your Onform ZIP first."; return; }
+    positionExtract.disabled = true;
+    positionSave.disabled = true;
+    try {
+      positionStatus.textContent = "Unpacking ZIP and assigning P1–P8 labels…";
+      const images = await unzipImages(zipFile);
+      const sequenceMatches = images.filter((item) => /kinematic|sequence/i.test(item.name));
+      let swings = images.filter((item) => !sequenceMatches.includes(item));
+      let sequences = sequenceMatches;
+      if (swings.length === 9 && sequences.length === 0) sequences = [swings.pop()];
+      if (swings.length !== 8 || sequences.length !== 1) {
+        throw new Error(`Found ${swings.length} swing images and ${sequences.length} sequence images. Include eight P-position screenshots and one filename containing “kinematic” or “sequence”.`);
+      }
+      const explicit = new Map();
+      swings.forEach((item) => {
+        const m = item.name.match(/(?:^|[^a-z])p\s*[-_ ]?([1-8])(?:[^0-9]|$)/i);
+        if (m) explicit.set(Number(m[1]), item);
+      });
+      swings = explicit.size === 8 ? Array.from({ length: 8 }, (_, i) => explicit.get(i + 1)) : swings.sort((a, b) => naturalSortName(a.name, b.name));
+      positionFiles = swings.map((item, i) => new File([item.file], `P${i + 1}.${item.name.split(".").pop().toLowerCase()}`, { type: item.file.type }));
+      sequenceFile = new File([sequences[0].file], `Kinematic-Sequence.${sequences[0].name.split(".").pop().toLowerCase()}`, { type: sequences[0].file.type });
+      showPositionEvidence(positionFiles.map((f, i) => ({ label: `P${i + 1}`, file: f })).concat([{ label: "Kinematic Sequence", file: sequenceFile }]));
+      positionMetrics = {};
+      let totalLabels = 0;
+      for (let i = 0; i < positionFiles.length; i += 1) {
+        positionStatus.textContent = `Reading P${i + 1} of 8…`;
+        const result = await readScreenshot(positionFiles[i], `P${i + 1}`);
+        positionMetrics[`P${i + 1}`] = result.metrics;
+        totalLabels += result.spatial?.labelsFound || 0;
+      }
+      ocrText3 = await readSequenceScreenshot(sequenceFile);
+      const selected = checkpointSelect?.value || "P7";
+      fillPositionMetrics(positionMetrics[selected] || {});
+      positionStatus.textContent = `OCR reviewed all eight positions (${totalLabels} metric labels detected). Saving the P1–P8 files and sequence image…`;
+      const saveForm = new FormData();
+      saveForm.append("bundle", zipFile);
+      const stored = await fetch(`/swing-analysis/${analysisId}/workspace/onform-p-position-bundle`, { method: "POST", body: saveForm, credentials: "same-origin" });
+      const storedPayload = await stored.json();
+      if (!stored.ok) throw new Error(storedPayload.detail || "Unable to save the ZIP evidence");
+      savedImport = storedPayload.saved_import;
+      await postPositionMetrics(false);
+      showPositionEvidence(savedImport.screenshots || []);
+      positionSave.disabled = false;
+      positionStatus.textContent = `Saved and labeled P1–P8 plus the kinematic-sequence image. OCR detected ${totalLabels} metric labels; select each P-position to review its values, then verify and save.`;
+    } catch (error) {
+      console.error(error);
+      positionStatus.textContent = error.message || "Unable to unpack or read this ZIP file.";
+    } finally {
+      positionExtract.disabled = false;
+    }
+  }
+
+  positionExtract?.addEventListener("click", processPositionZip);
+  positionZip?.addEventListener("change", () => {
+    positionStatus.textContent = "ZIP selected. It should contain eight P-position images and one kinematic-sequence image.";
+    positionSave.disabled = true;
+  });
+  positionSave?.addEventListener("click", async () => {
+    positionSave.disabled = true;
+    positionStatus.textContent = "Saving coach-verified P1–P8 metrics…";
+    try {
+      await postPositionMetrics(true);
+      positionStatus.textContent = "Verified P1–P8 metrics and screenshot evidence saved to this swing analysis.";
+    } catch (error) {
+      positionStatus.textContent = error.message || "Unable to verify P-position metrics.";
+    } finally {
+      positionSave.disabled = false;
+    }
+  });
 
   function bindPreview(input, preview) {
     input.addEventListener("change", () => {
@@ -616,6 +816,7 @@
     });
   }
   checkpointSelect?.addEventListener("change", () => {
+    if (positionMetrics[checkpointSelect.value]) fillPositionMetrics(positionMetrics[checkpointSelect.value]);
     renderMetricTiles(collectMetrics(), {
       verified: false,
       conflicts,

@@ -753,7 +753,7 @@
       await postPositionMetrics(false);
       showPositionEvidence(savedImport.screenshots || []);
       positionSave.disabled = false;
-      positionStatus.textContent = `Saved and labeled all eight screenshots P1–P8. OCR detected ${totalLabels} metric labels and retained each screenshot's text, including its kinematic-sequence information. Select each P-position to review values, then verify and save.`;
+      positionStatus.textContent = `Saved all eight images as P1–P8 in the session Biomechanics tab. OCR detected ${totalLabels} metric labels and retained each image's text, including its kinematic-sequence information. Select each P-position to review values, then verify and save.`;
     } catch (error) {
       console.error(error);
       positionStatus.textContent = error.message || "Unable to unpack or read this ZIP file.";

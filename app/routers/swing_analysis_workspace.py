@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import CoachingSession, SessionVideo, Shot, Student, SwingAnalysis
+from app.models import CoachingSession, SessionScreenshot, SessionVideo, Shot, Student, SwingAnalysis
 from app.swing_analysis_store import (
     OBSERVATION_ONLY_SOURCE,
     P_POSITIONS,
@@ -886,8 +886,19 @@ async def onform_p_position_bundle(
 
     created = []
     try:
+        from datetime import datetime
+        session_capture_time = datetime.utcnow()
         for index, (filename, data, content_type) in enumerate(ordered, start=1):
             created.append(_store_onform_image_bytes(data, filename=filename, content_type=content_type, session_id=analysis.session_id, analysis_id=analysis.id, label=f"P{index}", position=f"P{index}"))
+            suffix = os.path.splitext(filename)[1].lower()
+            db.add(SessionScreenshot(
+                id=uuid4().hex,
+                session_id=analysis.session_id,
+                original_filename=f"P{index}{suffix}",
+                content_type=content_type,
+                image_data=data,
+                created_at=session_capture_time,
+            ))
         try:
             extra = json.loads(analysis.extra_metrics_json or "{}")
             if not isinstance(extra, dict): extra = {}

@@ -44,7 +44,7 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
     shots = get_session_shots(session_id, db=db)
     _backfill_manual_estimates(shots, db)
     videos = list_session_videos(db, session_id)
-    screenshots = db.query(SessionScreenshot).filter(SessionScreenshot.session_id == session_id).order_by(SessionScreenshot.created_at.desc()).all()
+    screenshots = db.query(SessionScreenshot).filter(SessionScreenshot.session_id == session_id).order_by(SessionScreenshot.created_at.desc(), SessionScreenshot.original_filename.asc()).all()
     swing_analyses = db.query(SwingAnalysis).filter(SwingAnalysis.session_id == session_id).order_by(SwingAnalysis.updated_at.desc()).all()
     latest_p_sheet_analysis = db.query(PPositionAnalysis).filter(PPositionAnalysis.session_id == session_id).order_by(PPositionAnalysis.created_at.desc()).first()
     try:

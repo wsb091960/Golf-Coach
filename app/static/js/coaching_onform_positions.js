@@ -9,9 +9,9 @@
   const positions = Array.from({ length: 8 }, (_, i) => `P${i + 1}`);
   const definitions = [
     ["torso_rotation", "°", "torso_rotation_direction"], ["pelvis_rotation", "°", "pelvis_rotation_direction"],
-    ["x_factor", "°", null], ["torso_sway", '"', "torso_sway_direction"],
-    ["pelvis_sway", '"', "pelvis_sway_direction"], ["pelvis_lift", '"', "pelvis_lift_direction"],
-    ["torso_lift", '"', "torso_lift_direction"], ["torso_forward_bend", "°", "torso_forward_bend_direction"],
+    ["x_factor", "°", null], ["torso_sway", " in", "torso_sway_direction"],
+    ["pelvis_sway", " in", "pelvis_sway_direction"], ["pelvis_lift", " in", "pelvis_lift_direction"],
+    ["torso_lift", " in", "torso_lift_direction"], ["torso_forward_bend", "°", "torso_forward_bend_direction"],
     ["shoulder_tilt", "°", null], ["hip_tilt", "°", null], ["spine_tilt", "°", null], ["shaft_angle", "°", null],
   ];
   const numberText = (value) => {
@@ -65,11 +65,9 @@
       button.classList.toggle("is-selected", selected);
       button.setAttribute("aria-pressed", String(selected));
     });
-    const image = images.find((item) => item.position === position && item.available !== false);
-    const img = review.querySelector("[data-coaching-image]"), link = review.querySelector("[data-coaching-image-link]");
-    if (image && img && link) { img.src = image.url; img.alt = `${position} Onform screenshot`; link.href = image.url; link.hidden = false; }
-    else if (link) link.hidden = true;
-    const caption = review.querySelector("[data-coaching-image-caption]"); if (caption) caption.textContent = image?.label || position;
+    review.querySelectorAll("[data-position-card]").forEach((card) => {
+      card.classList.toggle("is-selected", card.dataset.positionCard === position);
+    });
     const count = definitions.filter(([key]) => vals[key] !== undefined && vals[key] !== null && vals[key] !== "" && Number.isFinite(Number(vals[key]))).length;
     const countNode = review.querySelector("[data-coaching-ocr-count]"); if (countNode) countNode.textContent = `${count} of ${definitions.length} values`;
     const sequenceText = String(sequence[position] || "").trim();
@@ -98,5 +96,5 @@
   review.dataset.verified = document.querySelector(".gcie-metrics-card .gcie-data-badge")?.textContent?.includes("VERIFIED") ? "true" : "false";
   review.querySelectorAll("[data-position]").forEach((button) => button.addEventListener("click", () => select(button.dataset.position)));
   renderChart();
-  select("P1");
+  select(images.find((item) => item.available !== false)?.position || "P1");
 })();

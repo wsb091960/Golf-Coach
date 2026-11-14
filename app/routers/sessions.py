@@ -1,6 +1,7 @@
 from __future__ import annotations
 from collections import Counter
 import json
+import re
 from datetime import date
 from pathlib import Path
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -45,6 +46,10 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
     _backfill_manual_estimates(shots, db)
     videos = list_session_videos(db, session_id)
     screenshots = db.query(SessionScreenshot).filter(SessionScreenshot.session_id == session_id).order_by(SessionScreenshot.created_at.desc(), SessionScreenshot.original_filename.asc()).all()
+    # Onform P-position captures belong to their Swing Analysis review, not
+    # the separate session screenshot gallery. Older ZIP imports duplicated
+    # these there, so hide those legacy copies as well.
+    screenshots = [row for row in screenshots if not re.fullmatch(r"P[1-8]\.(?:png|jpe?g|webp)", row.original_filename or "", re.IGNORECASE)]
     swing_analyses = db.query(SwingAnalysis).filter(SwingAnalysis.session_id == session_id).order_by(SwingAnalysis.updated_at.desc()).all()
     latest_p_sheet_analysis = db.query(PPositionAnalysis).filter(PPositionAnalysis.session_id == session_id).order_by(PPositionAnalysis.created_at.desc()).first()
     try:

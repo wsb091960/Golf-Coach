@@ -14,10 +14,14 @@
         .coaching-onform-viewer{margin-top:16px;padding:13px;border:1px solid #e0e8e3;border-radius:13px;background:#fbfcfb}
         .coaching-onform-viewer>.gcie-card-heading{margin-bottom:10px}
         .coaching-onform-viewer .gcie-card-heading p{margin:4px 0 0;color:#7a8981;font-size:11px}
-        .coaching-onform-image-link{display:grid;place-items:center;min-height:180px;max-height:400px;overflow:hidden;border-radius:10px;background:#102820}
-        .coaching-onform-image-link img{display:block;width:100%;max-height:400px;object-fit:contain}
-        .session-onform-image-caption{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 2px;color:#75847d;font-size:11px}
-        .session-onform-image-caption strong{color:#174f40;font-size:13px}
+        .coaching-onform-position-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:12px}
+        .coaching-onform-position-card{overflow:hidden;border:1px solid #d8e2dc;border-radius:12px;background:#fff}
+        .coaching-onform-position-card.is-selected{border-color:#1c654d;box-shadow:0 0 0 2px #1c654d22}
+        .coaching-onform-image-link{display:grid;place-items:center;min-height:120px;height:170px;overflow:hidden;background:#102820}
+        .coaching-onform-image-link img{display:block;width:100%;height:100%;object-fit:contain}
+        .coaching-onform-position-card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px}
+        .coaching-onform-position-card-foot strong{color:#174f40;font-size:14px}
+        .coaching-onform-position-card-foot .button{padding:7px 10px}
         .coaching-onform-position-selector,.coaching-onform-metric-selector{margin:10px 0 0}
         .coaching-onform-position-selector .gcie-checkpoint,.coaching-onform-metric-selector .gcie-checkpoint{min-width:42px;min-height:36px;display:grid;place-items:center;padding:7px 10px}
         .coaching-onform-position-selector .gcie-checkpoint.is-selected,.coaching-onform-metric-selector .gcie-checkpoint.is-selected{border-color:#174f3c;background:#174f3c;color:#fff}
@@ -134,7 +138,7 @@
     </div>
     <div class="gcie-review-grid">
         <article class="gcie-review-card gcie-video-card">
-            <div class="gcie-video-topline"><span>{{ (analysis.original_video.camera_view or analysis.camera_view or "SWING VIDEO")|upper }}</span><span>{% if latest_onform_import and latest_onform_import.screenshots %}{{ latest_onform_import.screenshots|length }} saved metric screenshot{{ "s" if latest_onform_import.screenshots|length != 1 else "" }}{% else %}Screenshot metrics optional{% endif %}</span></div>
+            <div class="gcie-video-topline"><span>{{ (analysis.original_video.camera_view or analysis.camera_view or "SWING VIDEO")|upper }}</span><span>{% if latest_onform_import and latest_onform_import.screenshots %}{{ latest_onform_import.screenshots|length }} P-position screenshot{{ "s" if latest_onform_import.screenshots|length != 1 else "" }}{% else %}Screenshot metrics optional{% endif %}</span></div>
             {% if not is_observation_only and analysis.original_video and analysis.original_video.id %}
             <div class="gcie-video-stage"><video id="gcie-review-video" controls playsinline preload="metadata" src="/sessions/{{ analysis.session_id }}/videos/{{ analysis.original_video.id }}/stream"></video><canvas id="gcie-pose-canvas" aria-label="On-device body landmark overlay"></canvas><span class="gcie-pose-label" id="gcie-pose-label" hidden></span></div>
             <div class="gcie-overlay-controls"><button type="button" class="button button-secondary" id="gcie-pose-toggle" aria-pressed="false">Show body overlay</button><span id="gcie-pose-status" role="status">Overlay is off. Turn it on to see estimated landmarks on the video.</span><span id="gcie-upload-status" class="gcie-upload-status" role="status" hidden></span></div>
@@ -143,14 +147,19 @@
             {% else %}
             <div class="gcie-video-stage gcie-video-empty"><strong>No swing video loaded</strong><span>Use “Upload / Replace Onform MP4” above to add a clip. Screenshot import is a separate step.</span></div>
             {% endif %}
+            {% set p_images = latest_onform_import.screenshots|selectattr('position')|list if latest_onform_import else [] %}
             {% if latest_onform_import and latest_onform_import.position_metrics %}
-            {% set p_images = latest_onform_import.screenshots|selectattr('position')|list %}
             <section class="coaching-onform-viewer" aria-label="Onform P-position screenshot review">
                 <div class="gcie-card-heading"><div><span class="section-kicker">ONFORM SCREENSHOT REVIEW</span><h3>Review each P-position</h3><p>OCR values below change with the selected screenshot.</p></div><span class="gcie-data-badge">{{ p_images|length }} P-position images</span></div>
                 {% if p_images %}
-                <a class="coaching-onform-image-link" data-coaching-image-link href="{{ p_images[0].url }}" target="_blank" rel="noopener"><img data-coaching-image src="{{ p_images[0].url }}" alt="{{ p_images[0].position }} Onform screenshot"></a>
-                <div class="session-onform-image-caption"><strong data-coaching-image-caption>{{ p_images[0].position }}</strong><span>Click image to open full size</span></div>
-                <div class="gcie-position-selector coaching-onform-position-selector" role="group" aria-label="Select Onform P-position">{% for position_number in range(1, 9) %}<button type="button" class="gcie-checkpoint{% if position_number == 1 %} is-selected{% endif %}" data-position="P{{ position_number }}" aria-pressed="{{ 'true' if position_number == 1 else 'false' }}"><b>P{{ position_number }}</b></button>{% endfor %}</div>
+                <div class="coaching-onform-position-grid" aria-label="P-position screenshots">
+                    {% for item in p_images %}
+                    <article class="coaching-onform-position-card{% if loop.first %} is-selected{% endif %}" data-position-card="{{ item.position }}">
+                        <a class="coaching-onform-image-link" data-position="{{ item.position }}" aria-label="Open {{ item.position }} screenshot in a new tab" href="{{ item.url }}" target="_blank" rel="noopener"><img src="{{ item.url }}" alt="{{ item.position }} Onform screenshot"></a>
+                        <div class="coaching-onform-position-card-foot"><strong>{{ item.position }}</strong>{% if not is_preview %}<form method="post" action="/swing-analysis/{{ analysis.id }}/workspace/onform-p-position-delete" onsubmit="return confirm('Delete {{ item.position }} screenshot and its OCR values?')"><input type="hidden" name="position" value="{{ item.position }}"><button type="submit" class="button button-secondary">Delete</button></form>{% endif %}</div>
+                    </article>
+                    {% endfor %}
+                </div>
                 {% else %}<p class="gcie-video-help">No P-position screenshots are attached to this OCR set yet.</p>{% endif %}
             </section>
             {% endif %}
@@ -169,7 +178,6 @@
                 {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-evidence-row"><span>OCR body values</span><strong data-coaching-ocr-count>Reading P1…</strong><small>Read from the selected P-position screenshot</small></div><div class="gcie-evidence-row"><span>Kinematic sequence</span><strong data-coaching-sequence-status>Checking P1…</strong><small>OCR sequence text for the selected image</small></div><div class="gcie-priority-note coaching-onform-sequence"><b>Sequence · <span data-coaching-sequence-position>P1</span></b><span data-coaching-sequence-text>Loading sequence text…</span></div>{% endif %}
                 <div class="gcie-evidence-row"><span>Club path</span><strong>{% if analysis.shot and analysis.shot.club_path is not none %}{{ "%.1f"|format(analysis.shot.club_path) }}°{% else %}Not recorded{% endif %}</strong><small>Garmin R10, if linked</small></div>
                 <div class="gcie-evidence-row"><span>Checkpoint timing</span><strong>{% set timed_points = analysis.checkpoints|selectattr('time_seconds')|list if analysis.checkpoints else [] %}{{ timed_points|length }} recorded</strong><small>P1–P10 coach review</small></div>
-                {% if latest_onform_import and latest_onform_import.screenshots %}<div class="gcie-screenshot-links"><span>Saved Onform evidence</span>{% for item in latest_onform_import.screenshots %}{% if item.available %}<a href="{{ item.url }}" target="_blank" rel="noopener">Open screenshot {{ loop.index }} ↗</a>{% endif %}{% endfor %}</div>{% endif %}
             </article>
             <article class="gcie-review-card gcie-observation-card">
                 <div class="gcie-card-heading"><div><span class="section-kicker">COACH REVIEW</span><h3>Coach observations</h3></div><a href="#analysis-workflow" class="gcie-edit-link">Edit below</a></div>
@@ -183,7 +191,7 @@
     {% set conflicts = latest_onform_import.conflicts_at_extraction if latest_onform_import and latest_onform_import.conflicts_at_extraction else [] %}
     <article class="gcie-review-card gcie-metrics-card">
         <div class="gcie-card-heading gcie-metrics-heading"><div><span class="section-kicker">GCIE BIOMECHANICS METRICS</span><h3>Movement through the swing</h3><p>{% if latest_onform_import %}<span data-selected-metric-position>{{ latest_onform_import.checkpoint_position or "P1" }}</span> · Onform screenshot data{% else %}Upload Onform screenshots to show measured values here.{% endif %}</p></div><span class="gcie-data-badge">{% if latest_onform_import and latest_onform_import.verified %}COACH VERIFIED{% elif latest_onform_import %}REVIEW NEEDED{% else %}AWAITING DATA{% endif %}</span></div>
-        {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-position-selector coaching-onform-metric-selector" role="group" aria-label="Select P-position metrics">{% for position_number in range(1, 9) %}<button type="button" class="gcie-checkpoint{% if position_number == 1 %} is-selected{% endif %}" data-position="P{{ position_number }}" aria-pressed="{{ 'true' if position_number == 1 else 'false' }}"><b>P{{ position_number }}</b></button>{% endfor %}</div>{% endif %}
+        {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-position-selector coaching-onform-metric-selector" role="group" aria-label="Select P-position metrics">{% for position_number in range(1, 9) %}{% set position_label = "P" ~ position_number %}{% if position_label in (p_images|map(attribute='position')|list) %}<button type="button" class="gcie-checkpoint{% if p_images and position_label == p_images[0].position %} is-selected{% endif %}" data-position="{{ position_label }}" aria-pressed="{{ 'true' if p_images and position_label == p_images[0].position else 'false' }}"><b>{{ position_label }}</b></button>{% endif %}{% endfor %}</div>{% endif %}
         <div class="gcie-metrics-layout">
             <div class="gcie-metric-tiles">
                 {% for key,label,unit,direction in [("torso_rotation","Torso turn","°","torso_rotation_direction"),("pelvis_rotation","Pelvis turn","°","pelvis_rotation_direction"),("x_factor","X-Factor","°",none),("torso_sway","Torso sway"," in","torso_sway_direction"),("pelvis_sway","Pelvis sway"," in","pelvis_sway_direction"),("pelvis_lift","Pelvis lift"," in","pelvis_lift_direction"),("torso_lift","Torso lift"," in","torso_lift_direction"),("torso_forward_bend","Torso forward bend","°","torso_forward_bend_direction"),("shoulder_tilt","Shoulder tilt","°",none),("hip_tilt","Hip / pelvis tilt","°",none),("spine_tilt","Spine tilt","°",none),("shaft_angle","Shaft angle","°",none)] %}
@@ -861,7 +869,7 @@
 
 <script src="/static/js/swing_analysis_workspace.js?v=5.2.6"></script>
 <script src="/static/js/swing_analysis_review.js?v=2"></script>
-<script src="/static/js/coaching_onform_positions.js?v=5.2.10A"></script>
+<script src="/static/js/coaching_onform_positions.js?v=5.2.10B"></script>
 <script src="/static/js/gcie_pose_overlay.js?v=2"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>

@@ -753,7 +753,7 @@
       await postPositionMetrics(false);
       showPositionEvidence(savedImport.screenshots || []);
       positionSave.disabled = false;
-      positionStatus.textContent = `Saved all eight images as P1–P8 in the session Biomechanics tab. OCR detected ${totalLabels} metric labels and retained each image's text, including its kinematic-sequence information. Select each P-position to review values, then verify and save.`;
+      positionStatus.textContent = `Saved all eight images as P1–P8 for this swing analysis. OCR detected ${totalLabels} metric labels and retained each image's kinematic-sequence information. Review each position and its changing values on Coaching Analysis, then verify and save.`;
     } catch (error) {
       console.error(error);
       positionStatus.textContent = error.message || "Unable to unpack or read this ZIP file.";
@@ -781,6 +781,7 @@
   });
 
   function bindPreview(input, preview) {
+    if (!input || !preview) return;
     input.addEventListener("change", () => {
       const file = input.files?.[0];
       if (!file) {
@@ -890,7 +891,7 @@
     return payload;
   }
 
-  extractButton.addEventListener("click", async () => {
+  extractButton?.addEventListener("click", async () => {
     const hasFirst = Boolean(file1.files?.[0] || savedScreenshot(1));
     const hasSecond = Boolean(file2.files?.[0] || savedScreenshot(2));
     if (!hasFirst || !hasSecond) {

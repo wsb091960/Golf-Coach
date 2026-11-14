@@ -888,19 +888,10 @@ async def onform_p_position_bundle(
 
     created = []
     try:
-        from datetime import datetime
-        session_capture_time = datetime.utcnow()
         for index, (filename, data, content_type) in enumerate(ordered, start=1):
-            created.append(_store_onform_image_bytes(data, filename=filename, content_type=content_type, session_id=analysis.session_id, analysis_id=analysis.id, label=f"P{index}", position=f"P{index}"))
-            suffix = os.path.splitext(filename)[1].lower()
-            db.add(SessionScreenshot(
-                id=uuid4().hex,
-                session_id=analysis.session_id,
-                original_filename=f"P{index}{suffix}",
-                content_type=content_type,
-                image_data=data,
-                created_at=session_capture_time,
-            ))
+            saved = _store_onform_image_bytes(data, filename=filename, content_type=content_type, session_id=analysis.session_id, analysis_id=analysis.id, label=f"P{index}", position=f"P{index}")
+            saved["original_filename"] = f"P{index}"
+            created.append(saved)
         try:
             extra = json.loads(analysis.extra_metrics_json or "{}")
             if not isinstance(extra, dict): extra = {}
@@ -925,6 +916,81 @@ async def onform_p_position_bundle(
         raise
     refreshed = get_analysis(db, analysis.id) or analysis
     return {"ok": True, "saved_import": _latest_onform_import(refreshed)}
+
+
+@router.post("/{analysis_id}/workspace/onform-p-position-delete", name="onform_p_position_delete")
+def onform_p_position_delete(
+    analysis_id: str,
+    position: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    """Delete one P-position image and its OCR values from the latest ZIP set."""
+    position = position.strip().upper()
+    if not re.fullmatch(r"P[1-8]", position):
+        raise HTTPException(422, "Choose a P-position from P1 through P8")
+    analysis = get_analysis(db, analysis_id)
+    if analysis is None:
+        raise HTTPException(404, "Swing analysis not found")
+    try:
+        extra = json.loads(analysis.extra_metrics_json or "{}")
+    except (TypeError, json.JSONDecodeError):
+        extra = {}
+    imports = extra.get("onform_screenshot_imports", []) if isinstance(extra, dict) else []
+    if not imports or not isinstance(imports[-1], dict):
+        raise HTTPException(404, "No P-position screenshot set is saved")
+    saved_import = imports[-1]
+    screenshots = saved_import.get("screenshots", [])
+    item = next((entry for entry in screenshots if isinstance(entry, dict) and str(entry.get("position", "")).upper() == position), None)
+    if item is None:
+        raise HTTPException(404, f"{position} screenshot was not found")
+
+    stored_name = str(item.get("stored_filename") or "")
+    if stored_name and Path(stored_name).name == stored_name and stored_name.startswith(f"{analysis.session_id}_{analysis.id}_"):
+        (ONFORM_SCREENSHOT_DIR / stored_name).unlink(missing_ok=True)
+    screenshot_id = item.get("session_screenshot_id")
+    screenshot = db.get(SessionScreenshot, str(screenshot_id)) if screenshot_id else None
+    if screenshot and screenshot.session_id == analysis.session_id:
+        db.delete(screenshot)
+    elif item.get("original_filename"):
+        # Remove the legacy duplicate stored in the session gallery, if present.
+        candidates = db.scalars(select(SessionScreenshot).where(
+            SessionScreenshot.session_id == analysis.session_id,
+        ).order_by(SessionScreenshot.created_at.desc())).all()
+        for candidate in candidates:
+            base_name = Path(candidate.original_filename or "").stem.upper()
+            if base_name == position:
+                db.delete(candidate)
+
+    saved_import["screenshots"] = [entry for entry in screenshots if entry is not item]
+    metrics = saved_import.get("position_metrics")
+    if isinstance(metrics, dict):
+        metrics.pop(position, None)
+    sequence = saved_import.get("kinematic_sequence")
+    if isinstance(sequence, dict) and isinstance(sequence.get("ocr_text_by_position"), dict):
+        sequence["ocr_text_by_position"].pop(position, None)
+    saved_import["verified"] = False
+    saved_import["status"] = "position_metrics_review"
+
+    checkpoint = db.scalar(select(SwingCheckpoint).where(
+        SwingCheckpoint.analysis_id == analysis.id,
+        SwingCheckpoint.position == position,
+    ))
+    if checkpoint and checkpoint.measurement_source == "Onform Screenshot OCR":
+        for field in CHECKPOINT_SCREENSHOT_FIELDS:
+            setattr(checkpoint, field, None)
+        try:
+            checkpoint_extra = json.loads(checkpoint.extra_metrics_json or "{}")
+        except (TypeError, json.JSONDecodeError):
+            checkpoint_extra = {}
+        if isinstance(checkpoint_extra, dict):
+            checkpoint_extra.pop("onform_metrics", None)
+            checkpoint.extra_metrics_json = json.dumps(checkpoint_extra)
+        checkpoint.measurement_source = "Manual"
+        checkpoint.confidence = None
+
+    analysis.extra_metrics_json = json.dumps(extra)
+    db.commit()
+    return RedirectResponse(f"/swing-analysis/{analysis_id}/coaching", status_code=303)
 
 
 @router.post("/{analysis_id}/workspace/onform-p-position-metrics", name="onform_p_position_metrics")

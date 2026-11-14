@@ -160,6 +160,7 @@
                     </article>
                     {% endfor %}
                 </div>
+                {% if not is_preview %}<form style="display:flex;justify-content:flex-end;margin-top:10px" method="post" action="/swing-analysis/{{ analysis.id }}/workspace/onform-p-position-clear" onsubmit="return confirm('Clear all P1–P8 screenshots, OCR values, and sequence text from this set?')"><button type="submit" class="button button-secondary">Clear P1–P8</button></form>{% endif %}
                 {% else %}<p class="gcie-video-help">No P-position screenshots are attached to this OCR set yet.</p>{% endif %}
             </section>
             {% endif %}

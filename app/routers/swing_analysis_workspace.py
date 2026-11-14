@@ -993,6 +993,69 @@ def onform_p_position_delete(
     return RedirectResponse(f"/swing-analysis/{analysis_id}/coaching", status_code=303)
 
 
+@router.post("/{analysis_id}/workspace/onform-p-position-clear", name="onform_p_position_clear")
+def onform_p_position_clear(
+    analysis_id: str,
+    db: Session = Depends(get_db),
+):
+    """Clear the current P1–P8 screenshot set so a new ZIP can be imported."""
+    analysis = get_analysis(db, analysis_id)
+    if analysis is None:
+        raise HTTPException(404, "Swing analysis not found")
+    try:
+        extra = json.loads(analysis.extra_metrics_json or "{}")
+    except (TypeError, json.JSONDecodeError):
+        extra = {}
+    imports = extra.get("onform_screenshot_imports", []) if isinstance(extra, dict) else []
+    if not imports or not isinstance(imports[-1], dict):
+        raise HTTPException(404, "No P-position screenshot set is saved")
+    saved_import = imports[-1]
+    screenshots = saved_import.get("screenshots", [])
+    p_screenshots = [entry for entry in screenshots if isinstance(entry, dict) and re.fullmatch(r"P[1-8]", str(entry.get("position", "")).upper())]
+    if not p_screenshots:
+        raise HTTPException(404, "No P-position screenshots are saved")
+
+    for item in p_screenshots:
+        stored_name = str(item.get("stored_filename") or "")
+        if stored_name and Path(stored_name).name == stored_name and stored_name.startswith(f"{analysis.session_id}_{analysis.id}_"):
+            (ONFORM_SCREENSHOT_DIR / stored_name).unlink(missing_ok=True)
+
+    # Older ZIP imports also copied P1–P8 into the general session gallery.
+    legacy_rows = db.scalars(select(SessionScreenshot).where(
+        SessionScreenshot.session_id == analysis.session_id,
+    )).all()
+    for row in legacy_rows:
+        if re.fullmatch(r"P[1-8](?:\.(?:png|jpe?g|webp))?", row.original_filename or "", re.IGNORECASE):
+            db.delete(row)
+
+    for position_number in range(1, 9):
+        checkpoint = db.scalar(select(SwingCheckpoint).where(
+            SwingCheckpoint.analysis_id == analysis.id,
+            SwingCheckpoint.position == f"P{position_number}",
+        ))
+        if checkpoint and checkpoint.measurement_source == "Onform Screenshot OCR":
+            for field in CHECKPOINT_SCREENSHOT_FIELDS:
+                setattr(checkpoint, field, None)
+            try:
+                checkpoint_extra = json.loads(checkpoint.extra_metrics_json or "{}")
+            except (TypeError, json.JSONDecodeError):
+                checkpoint_extra = {}
+            if isinstance(checkpoint_extra, dict):
+                checkpoint_extra.pop("onform_metrics", None)
+                checkpoint.extra_metrics_json = json.dumps(checkpoint_extra)
+            checkpoint.measurement_source = "Manual"
+            checkpoint.confidence = None
+
+    saved_import["screenshots"] = []
+    saved_import["position_metrics"] = {}
+    saved_import["kinematic_sequence"] = {}
+    saved_import["verified"] = False
+    saved_import["status"] = "position_bundle_cleared"
+    analysis.extra_metrics_json = json.dumps(extra)
+    db.commit()
+    return RedirectResponse(f"/swing-analysis/{analysis_id}/coaching", status_code=303)
+
+
 @router.post("/{analysis_id}/workspace/onform-p-position-metrics", name="onform_p_position_metrics")
 async def onform_p_position_metrics(
     analysis_id: str,

@@ -144,21 +144,21 @@
 <section class="gcie-review" aria-label="Swing review and biomechanics metrics" data-coaching-onform-package>
     <div class="gcie-review-heading">
         <div><span class="section-kicker">GCIE SCREENSHOT REVIEW</span><h2>Swing Analysis · Onform Screenshots</h2><p>{{ analysis.original_video.camera_view or analysis.camera_view or "Review the saved P-position screenshots" }}{% if analysis.club %} · {{ analysis.club }}{% endif %}</p></div>
-        <div class="gcie-review-actions"><a class="button button-secondary" href="/sessions/{{ analysis.session_id }}">Back to Session</a><a class="button button-secondary" href="#onform-screenshot-import">Upload P1–P8 ZIP</a><button type="button" class="button button-primary" id="save-analysis" {% if is_preview %}disabled title="Read-only demo preview"{% endif %}>Save Analysis</button></div>
+        <div class="gcie-review-actions"><a class="button button-secondary" href="/sessions/{{ analysis.session_id }}">Back to Session</a><a class="button button-secondary" href="#onform-screenshot-import">Upload P-position ZIP</a><button type="button" class="button button-primary" id="save-analysis" {% if is_preview %}disabled title="Read-only demo preview"{% endif %}>Save Analysis</button></div>
     </div>
     <section class="analysis-card onform-screenshot-import" id="onform-screenshot-import" style="margin:0 0 18px;padding:18px">
         <div class="card-heading">
-            <div><span class="section-kicker">ONFORM SCREENSHOT IMPORT</span><h3>Upload P1–P8 screenshots</h3>
-            <p>Select the ZIP containing exactly eight Onform screenshots. Each screenshot includes its P-position metrics and kinematic-sequence data. The OCR results and images will be saved into this Coaching Analysis.</p></div>
+            <div><span class="section-kicker">ONFORM SCREENSHOT IMPORT</span><h3>Upload P-position screenshots</h3>
+            <p>Select the ZIP containing between 1 and 10 Onform screenshots. Each screenshot includes its P-position metrics and kinematic-sequence data. The OCR results and images will be saved into this Coaching Analysis.</p></div>
         </div>
         <label for="onform-p-position-zip"><strong>Onform ZIP bundle</strong></label>
         <input id="onform-p-position-zip" type="file" accept=".zip,application/zip">
         <div id="onform-p-position-previews" class="compact-evidence-strip" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px" aria-live="polite"></div>
         <div class="onform-import-actions" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px">
             <button type="button" class="button button-primary" id="onform-p-position-extract">Upload, extract &amp; read OCR</button>
-            <button type="button" class="button button-secondary" id="onform-p-position-save" disabled>Verify P1–P8 values</button>
+            <button type="button" class="button button-secondary" id="onform-p-position-save" disabled>Verify OCR values</button>
         </div>
-        <p id="onform-p-position-status" class="field-help" aria-live="polite">After OCR runs, this page will reload with the P1–P8 screenshots and matching metrics.</p>
+        <p id="onform-p-position-status" class="field-help" aria-live="polite">After OCR runs, this page will reload with the P-position screenshots and matching metrics.</p>
         <strong id="onform-screenshot-status" hidden></strong>
         <div hidden aria-hidden="true">
             <input id="onform-screenshot-file-1" type="file"><input id="onform-screenshot-file-2" type="file"><input id="onform-screenshot-file-3" type="file">
@@ -184,7 +184,7 @@
                     </article>
                     {% endfor %}
                 </div>
-                {% if not is_preview %}<form style="display:flex;justify-content:flex-end;margin-top:10px" method="post" action="/swing-analysis/{{ analysis.id }}/workspace/onform-p-position-clear" onsubmit="return confirm('Clear all P1–P8 screenshots, OCR values, and sequence text from this set?')"><button type="submit" class="button button-secondary">Clear P1–P8</button></form>{% endif %}
+                {% if not is_preview %}<form style="display:flex;justify-content:flex-end;margin-top:10px" method="post" action="/swing-analysis/{{ analysis.id }}/workspace/onform-p-position-clear" onsubmit="return confirm('Clear all P-position screenshots, OCR values, and sequence text from this set?')"><button type="submit" class="button button-secondary">Clear screenshots</button></form>{% endif %}
                 {% else %}<p class="gcie-video-help">No P-position screenshots are attached to this OCR set yet.</p>{% endif %}
             </section>
             {% endif %}
@@ -196,7 +196,7 @@
     {% set conflicts = latest_onform_import.conflicts_at_extraction if latest_onform_import and latest_onform_import.conflicts_at_extraction else [] %}
     <article class="gcie-review-card gcie-metrics-card">
         <div class="gcie-card-heading gcie-metrics-heading"><div><span class="section-kicker">GCIE BIOMECHANICS METRICS</span><h3>Movement through the swing</h3><p>{% if latest_onform_import %}<span data-selected-metric-position>{{ latest_onform_import.checkpoint_position or "P1" }}</span> · Onform screenshot data{% else %}Upload Onform screenshots to show measured values here.{% endif %}</p></div><span class="gcie-data-badge">{% if latest_onform_import and latest_onform_import.verified %}COACH VERIFIED{% elif latest_onform_import %}REVIEW NEEDED{% else %}AWAITING DATA{% endif %}</span></div>
-        {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-position-selector coaching-onform-metric-selector" role="group" aria-label="Select P-position metrics">{% for position_number in range(1, 9) %}{% set position_label = "P" ~ position_number %}{% if position_label in (p_images|map(attribute='position')|list) %}<button type="button" class="gcie-checkpoint{% if p_images and position_label == p_images[0].position %} is-selected{% endif %}" data-position="{{ position_label }}" aria-pressed="{{ 'true' if p_images and position_label == p_images[0].position else 'false' }}"><b>{{ position_label }}</b></button>{% endif %}{% endfor %}</div>{% endif %}
+        {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-position-selector coaching-onform-metric-selector" role="group" aria-label="Select P-position metrics">{% for position_number in range(1, 11) %}{% set position_label = "P" ~ position_number %}{% if position_label in (p_images|map(attribute='position')|list) %}<button type="button" class="gcie-checkpoint{% if p_images and position_label == p_images[0].position %} is-selected{% endif %}" data-position="{{ position_label }}" aria-pressed="{{ 'true' if p_images and position_label == p_images[0].position else 'false' }}"><b>{{ position_label }}</b></button>{% endif %}{% endfor %}</div>{% endif %}
         <div class="gcie-metrics-layout">
             <div class="gcie-metric-tiles">
                 {% for key,label,unit,direction in [("torso_rotation","Torso turn","°","torso_rotation_direction"),("pelvis_rotation","Pelvis turn","°","pelvis_rotation_direction"),("x_factor","X-Factor","°",none),("torso_sway","Torso sway"," in","torso_sway_direction"),("pelvis_sway","Pelvis sway"," in","pelvis_sway_direction"),("pelvis_lift","Pelvis lift"," in","pelvis_lift_direction"),("torso_lift","Torso lift"," in","torso_lift_direction"),("torso_forward_bend","Torso forward bend","°","torso_forward_bend_direction"),("shoulder_tilt","Shoulder tilt","°",none),("hip_tilt","Hip / pelvis tilt","°",none),("spine_tilt","Spine tilt","°",none),("shaft_angle","Shaft angle","°",none)] %}
@@ -236,7 +236,7 @@
                 <div><span class="section-kicker">Onform screenshots</span><h2>Review the swing positions</h2></div>
                 <a class="gc-text-link" href="/swing-analysis/{{ analysis.id }}/onform-import">Add or replace screenshots ↗</a>
             </div>
-            <p class="gc-overview-note">P1–P8 screenshots and their OCR readings are shown above. Select a position to review its numeric values, direction, and sequence text.</p>
+            <p class="gc-overview-note">P-position screenshots and their OCR readings are shown above. Select a position to review its numeric values, direction, and sequence text.</p>
         </article>
 
         <article class="analysis-card gc-integrated-card">

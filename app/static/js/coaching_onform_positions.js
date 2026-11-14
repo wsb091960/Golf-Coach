@@ -5,7 +5,11 @@
   const metrics = read("gcie-onform-position-metrics");
   const images = read("gcie-onform-position-images");
   if (!metrics || typeof metrics !== "object" || !Object.keys(metrics).length) return;
-  const positions = Array.from({ length: 8 }, (_, i) => `P${i + 1}`);
+  const positions = Array.from(new Set([
+    ...images.map((item) => String(item.position || "").toUpperCase()),
+    ...Object.keys(metrics).map((position) => String(position).toUpperCase()),
+  ])).filter((position) => /^P(?:[1-9]|10)$/.test(position))
+    .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
   const definitions = [
     ["torso_rotation", "°", "torso_rotation_direction"], ["pelvis_rotation", "°", "pelvis_rotation_direction"],
     ["x_factor", "°", null], ["torso_sway", " in", "torso_sway_direction"],
@@ -43,7 +47,7 @@
       return;
     }
     const low = Math.min(0, ...values), high = Math.max(1, ...values), span = high - low || 1;
-    const x = (i) => 38 + i * 64, y = (v) => 158 - ((v - low) / span) * 112;
+    const x = (i) => 38 + i * (452 / Math.max(1, positions.length - 1)), y = (v) => 158 - ((v - low) / span) * 112;
     series.forEach((s) => {
       let segment = [];
       const flush = () => {
@@ -118,5 +122,5 @@
   review.dataset.verified = document.querySelector(".gcie-metrics-card .gcie-data-badge")?.textContent?.includes("VERIFIED") ? "true" : "false";
   review.querySelectorAll("[data-position]").forEach((button) => button.addEventListener("click", () => select(button.dataset.position)));
   renderChart();
-  select(images.find((item) => item.available !== false)?.position || "P1");
+  select(images.find((item) => item.available !== false)?.position || positions[0] || "P1");
 })();

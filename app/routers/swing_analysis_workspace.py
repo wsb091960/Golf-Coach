@@ -847,7 +847,7 @@ async def onform_p_position_bundle(
     bundle: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    """Unpack one Onform ZIP containing P1–P8 captures and a sequence image."""
+    """Unpack a variable set of one to ten Onform P-position captures."""
     analysis = get_analysis(db, analysis_id)
     if analysis is None:
         raise HTTPException(404, "Swing analysis not found")
@@ -864,8 +864,8 @@ async def onform_p_position_bundle(
             item for item in archive.infolist()
             if not item.is_dir() and os.path.splitext(item.filename)[1].lower() in image_exts
         ]
-        if len(entries) != 8:
-            raise HTTPException(422, "The ZIP must contain exactly eight Onform screenshots, one for each P-position")
+        if not 1 <= len(entries) <= 10:
+            raise HTTPException(422, "The ZIP must contain between one and ten Onform screenshots")
         if any(item.file_size > MAX_SCREENSHOT_BYTES for item in entries) or sum(item.file_size for item in entries) > 120 * 1024 * 1024:
             raise HTTPException(413, "A screenshot is over 15 MB or the extracted bundle is too large")
         images = [(item.filename, archive.read(item), image_exts[os.path.splitext(item.filename)[1].lower()]) for item in entries]
@@ -875,21 +875,25 @@ async def onform_p_position_bundle(
     # Each Onform image contains its P-position and kinematic-sequence data.
     positions = images
 
-    explicit = {}
+    named = []
     for item in positions:
-        match = re.search(r"(?:^|[^a-z])p\s*[-_ ]?([1-8])(?:[^0-9]|$)", os.path.basename(item[0]), re.I)
-        if match:
-            explicit[int(match.group(1))] = item
-    if len(explicit) == 8:
-        ordered = [explicit[index] for index in range(1, 9)]
+        match = re.search(r"(?:^|[^a-z])p\s*[-_ ]?(10|[1-9])(?:[^0-9]|$)", os.path.basename(item[0]), re.I)
+        named.append((item, int(match.group(1)) if match else None))
+    named_numbers = [number for _, number in named]
+    all_uniquely_labeled = all(number is not None for number in named_numbers) and len(set(named_numbers)) == len(named_numbers)
+    if all_uniquely_labeled:
+        ordered = sorted(named, key=lambda pair: pair[1])
     else:
-        ordered = sorted(positions, key=lambda item: _natural_filename_key(os.path.basename(item[0])))
+        ordered = [(item, index) for index, item in enumerate(
+            sorted(positions, key=lambda item: _natural_filename_key(os.path.basename(item[0]))), start=1
+        )]
 
     created = []
     try:
-        for index, (filename, data, content_type) in enumerate(ordered, start=1):
-            saved = _store_onform_image_bytes(data, filename=filename, content_type=content_type, session_id=analysis.session_id, analysis_id=analysis.id, label=f"P{index}", position=f"P{index}")
-            saved["original_filename"] = f"P{index}"
+        for (filename, data, content_type), position_number in ordered:
+            label = f"P{position_number}"
+            saved = _store_onform_image_bytes(data, filename=filename, content_type=content_type, session_id=analysis.session_id, analysis_id=analysis.id, label=label, position=label)
+            saved["original_filename"] = label
             created.append(saved)
         try:
             extra = json.loads(analysis.extra_metrics_json or "{}")
@@ -925,8 +929,8 @@ def onform_p_position_delete(
 ):
     """Delete one P-position image and close the numbering gap in the saved set."""
     position = position.strip().upper()
-    if not re.fullmatch(r"P[1-8]", position):
-        raise HTTPException(422, "Choose a P-position from P1 through P8")
+    if not re.fullmatch(r"P(?:[1-9]|10)", position):
+        raise HTTPException(422, "Choose a P-position from P1 through P10")
     analysis = get_analysis(db, analysis_id)
     if analysis is None:
         raise HTTPException(404, "Swing analysis not found")
@@ -941,7 +945,7 @@ def onform_p_position_delete(
     screenshots = saved_import.get("screenshots", [])
     p_screenshots = [
         entry for entry in screenshots
-        if isinstance(entry, dict) and re.fullmatch(r"P[1-8]", str(entry.get("position", "")).upper())
+        if isinstance(entry, dict) and re.fullmatch(r"P(?:[1-9]|10)", str(entry.get("position", "")).upper())
     ]
     ordered = sorted(p_screenshots, key=lambda entry: int(str(entry["position"])[1:]))
     deleted = next((entry for entry in ordered if str(entry["position"]).upper() == position), None)
@@ -971,8 +975,8 @@ def onform_p_position_delete(
     old_sequence_text = old_sequence_text if isinstance(old_sequence_text, dict) else {}
 
     renumbered = []
-    new_metrics = {key: value for key, value in old_metrics.items() if not re.fullmatch(r"P[1-8]", str(key).upper())}
-    new_sequence_text = {key: value for key, value in old_sequence_text.items() if not re.fullmatch(r"P[1-8]", str(key).upper())}
+    new_metrics = {key: value for key, value in old_metrics.items() if not re.fullmatch(r"P(?:[1-9]|10)", str(key).upper())}
+    new_sequence_text = {key: value for key, value in old_sequence_text.items() if not re.fullmatch(r"P(?:[1-9]|10)", str(key).upper())}
     for number, entry in enumerate((item for item in ordered if item is not deleted), start=1):
         old_position = str(entry.get("position", "")).upper()
         new_position = f"P{number}"
@@ -995,7 +999,7 @@ def onform_p_position_delete(
     saved_import["status"] = "position_metrics_review"
 
     # Keep checkpoint records aligned with the newly numbered screenshot set.
-    for number in range(1, 9):
+    for number in range(1, 11):
         checkpoint = db.scalar(select(SwingCheckpoint).where(
             SwingCheckpoint.analysis_id == analysis.id,
             SwingCheckpoint.position == f"P{number}",
@@ -1045,7 +1049,7 @@ def onform_p_position_clear(
     analysis_id: str,
     db: Session = Depends(get_db),
 ):
-    """Clear the current P1–P8 screenshot set so a new ZIP can be imported."""
+    """Clear the current P-position screenshot set so a new ZIP can be imported."""
     analysis = get_analysis(db, analysis_id)
     if analysis is None:
         raise HTTPException(404, "Swing analysis not found")
@@ -1058,7 +1062,7 @@ def onform_p_position_clear(
         raise HTTPException(404, "No P-position screenshot set is saved")
     saved_import = imports[-1]
     screenshots = saved_import.get("screenshots", [])
-    p_screenshots = [entry for entry in screenshots if isinstance(entry, dict) and re.fullmatch(r"P[1-8]", str(entry.get("position", "")).upper())]
+    p_screenshots = [entry for entry in screenshots if isinstance(entry, dict) and re.fullmatch(r"P(?:[1-9]|10)", str(entry.get("position", "")).upper())]
     if not p_screenshots:
         raise HTTPException(404, "No P-position screenshots are saved")
 
@@ -1067,15 +1071,15 @@ def onform_p_position_clear(
         if stored_name and Path(stored_name).name == stored_name and stored_name.startswith(f"{analysis.session_id}_{analysis.id}_"):
             (ONFORM_SCREENSHOT_DIR / stored_name).unlink(missing_ok=True)
 
-    # Older ZIP imports also copied P1–P8 into the general session gallery.
+    # Older ZIP imports may also have copied P-position images into the session gallery.
     legacy_rows = db.scalars(select(SessionScreenshot).where(
         SessionScreenshot.session_id == analysis.session_id,
     )).all()
     for row in legacy_rows:
-        if re.fullmatch(r"P[1-8](?:\.(?:png|jpe?g|webp))?", row.original_filename or "", re.IGNORECASE):
+        if re.fullmatch(r"P(?:[1-9]|10)(?:\.(?:png|jpe?g|webp))?", row.original_filename or "", re.IGNORECASE):
             db.delete(row)
 
-    for position_number in range(1, 9):
+    for position_number in range(1, 11):
         checkpoint = db.scalar(select(SwingCheckpoint).where(
             SwingCheckpoint.analysis_id == analysis.id,
             SwingCheckpoint.position == f"P{position_number}",
@@ -1130,20 +1134,20 @@ async def onform_p_position_metrics(
         extra = json.loads(analysis.extra_metrics_json or "{}")
         imports = extra.get("onform_screenshot_imports", [])
         if not imports or imports[-1].get("status") not in ("position_bundle_saved", "position_metrics_review"):
-            raise HTTPException(409, "Upload a P1–P8 screenshot bundle first")
+            raise HTTPException(409, "Upload a P-position screenshot bundle first")
         item = imports[-1]
         item["position_metrics"] = position_metrics
         item["kinematic_sequence"] = {
             "ocr_text_by_position": {
                 f"P{i}": str(position_sequence_text.get(f"P{i}") or "")[:12000]
-                for i in range(1, 9)
+                for i in range(1, 11)
             }
         }
         is_verified = verified.lower() == "true"
         item["verified"] = is_verified
         item["status"] = "position_metrics_verified" if is_verified else "position_metrics_review"
         if is_verified:
-            for position in (f"P{i}" for i in range(1, 9)):
+            for position in (f"P{i}" for i in range(1, 11)):
                 values = position_metrics.get(position)
                 if not isinstance(values, dict):
                     continue

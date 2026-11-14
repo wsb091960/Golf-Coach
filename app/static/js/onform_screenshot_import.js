@@ -28,6 +28,7 @@
   let positionMetrics = {};
   let positionSequenceText = {};
   let positionFiles = [];
+  let positionNumbers = [];
   let sequenceFile = null;
   let primaryGoal = "";
   try {
@@ -617,8 +618,8 @@
       positionMetrics = savedImport.position_metrics;
       positionSave.disabled = !Object.keys(positionMetrics).length;
       positionStatus.textContent = savedImport.verified
-        ? "Saved P1–P8 screenshot set and verified OCR measurements loaded."
-        : "Saved P1–P8 screenshots loaded. Review the OCR values, then verify and save.";
+        ? "Saved P-position screenshot set and verified OCR measurements loaded."
+        : "Saved P-position screenshots loaded. Review the OCR values, then verify and save.";
       const selectedPosition = checkpointSelect?.value || "P7";
       if (positionMetrics[selectedPosition]) fillPositionMetrics(positionMetrics[selectedPosition]);
     }
@@ -714,35 +715,39 @@
     positionExtract.disabled = true;
     positionSave.disabled = true;
     try {
-      positionStatus.textContent = "Unpacking ZIP and assigning P1–P8 labels…";
+      positionStatus.textContent = "Unpacking ZIP and assigning P-position labels…";
       const images = await unzipImages(zipFile);
-      let swings = images;
-      if (swings.length !== 8) {
-        throw new Error(`Found ${swings.length} images. Include exactly eight Onform screenshots, one for each P-position.`);
+      if (images.length < 1 || images.length > 10) {
+        throw new Error(`Found ${images.length} images. Include between one and ten Onform screenshots.`);
       }
-      const explicit = new Map();
-      swings.forEach((item) => {
-        const m = item.name.match(/(?:^|[^a-z])p\s*[-_ ]?([1-8])(?:[^0-9]|$)/i);
-        if (m) explicit.set(Number(m[1]), item);
+      const named = images.map((item) => {
+        const match = item.name.match(/(?:^|[^a-z])p\s*[-_ ]?(10|[1-9])(?:[^0-9]|$)/i);
+        return { ...item, positionNumber: match ? Number(match[1]) : null };
       });
-      swings = explicit.size === 8 ? Array.from({ length: 8 }, (_, i) => explicit.get(i + 1)) : swings.sort((a, b) => naturalSortName(a.name, b.name));
-      positionFiles = swings.map((item, i) => new File([item.file], `P${i + 1}.${item.name.split(".").pop().toLowerCase()}`, { type: item.file.type }));
+      const namedNumbers = named.map((item) => item.positionNumber);
+      const allUniquelyLabeled = namedNumbers.every((number) => number !== null) && new Set(namedNumbers).size === named.length;
+      const numbered = allUniquelyLabeled
+        ? named.sort((a, b) => a.positionNumber - b.positionNumber)
+        : named.sort((a, b) => naturalSortName(a.name, b.name)).map((item, index) => ({ ...item, positionNumber: index + 1 }));
+      positionNumbers = numbered.map((item) => item.positionNumber);
+      positionFiles = numbered.map((item) => new File([item.file], `P${item.positionNumber}.${item.name.split(".").pop().toLowerCase()}`, { type: item.file.type }));
       sequenceFile = null;
-      showPositionEvidence(positionFiles.map((f, i) => ({ label: `P${i + 1}`, file: f })));
+      showPositionEvidence(positionFiles.map((file, index) => ({ label: `P${positionNumbers[index]}`, file })));
       positionMetrics = {};
       positionSequenceText = {};
       let totalLabels = 0;
       for (let i = 0; i < positionFiles.length; i += 1) {
-        positionStatus.textContent = `Reading P${i + 1} of 8…`;
-        const result = await readScreenshot(positionFiles[i], `P${i + 1}`);
-        positionMetrics[`P${i + 1}`] = result.metrics;
-        positionSequenceText[`P${i + 1}`] = result.text;
+        const position = `P${positionNumbers[i]}`;
+        positionStatus.textContent = `Reading ${position} (${i + 1} of ${positionFiles.length})…`;
+        const result = await readScreenshot(positionFiles[i], position);
+        positionMetrics[position] = result.metrics;
+        positionSequenceText[position] = result.text;
         totalLabels += result.spatial?.labelsFound || 0;
       }
       ocrText3 = "";
-      const selected = checkpointSelect?.value || "P7";
-      fillPositionMetrics(positionMetrics[selected] || {});
-      positionStatus.textContent = `OCR reviewed all eight positions (${totalLabels} metric labels detected). Saving the P1–P8 files and sequence image…`;
+      const selected = checkpointSelect?.value || `P${positionNumbers[0]}`;
+      fillPositionMetrics(positionMetrics[selected] || positionMetrics[`P${positionNumbers[0]}`] || {});
+      positionStatus.textContent = `OCR reviewed ${positionFiles.length} position(s) (${totalLabels} metric labels detected). Saving screenshots and readings…`;
       const saveForm = new FormData();
       saveForm.append("bundle", zipFile);
       const stored = await fetch(`/swing-analysis/${analysisId}/workspace/onform-p-position-bundle`, { method: "POST", body: saveForm, credentials: "same-origin" });
@@ -751,7 +756,7 @@
       savedImport = storedPayload.saved_import;
       await postPositionMetrics(false);
       positionSave.disabled = false;
-      positionStatus.textContent = "OCR metrics and screenshots saved to this Coaching Analysis. Reloading to show P1–P8…";
+      positionStatus.textContent = "OCR metrics and screenshots saved to this Coaching Analysis. Reloading to show the selected P-positions…";
       window.setTimeout(() => window.location.reload(), 450);
     } catch (error) {
       console.error(error);
@@ -763,12 +768,12 @@
 
   positionExtract?.addEventListener("click", processPositionZip);
   positionZip?.addEventListener("change", () => {
-    positionStatus.textContent = "ZIP selected. It should contain exactly eight screenshots, each with the P-position and kinematic-sequence information.";
+    positionStatus.textContent = "ZIP selected. Include between one and ten screenshots; each image should show its P-position and Onform metrics.";
     positionSave.disabled = true;
   });
   positionSave?.addEventListener("click", async () => {
     positionSave.disabled = true;
-    positionStatus.textContent = "Saving coach-verified P1–P8 metrics…";
+    positionStatus.textContent = "Saving coach-verified P-position metrics…";
     try {
       await postPositionMetrics(true);
       positionStatus.textContent = "Verified values saved to this Coaching Analysis. Reloading…";

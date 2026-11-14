@@ -4,7 +4,6 @@
   const read = (id) => { try { return JSON.parse(document.getElementById(id)?.textContent || "{}"); } catch { return {}; } };
   const metrics = read("gcie-onform-position-metrics");
   const images = read("gcie-onform-position-images");
-  const sequence = read("gcie-onform-sequence-text");
   if (!metrics || typeof metrics !== "object" || !Object.keys(metrics).length) return;
   const positions = Array.from({ length: 8 }, (_, i) => `P${i + 1}`);
   const definitions = [
@@ -70,9 +69,32 @@
     });
     const count = definitions.filter(([key]) => vals[key] !== undefined && vals[key] !== null && vals[key] !== "" && Number.isFinite(Number(vals[key]))).length;
     const countNode = review.querySelector("[data-coaching-ocr-count]"); if (countNode) countNode.textContent = `${count} of ${definitions.length} values`;
-    const sequenceText = String(sequence[position] || "").trim();
-    const seqNode = review.querySelector("[data-coaching-sequence-text]"); if (seqNode) seqNode.textContent = sequenceText || "No sequence text was readable for this position.";
-    const seqStatus = review.querySelector("[data-coaching-sequence-status]"); if (seqStatus) seqStatus.textContent = sequenceText ? "Text read" : "No text read";
+    const seqNode = review.querySelector("[data-coaching-sequence-text]");
+    if (seqNode) {
+      seqNode.replaceChildren();
+      const labels = {
+        torso_rotation: "Torso turn", pelvis_rotation: "Pelvis turn", x_factor: "X-Factor",
+        torso_sway: "Torso sway", pelvis_sway: "Pelvis sway", pelvis_lift: "Pelvis lift",
+        torso_lift: "Torso lift", torso_forward_bend: "Torso forward bend",
+        shoulder_tilt: "Shoulder tilt", hip_tilt: "Hip / pelvis tilt", spine_tilt: "Spine tilt",
+        shaft_angle: "Shaft angle",
+      };
+      const readings = definitions.flatMap(([key, unit, directionKey]) => {
+        const raw = vals[key];
+        if (raw === undefined || raw === null || raw === "" || !Number.isFinite(Number(raw))) return [];
+        const chip = document.createElement("span");
+        chip.className = "coaching-onform-summary-item";
+        const label = document.createElement("b");
+        label.textContent = labels[key] || key.replaceAll("_", " ");
+        const value = document.createElement("strong");
+        const direction = directionKey && vals[directionKey] ? ` · ${String(vals[directionKey]).toLowerCase()}` : "";
+        value.textContent = `${numberText(raw)}${unit}${direction}`;
+        chip.append(label, value);
+        return [chip];
+      });
+      if (readings.length) seqNode.append(...readings);
+      else seqNode.textContent = "No labeled metric values were recognized in this screenshot.";
+    }
     const seqPosition = review.querySelector("[data-coaching-sequence-position]"); if (seqPosition) seqPosition.textContent = position;
     const metricPosition = review.querySelector("[data-selected-metric-position]"); if (metricPosition) metricPosition.textContent = position;
     const video = document.getElementById("gcie-review-video");

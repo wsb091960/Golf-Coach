@@ -201,7 +201,7 @@ def swing_analysis_list(
     response_class=HTMLResponse,
     name="swing_analysis_new",
 )
-def swing_analysis_new(request: Request, db: Session = Depends(get_db)):
+def swing_analysis_new(request: Request, session_id: str = "", db: Session = Depends(get_db)):
     sessions = list(
         db.scalars(
             select(CoachingSession)
@@ -212,7 +212,11 @@ def swing_analysis_new(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         request=request,
         name="swing_analysis_new.html",
-        context={"page_title": "Start Coaching Analysis", "sessions": sessions},
+        context={
+            "page_title": "Start Coaching Analysis",
+            "sessions": sessions,
+            "selected_session_id": session_id if any(str(item.id) == session_id for item in sessions) else "",
+        },
     )
 
 

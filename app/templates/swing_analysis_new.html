@@ -31,7 +31,7 @@
                 <select name="session_id" required>
                     <option value="">Select a student session</option>
                     {% for session in sessions %}
-                    <option value="{{ session.id }}">{{ session.student.name if session.student and session.student.name else 'Student' }} · {{ session.session_date.strftime('%b %d, %Y') }} · {{ session.name or session.session_type }}</option>
+                    <option value="{{ session.id }}" {% if session.id == selected_session_id %}selected{% endif %}>{{ session.student.name if session.student and session.student.name else 'Student' }} · {{ session.session_date.strftime('%b %d, %Y') }} · {{ session.name or session.session_type }}</option>
                     {% endfor %}
                 </select>
             </label>

@@ -125,6 +125,10 @@
                     Add Shot Manually
                 </button>
 
+                <a class="button button-primary" href="{% if session_swing_analyses %}/swing-analysis/{{ session_swing_analyses[0].id }}/coaching{% else %}/swing-analysis/new?session_id={{ session.id }}{% endif %}">
+                    {% if session_swing_analyses %}Open Swing Analysis{% else %}Start Swing Analysis{% endif %}
+                </a>
+
             </div>
         </header>
 
@@ -227,9 +231,6 @@
                     {% endif %}
                     {% if not session_metrics.shots %}
                     <a class="button button-secondary" href="/sessions/{{ session.id }}?tab=shots">Add Session Shots</a>
-                    {% endif %}
-                    {% if session_swing_analyses %}
-                    <a class="button button-secondary" href="/sessions/{{ session.id }}?tab=screenshots#session-swing-analyses">Open Swing Analysis</a>
                     {% endif %}
                 </div>
             </div>

@@ -58,12 +58,29 @@ def session_detail(request: Request, session_id: str, db: Session = Depends(get_
             position_metrics = import_record.get("position_metrics")
             if not isinstance(position_metrics, dict) or not position_metrics:
                 continue
+            position_images = []
+            for evidence in import_record.get("screenshots", []):
+                if not isinstance(evidence, dict) or not evidence.get("stored_filename"):
+                    continue
+                position = str(evidence.get("position") or "")
+                if not position.startswith("P"):
+                    continue
+                position_images.append({
+                    "position": position,
+                    "label": evidence.get("label") or position,
+                    "url": f"/swing-analysis/{swing_analysis.id}/workspace/onform-screenshot/{evidence['stored_filename']}",
+                })
+            position_images.sort(key=lambda image: int(image["position"][1:]) if image["position"][1:].isdigit() else 99)
+            sequence = import_record.get("kinematic_sequence") or {}
+            sequence_text = sequence.get("ocr_text_by_position") if isinstance(sequence, dict) else {}
             onform_position_imports.append({
                 "title": (swing_analysis.original_video.title if swing_analysis.original_video and swing_analysis.original_video.title else "Onform swing"),
                 "camera_view": swing_analysis.camera_view or (swing_analysis.original_video.camera_view if swing_analysis.original_video else ""),
                 "status": import_record.get("status", ""),
                 "verified": bool(import_record.get("verified")),
                 "position_metrics": position_metrics,
+                "position_images": position_images,
+                "sequence_text": sequence_text if isinstance(sequence_text, dict) else {},
             })
     latest_p_sheet_analysis = db.query(PPositionAnalysis).filter(PPositionAnalysis.session_id == session_id).order_by(PPositionAnalysis.created_at.desc()).first()
     try:

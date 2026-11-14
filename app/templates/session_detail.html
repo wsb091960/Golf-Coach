@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 18257)
+Total output lines: 1421
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -10,7 +13,7 @@
     <link rel="stylesheet" href="/static/css/topdown_flight.css?v=5.3O">
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
-    <link rel="stylesheet" href="/static/css/swing_analysis_review.css?v=5.2.8F">
+    <link rel="stylesheet" href="/static/css/swing_analysis_review.css?v=5.2.9A">
     <style>
         .related-doc-links{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 12px}
         .related-doc-link{display:inline-flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid #d9e2d9;border-radius:10px;background:#f8fbf9;color:#174f40;font-weight:700;text-decoration:none}
@@ -21,6 +24,14 @@
         .gcie-position-selector .gcie-checkpoint.is-selected{border-color:#174f3c;background:#174f3c;color:#fff}
         .gcie-position-selector .gcie-checkpoint.is-selected b{color:#fff}
         .session-meta-static{box-sizing:border-box;display:flex;align-items:center;min-height:44px;padding:10px;border:1px solid #d7e1dd;border-radius:9px;background:#f3f5f1;color:#17332c}
+        .session-onform-package{display:grid;gap:14px;margin:18px 0 24px}
+        .session-onform-image-link{display:grid;place-items:center;min-height:260px;max-height:460px;overflow:hidden;border-radius:12px;background:#102820}
+        .session-onform-position-image{display:block;width:100%;height:100%;max-height:460px;object-fit:contain}
+        .session-onform-image-empty{padding:32px;color:#e9eee7;text-align:center}
+        .session-onform-image-caption{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 2px;color:#75847d;font-size:11px}
+        .session-onform-image-caption strong{color:#174f40;font-size:13px}
+        .session-onform-sequence-text{max-height:150px;overflow:auto;padding:12px;border-radius:9px;background:#f5f8f6;white-space:pre-wrap;overflow-wrap:anywhere}
+        .session-onform-viewer-positions{margin:10px 0 0}
         .session-overview{display:grid;gap:14px}
         .session-overview-header{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:22px 24px;border-radius:15px;background:linear-gradient(115deg,#123e33,#1d624b);color:#fff}
         .session-overview-header h2{margin:5px 0;font-size:24px}
@@ -544,7 +555,7 @@
                 <button class="button button-primary" type="submit">Add Screenshots</button>
             </form>
 
-            {% if session_screenshots %}
+            {% if session_screenshots and not onform_position_imports %}
             <div class="session-screenshot-grid">
                 {% for screenshot in session_screenshots %}
                 <article class="session-screenshot-card">
@@ -566,6 +577,24 @@
 
             {% if onform_position_imports %}
             {% for import_set in onform_position_imports %}
+            <div class="session-onform-package" data-session-onform-package>
+            <div class="gcie-review-grid session-onform-review-grid">
+                <article class="gcie-review-card gcie-video-card">
+                    <div class="gcie-video-topline"><span>{{ student.name if student else 'SESSION GOLFER' }} · ONFORM · <span data-current-position-label>P1</span></span><span>{{ import_set.camera_view|default('SWING VIEW', true)|upper }}</span></div>
+                    <a class="session-onform-image-link" data-current-image-link href="{{ import_set.position_images[0].url if import_set.position_images else '#' }}" target="_blank" rel="noopener" aria-label="Open Onform screenshot">
+                        {% if import_set.position_images %}<img class="session-onform-position-image" data-current-position-image src="{{ import_set.position_images[0].url }}" alt="P1 Onform screenshot">{% else %}<div class="session-onform-image-empty">P-position screenshots are saved in this session.</div>{% endif %}
+                    </a>
+                    <div class="session-onform-image-caption"><strong data-current-image-caption>{{ import_set.position_images[0].label if import_set.position_images else 'P1' }}</strong><span>Onform screenshot with swing metrics and kinematic sequence</span></div>
+                    <div class="gcie-position-selector session-onform-viewer-positions" role="group" aria-label="Select screenshot position">
+                        {% for position_number in range(1, 9) %}<button type="button" class="gcie-checkpoint{% if position_number == 1 %} is-selected{% endif %}" data-position="P{{ position_number }}" ar…257 tokens truncated…erification</span><strong class="status-review">{{ 'Verified' if import_set.verified else 'Review needed' }}</strong><small>Color indicates OCR review status; it does not grade the golfer.</small></div>
+                    </article>
+                    <article class="gcie-review-card gcie-observation-card">
+                        <div class="gcie-card-heading"><div><span class="section-kicker">OCR DETAILS</span><h3>Recognized sequence text</h3></div></div>
+                        <p class="session-onform-sequence-text" data-ocr-sequence-text>Loading OCR text for P1…</p>
+                        <p class="gcie-video-help">OCR readings are shown as captured. Confirm values against the screenshot before using them for coaching.</p>
+                    </article>
+                </div>
+            </div>
             <article class="gcie-review-card gcie-metrics-card session-onform-metrics" data-session-onform-metrics data-verified="{{ 'true' if import_set.verified else 'false' }}">
                 <div class="gcie-card-heading gcie-metrics-heading">
                     <div><span class="section-kicker">GCIE BIOMECHANICS METRICS</span><h3>Movement through the swing</h3><p>{{ import_set.title }}{% if import_set.camera_view %} · {{ import_set.camera_view }}{% endif %} · {{ 'Coach-verified Onform values' if import_set.verified else 'Onform OCR · coach review needed' }}</p></div>
@@ -584,7 +613,10 @@
                 </div>
                 <div class="gcie-status-legend"><span><i data-state="good"></i>Verified OCR reading</span><span><i data-state="warning"></i>OCR reading needs review</span></div>
                 <script type="application/json" class="session-onform-metrics-data">{{ import_set.position_metrics|tojson }}</script>
+                <script type="application/json" class="session-onform-images-data">{{ import_set.position_images|tojson }}</script>
+                <script type="application/json" class="session-onform-sequence-data">{{ import_set.sequence_text|tojson }}</script>
             </article>
+            </div>
             {% endfor %}
             {% endif %}
 
@@ -1358,7 +1390,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 <script src="/static/js/session_performance.js?v=5.3O"></script>
-<script src="/static/js/session_onform_metrics.js?v=5.2.8F"></script>
+<script src="/static/js/session_onform_metrics.js?v=5.2.9A"></script>
 
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>

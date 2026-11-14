@@ -8,9 +8,9 @@
     }
     button.addEventListener("click", () => {
       if (!video) return;
+      video.pause();
       const seek = () => {
         video.currentTime = Math.max(0, Math.min(time, Number.isFinite(video.duration) ? video.duration : time));
-        video.play().catch(() => {});
       };
       if (video.readyState >= 1) seek();
       else video.addEventListener("loadedmetadata", seek, { once: true });

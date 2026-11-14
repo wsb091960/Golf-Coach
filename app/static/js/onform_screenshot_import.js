@@ -26,6 +26,7 @@
   const positionStatus = document.getElementById("onform-p-position-status");
   const positionPreviews = document.getElementById("onform-p-position-previews");
   let positionMetrics = {};
+  let positionSequenceText = {};
   let positionFiles = [];
   let sequenceFile = null;
   let primaryGoal = "";
@@ -697,7 +698,7 @@
   async function postPositionMetrics(verifiedValue) {
     const form = new FormData();
     form.append("position_metrics_json", JSON.stringify(positionMetrics));
-    form.append("sequence_ocr_text", ocrText3);
+    form.append("position_sequence_text_json", JSON.stringify(positionSequenceText));
     form.append("verified", verifiedValue ? "true" : "false");
     const response = await fetch(`/swing-analysis/${analysisId}/workspace/onform-p-position-metrics`, {
       method: "POST", body: form, credentials: "same-origin",
@@ -716,12 +717,9 @@
     try {
       positionStatus.textContent = "Unpacking ZIP and assigning P1–P8 labels…";
       const images = await unzipImages(zipFile);
-      const sequenceMatches = images.filter((item) => /kinematic|sequence/i.test(item.name));
-      let swings = images.filter((item) => !sequenceMatches.includes(item));
-      let sequences = sequenceMatches;
-      if (swings.length === 9 && sequences.length === 0) sequences = [swings.pop()];
-      if (swings.length !== 8 || sequences.length !== 1) {
-        throw new Error(`Found ${swings.length} swing images and ${sequences.length} sequence images. Include eight P-position screenshots and one filename containing “kinematic” or “sequence”.`);
+      let swings = images;
+      if (swings.length !== 8) {
+        throw new Error(`Found ${swings.length} images. Include exactly eight Onform screenshots, one for each P-position.`);
       }
       const explicit = new Map();
       swings.forEach((item) => {
@@ -730,17 +728,19 @@
       });
       swings = explicit.size === 8 ? Array.from({ length: 8 }, (_, i) => explicit.get(i + 1)) : swings.sort((a, b) => naturalSortName(a.name, b.name));
       positionFiles = swings.map((item, i) => new File([item.file], `P${i + 1}.${item.name.split(".").pop().toLowerCase()}`, { type: item.file.type }));
-      sequenceFile = new File([sequences[0].file], `Kinematic-Sequence.${sequences[0].name.split(".").pop().toLowerCase()}`, { type: sequences[0].file.type });
-      showPositionEvidence(positionFiles.map((f, i) => ({ label: `P${i + 1}`, file: f })).concat([{ label: "Kinematic Sequence", file: sequenceFile }]));
+      sequenceFile = null;
+      showPositionEvidence(positionFiles.map((f, i) => ({ label: `P${i + 1}`, file: f })));
       positionMetrics = {};
+      positionSequenceText = {};
       let totalLabels = 0;
       for (let i = 0; i < positionFiles.length; i += 1) {
         positionStatus.textContent = `Reading P${i + 1} of 8…`;
         const result = await readScreenshot(positionFiles[i], `P${i + 1}`);
         positionMetrics[`P${i + 1}`] = result.metrics;
+        positionSequenceText[`P${i + 1}`] = result.text;
         totalLabels += result.spatial?.labelsFound || 0;
       }
-      ocrText3 = await readSequenceScreenshot(sequenceFile);
+      ocrText3 = "";
       const selected = checkpointSelect?.value || "P7";
       fillPositionMetrics(positionMetrics[selected] || {});
       positionStatus.textContent = `OCR reviewed all eight positions (${totalLabels} metric labels detected). Saving the P1–P8 files and sequence image…`;
@@ -753,7 +753,7 @@
       await postPositionMetrics(false);
       showPositionEvidence(savedImport.screenshots || []);
       positionSave.disabled = false;
-      positionStatus.textContent = `Saved and labeled P1–P8 plus the kinematic-sequence image. OCR detected ${totalLabels} metric labels; select each P-position to review its values, then verify and save.`;
+      positionStatus.textContent = `Saved and labeled all eight screenshots P1–P8. OCR detected ${totalLabels} metric labels and retained each screenshot's text, including its kinematic-sequence information. Select each P-position to review values, then verify and save.`;
     } catch (error) {
       console.error(error);
       positionStatus.textContent = error.message || "Unable to unpack or read this ZIP file.";
@@ -764,7 +764,7 @@
 
   positionExtract?.addEventListener("click", processPositionZip);
   positionZip?.addEventListener("change", () => {
-    positionStatus.textContent = "ZIP selected. It should contain eight P-position images and one kinematic-sequence image.";
+    positionStatus.textContent = "ZIP selected. It should contain exactly eight screenshots, each with the P-position and kinematic-sequence information.";
     positionSave.disabled = true;
   });
   positionSave?.addEventListener("click", async () => {

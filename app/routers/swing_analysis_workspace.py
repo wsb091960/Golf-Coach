@@ -863,21 +863,16 @@ async def onform_p_position_bundle(
             item for item in archive.infolist()
             if not item.is_dir() and os.path.splitext(item.filename)[1].lower() in image_exts
         ]
-        if len(entries) not in (8, 9):
-            raise HTTPException(422, "The ZIP must contain eight P-position screenshots and one kinematic-sequence screenshot")
+        if len(entries) != 8:
+            raise HTTPException(422, "The ZIP must contain exactly eight Onform screenshots, one for each P-position")
         if any(item.file_size > MAX_SCREENSHOT_BYTES for item in entries) or sum(item.file_size for item in entries) > 120 * 1024 * 1024:
             raise HTTPException(413, "A screenshot is over 15 MB or the extracted bundle is too large")
         images = [(item.filename, archive.read(item), image_exts[os.path.splitext(item.filename)[1].lower()]) for item in entries]
     except zipfile.BadZipFile as exc:
         raise HTTPException(422, "This ZIP file could not be opened") from exc
 
-    sequence = [item for item in images if re.search(r"kinematic|sequence", item[0], re.I)]
-    positions = [item for item in images if item not in sequence]
-    # If the ninth image has no descriptive filename, retain it as the sequence image.
-    if len(positions) == 9 and not sequence:
-        sequence = [positions.pop()]
-    if len(positions) != 8 or len(sequence) != 1:
-        raise HTTPException(422, "Include eight swing-position images and one image named with ‘kinematic’ or ‘sequence’")
+    # Each Onform image contains its P-position and kinematic-sequence data.
+    positions = images
 
     explicit = {}
     for item in positions:
@@ -893,9 +888,6 @@ async def onform_p_position_bundle(
     try:
         for index, (filename, data, content_type) in enumerate(ordered, start=1):
             created.append(_store_onform_image_bytes(data, filename=filename, content_type=content_type, session_id=analysis.session_id, analysis_id=analysis.id, label=f"P{index}", position=f"P{index}"))
-        filename, data, content_type = sequence[0]
-        created.append(_store_onform_image_bytes(data, filename=filename, content_type=content_type, session_id=analysis.session_id, analysis_id=analysis.id, label="Kinematic Sequence"))
-
         try:
             extra = json.loads(analysis.extra_metrics_json or "{}")
             if not isinstance(extra, dict): extra = {}
@@ -926,7 +918,7 @@ async def onform_p_position_bundle(
 async def onform_p_position_metrics(
     analysis_id: str,
     position_metrics_json: str = Form("{}"),
-    sequence_ocr_text: str = Form(""),
+    position_sequence_text_json: str = Form("{}"),
     verified: str = Form("false"),
     db: Session = Depends(get_db),
 ):
@@ -940,13 +932,24 @@ async def onform_p_position_metrics(
     if not isinstance(position_metrics, dict):
         raise HTTPException(422, "P-position metrics must be an object")
     try:
+        position_sequence_text = json.loads(position_sequence_text_json or "{}")
+    except json.JSONDecodeError:
+        position_sequence_text = {}
+    if not isinstance(position_sequence_text, dict):
+        position_sequence_text = {}
+    try:
         extra = json.loads(analysis.extra_metrics_json or "{}")
         imports = extra.get("onform_screenshot_imports", [])
         if not imports or imports[-1].get("status") not in ("position_bundle_saved", "position_metrics_review"):
             raise HTTPException(409, "Upload a P1–P8 screenshot bundle first")
         item = imports[-1]
         item["position_metrics"] = position_metrics
-        item["kinematic_sequence"] = {"ocr_text": sequence_ocr_text[:12000]}
+        item["kinematic_sequence"] = {
+            "ocr_text_by_position": {
+                f"P{i}": str(position_sequence_text.get(f"P{i}") or "")[:12000]
+                for i in range(1, 9)
+            }
+        }
         is_verified = verified.lower() == "true"
         item["verified"] = is_verified
         item["status"] = "position_metrics_verified" if is_verified else "position_metrics_review"

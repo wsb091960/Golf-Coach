@@ -92,14 +92,14 @@
 
             <div class="analysis-card" style="margin:0 0 16px;padding:18px;background:#f7faf8">
                 <h3 style="margin-top:0">P1–P8 Screenshot Bundle</h3>
-                <p>Upload one ZIP with eight P-position screenshots and one kinematic-sequence screenshot. If filenames include P1–P8, those labels are honored; otherwise images are numbered by filename order.</p>
+                <p>Upload one ZIP with exactly eight screenshots. Each image contains its P-position and kinematic-sequence information. If filenames include P1–P8, those labels are honored; otherwise images are numbered by filename order.</p>
                 <label><span>Onform ZIP bundle</span><input id="onform-p-position-zip" type="file" accept=".zip,application/zip"></label>
                 <div id="onform-p-position-previews" class="compact-evidence-strip" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px" aria-live="polite"></div>
                 <div class="onform-import-actions" style="margin-top:12px">
                     <button type="button" class="button button-secondary" id="onform-p-position-extract">Unpack, label P1–P8 &amp; read metrics</button>
                     <button type="button" class="button button-primary" id="onform-p-position-save" disabled>Verify &amp; Save P1–P8 Metrics</button>
                 </div>
-                <p id="onform-p-position-status" class="field-help" aria-live="polite">ZIP should contain eight swing-position images and one image named “kinematic” or “sequence”.</p>
+                <p id="onform-p-position-status" class="field-help" aria-live="polite">ZIP should contain exactly eight screenshots, one for each P-position.</p>
             </div>
 
             <details class="onform-legacy-screenshot-import">
@@ -285,7 +285,7 @@
 <script src="/media-assets/tesseract/tesseract.min.js"></script>
 <script id="student-primary-goal" type="application/json">{{ primary_goal | tojson }}</script>
 <script id="onform-saved-import" type="application/json">{{ latest_onform_import | tojson if latest_onform_import else "null" }}</script>
-<script src="/static/js/onform_screenshot_import.js?v=5.2.8C"></script>
+<script src="/static/js/onform_screenshot_import.js?v=5.2.8E"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 </body>

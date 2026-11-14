@@ -341,16 +341,11 @@ def swing_analysis_onform_import(
     analysis_id: str,
     db: Session = Depends(get_db),
 ):
-    context = _workspace_context(db, analysis_id)
-    return templates.TemplateResponse(
-        request=request,
-        name="swing_analysis_onform.html",
-        context={
-            "page_title": "Onform Import",
-            **context,
-        },
+    _workspace_context(db, analysis_id)
+    return RedirectResponse(
+        url=f"/swing-analysis/{analysis_id}/coaching#onform-screenshot-import",
+        status_code=303,
     )
-
 
 @router.get(
     "/{analysis_id}/p-position",

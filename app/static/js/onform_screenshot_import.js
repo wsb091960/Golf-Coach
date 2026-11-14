@@ -615,7 +615,6 @@
     updateCoachingGoalRead();
     if (savedImport.position_metrics) {
       positionMetrics = savedImport.position_metrics;
-      showPositionEvidence(savedImport.screenshots || []);
       positionSave.disabled = !Object.keys(positionMetrics).length;
       positionStatus.textContent = savedImport.verified
         ? "Saved P1–P8 screenshot set and verified OCR measurements loaded."
@@ -751,9 +750,9 @@
       if (!stored.ok) throw new Error(storedPayload.detail || "Unable to save the ZIP evidence");
       savedImport = storedPayload.saved_import;
       await postPositionMetrics(false);
-      showPositionEvidence(savedImport.screenshots || []);
       positionSave.disabled = false;
-      positionStatus.textContent = `Saved all eight images as P1–P8 for this swing analysis. OCR detected ${totalLabels} metric labels and retained each image's kinematic-sequence information. Review each position and its changing values on Coaching Analysis, then verify and save.`;
+      positionStatus.textContent = "OCR metrics and screenshots saved to this Coaching Analysis. Reloading to show P1–P8…";
+      window.setTimeout(() => window.location.reload(), 450);
     } catch (error) {
       console.error(error);
       positionStatus.textContent = error.message || "Unable to unpack or read this ZIP file.";
@@ -772,7 +771,8 @@
     positionStatus.textContent = "Saving coach-verified P1–P8 metrics…";
     try {
       await postPositionMetrics(true);
-      positionStatus.textContent = "Verified P1–P8 metrics and screenshot evidence saved to this swing analysis.";
+      positionStatus.textContent = "Verified values saved to this Coaching Analysis. Reloading…";
+      window.setTimeout(() => window.location.reload(), 450);
     } catch (error) {
       positionStatus.textContent = error.message || "Unable to verify P-position metrics.";
     } finally {
@@ -1029,19 +1029,7 @@
     });
   }
 
-  const workspaceSaveButton = document.getElementById("save-analysis");
-  if (workspaceSaveButton) {
-    workspaceSaveButton.addEventListener(
-      "click",
-      function (event) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        commitVerifiedImport();
-      },
-      true
-    );
-  }
-
+  // Do not intercept the Coaching Analysis page Save Analysis button.
 
   window.OnformScreenshotParser = { parseRibbonText, parseSpatialWords, detectSpatialLabels, mergeMetrics };
 })();

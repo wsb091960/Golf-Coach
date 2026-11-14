@@ -86,7 +86,7 @@
                 </div>
 
                 <h1>
-                    {{ analysis.original_video.title or "Swing Analysis" }}
+                    Swing Analysis
                 </h1>
 
                 <p>
@@ -124,7 +124,7 @@
         <div class="analysis-workflow-shell" id="analysis-workflow">
             <div class="analysis-workflow-label">Analysis Workflow</div>
             <nav class="analysis-step-nav" aria-label="Analysis workflow">
-            <a class="analysis-step-link" href="/swing-analysis/{{ analysis.id }}/onform-import">Onform Import</a>
+            <a class="analysis-step-link" href="#onform-screenshot-import">Upload Screenshots</a>
             <a class="analysis-step-link" href="/swing-analysis/{{ analysis.id }}/p-position">P-Position Analysis</a>
             <a class="analysis-step-link active" href="/swing-analysis/{{ analysis.id }}/coaching">Coaching Analysis</a>
         </nav>
@@ -134,8 +134,31 @@
 <section class="gcie-review" aria-label="Swing review and biomechanics metrics" data-coaching-onform-package>
     <div class="gcie-review-heading">
         <div><span class="section-kicker">GCIE SCREENSHOT REVIEW</span><h2>Swing Analysis · Onform Screenshots</h2><p>{{ analysis.original_video.camera_view or analysis.camera_view or "Review the saved P-position screenshots" }}{% if analysis.club %} · {{ analysis.club }}{% endif %}</p></div>
-        <div class="gcie-review-actions"><a class="button button-secondary" href="/sessions/{{ analysis.session_id }}">Back to Session</a><a class="button button-secondary" href="/swing-analysis/{{ analysis.id }}/onform-import">Add Onform Screenshots</a><button type="button" class="button button-primary" id="save-analysis" {% if is_preview %}disabled title="Read-only demo preview"{% endif %}>Save Analysis</button></div>
+        <div class="gcie-review-actions"><a class="button button-secondary" href="/sessions/{{ analysis.session_id }}">Back to Session</a><a class="button button-secondary" href="#onform-screenshot-import">Upload P1–P8 ZIP</a><button type="button" class="button button-primary" id="save-analysis" {% if is_preview %}disabled title="Read-only demo preview"{% endif %}>Save Analysis</button></div>
     </div>
+    <section class="analysis-card onform-screenshot-import" id="onform-screenshot-import" style="margin:0 0 18px;padding:18px">
+        <div class="card-heading">
+            <div><span class="section-kicker">ONFORM SCREENSHOT IMPORT</span><h3>Upload P1–P8 screenshots</h3>
+            <p>Select the ZIP containing exactly eight Onform screenshots. Each screenshot includes its P-position metrics and kinematic-sequence data. The OCR results and images will be saved into this Coaching Analysis.</p></div>
+        </div>
+        <label for="onform-p-position-zip"><strong>Onform ZIP bundle</strong></label>
+        <input id="onform-p-position-zip" type="file" accept=".zip,application/zip">
+        <div id="onform-p-position-previews" class="compact-evidence-strip" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px" aria-live="polite"></div>
+        <div class="onform-import-actions" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:10px">
+            <button type="button" class="button button-primary" id="onform-p-position-extract">Upload, extract &amp; read OCR</button>
+            <button type="button" class="button button-secondary" id="onform-p-position-save" disabled>Verify P1–P8 values</button>
+        </div>
+        <p id="onform-p-position-status" class="field-help" aria-live="polite">After OCR runs, this page will reload with the P1–P8 screenshots and matching metrics.</p>
+        <strong id="onform-screenshot-status" hidden></strong>
+        <div hidden aria-hidden="true">
+            <input id="onform-screenshot-file-1" type="file"><input id="onform-screenshot-file-2" type="file"><input id="onform-screenshot-file-3" type="file">
+            <img id="onform-screenshot-preview-1"><img id="onform-screenshot-preview-2"><img id="onform-screenshot-preview-3">
+            <button id="onform-screenshot-extract" type="button"></button><button id="onform-screenshot-save" type="button"></button>
+            <input id="onform-screenshot-verified" type="checkbox"><select id="onform-screenshot-shot"></select>
+            <select id="onform-screenshot-checkpoint"><option>P1</option><option>P2</option><option>P3</option><option>P4</option><option>P5</option><option>P6</option><option>P7</option><option>P8</option></select>
+            <div id="onform-screenshot-conflicts"></div>
+        </div>
+    </section>
     <div class="gcie-review-grid">
         <article class="gcie-review-card gcie-video-card">
             {% set p_images = latest_onform_import.screenshots|selectattr('position')|list if latest_onform_import else [] %}
@@ -189,7 +212,7 @@
         </div>
         <div class="gcie-status-legend"><span><i data-state="good"></i>Good · verified reading</span><span><i data-state="warning"></i>Warning · review needed</span><span><i data-state="bad"></i>Bad · conflicting screenshots</span></div>
         <script id="gcie-onform-history" type="application/json">{{ onform_import_history|tojson }}</script>
-        {% if latest_onform_import %}<script id="gcie-onform-position-metrics" type="application/json">{{ latest_onform_import.position_metrics|tojson }}</script><script id="gcie-onform-position-images" type="application/json">{{ latest_onform_import.screenshots|tojson }}</script><script id="gcie-onform-sequence-text" type="application/json">{{ latest_onform_import.sequence_text_by_position|tojson }}</script>{% endif %}
+        {% if latest_onform_import %}<script id="gcie-onform-position-metrics" type="application/json">{{ latest_onform_import.position_metrics|tojson }}</script><script id="gcie-onform-position-images" type="application/json">{{ latest_onform_import.screenshots|tojson }}</script><script id="gcie-onform-sequence-text" type="application/json">{{ (latest_onform_import.kinematic_sequence.ocr_text_by_position if latest_onform_import.kinematic_sequence else {})|tojson }}</script>{% endif %}
     </article>
 </section>
 
@@ -805,5 +828,8 @@
 <script src="/static/js/coaching_onform_positions.js?v=5.2.10B"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
+<script src="/media-assets/tesseract/tesseract.min.js"></script>
+<script id="onform-saved-import" type="application/json">{{ latest_onform_import | tojson if latest_onform_import else "null" }}</script>
+<script src="/static/js/onform_screenshot_import.js?v=5.2.8G"></script>
 </body>
 </html>

@@ -141,9 +141,6 @@
                     <h2>{{ session.name or "Session Overview" }}</h2>
                     <p>{{ student.name if student else "Student" }} · {{ session.session_date }} · {{ session.session_type }}</p>
                 </div>
-                <span class="overview-status-badge">
-                    {% if session_lesson and lesson_needs_generation %}New screenshots to analyze{% elif session_lesson %}Lesson notes saved{% elif session_screenshots %}Screenshots ready for review{% else %}Session in progress{% endif %}
-                </span>
             </header>
 
             <div class="overview-cards">

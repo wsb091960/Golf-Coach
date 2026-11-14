@@ -10,11 +10,16 @@
     <link rel="stylesheet" href="/static/css/topdown_flight.css?v=5.3O">
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
+    <link rel="stylesheet" href="/static/css/swing_analysis_review.css?v=5.2.8F">
     <style>
         .related-doc-links{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 12px}
         .related-doc-link{display:inline-flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid #d9e2d9;border-radius:10px;background:#f8fbf9;color:#174f40;font-weight:700;text-decoration:none}
         .related-doc-link:hover,.related-doc-link:focus-visible{border-color:#175a46;background:#edf6f0;outline:2px solid transparent}
         .related-doc-link svg{width:22px;height:22px;flex:none;color:#c79a35}
+        .gcie-position-selector{display:flex;flex-wrap:wrap;gap:6px;margin:-3px 0 12px}
+        .gcie-position-selector .gcie-checkpoint{min-width:42px;min-height:36px;display:grid;place-items:center;padding:7px 10px}
+        .gcie-position-selector .gcie-checkpoint.is-selected{border-color:#174f3c;background:#174f3c;color:#fff}
+        .gcie-position-selector .gcie-checkpoint.is-selected b{color:#fff}
         .session-meta-static{box-sizing:border-box;display:flex;align-items:center;min-height:44px;padding:10px;border:1px solid #d7e1dd;border-radius:9px;background:#f3f5f1;color:#17332c}
         .session-overview{display:grid;gap:14px}
         .session-overview-header{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:22px 24px;border-radius:15px;background:linear-gradient(115deg,#123e33,#1d624b);color:#fff}
@@ -559,6 +564,30 @@
             <p class="screenshot-empty">No screenshots are stored with this session yet.</p>
             {% endif %}
 
+            {% if onform_position_imports %}
+            {% for import_set in onform_position_imports %}
+            <article class="gcie-review-card gcie-metrics-card session-onform-metrics" data-session-onform-metrics data-verified="{{ 'true' if import_set.verified else 'false' }}">
+                <div class="gcie-card-heading gcie-metrics-heading">
+                    <div><span class="section-kicker">GCIE BIOMECHANICS METRICS</span><h3>Movement through the swing</h3><p>{{ import_set.title }}{% if import_set.camera_view %} · {{ import_set.camera_view }}{% endif %} · {{ 'Coach-verified Onform values' if import_set.verified else 'Onform OCR · coach review needed' }}</p></div>
+                    <span class="gcie-data-badge" data-metric-status>{% if import_set.verified %}COACH VERIFIED{% else %}OCR REVIEW{% endif %}</span>
+                </div>
+                <div class="gcie-position-selector" role="group" aria-label="Choose P-position">
+                    {% for position_number in range(1, 9) %}<button type="button" class="gcie-checkpoint{% if position_number == 1 %} is-selected{% endif %}" data-position="P{{ position_number }}"><b>P{{ position_number }}</b></button>{% endfor %}
+                </div>
+                <div class="gcie-metrics-layout">
+                    <div class="gcie-metric-tiles">
+                        {% for key,label,unit,direction in [('torso_rotation','Torso turn','°','torso_rotation_direction'),('pelvis_rotation','Pelvis turn','°','pelvis_rotation_direction'),('x_factor','X-Factor','°',none),('torso_sway','Torso sway',' in','torso_sway_direction'),('pelvis_sway','Pelvis sway',' in','pelvis_sway_direction'),('pelvis_lift','Pelvis lift',' in','pelvis_lift_direction'),('torso_lift','Torso lift',' in','torso_lift_direction'),('torso_forward_bend','Torso forward bend','°','torso_forward_bend_direction')] %}
+                        <div class="gcie-metric-tile" data-metric-tile="{{ key }}" data-state="warning"><span>{{ label }}</span><strong data-metric-value>—</strong><small data-metric-detail>Awaiting value</small></div>
+                        {% endfor %}
+                    </div>
+                    <div class="gcie-metrics-chart-wrap"><div class="gcie-card-heading"><div><span class="section-kicker">CHECKPOINT TREND</span><h4>Turns &amp; separation</h4></div><small>Onform P1–P8</small></div><svg class="session-onform-chart" viewBox="0 0 500 205" role="img" aria-label="Pelvis turn, torso turn and X-Factor across P1 to P8"></svg><div class="gcie-chart-legend"><span><i></i>Pelvis turn</span><span><i class="torso"></i>Torso turn</span><span><i class="separation"></i>X-Factor</span></div><p class="gcie-chart-note">Only OCR values visible in the screenshots are plotted; unreadable or absent values remain blank.</p></div>
+                </div>
+                <div class="gcie-status-legend"><span><i data-state="good"></i>Verified OCR reading</span><span><i data-state="warning"></i>OCR reading needs review</span></div>
+                <script type="application/json" class="session-onform-metrics-data">{{ import_set.position_metrics|tojson }}</script>
+            </article>
+            {% endfor %}
+            {% endif %}
+
             <div id="onform-lesson" class="performance-card" style="margin:18px 0;padding:18px;background:#f8fbf9;border:1px solid #d9e2d9;border-radius:12px;">
                 <div class="card-heading"><div><span class="section-kicker">GCIE · Onform Review</span><h2>Create a Lesson</h2></div></div>
                 <p>Creates paired Student Notes and Coaches Notes once for the current screenshot set. Add new screenshots to create an updated lesson.</p>
@@ -577,46 +606,6 @@
                 {% endif %}
             </div>
 
-            <details class="session-video-archive" id="onform-video-links">
-                <summary>Swing videos · {{ session_videos|length }}</summary>
-                <p>Save an Onform share link without copying the video, or upload an exported .mp4 clip for frame review in Golf Coach.</p>
-                <form method="post" action="/sessions/{{ session.id }}/videos/onform-link" class="screenshot-upload-form" style="margin:14px 0;padding:16px;border:1px solid #d9e2d9;border-radius:10px;background:#f8fbf9;">
-                    <label><span>Onform share link</span><input type="url" name="onform_url" placeholder="https://videoplayer.onform.com/…" required></label>
-                    <label><span>Video title</span><input name="title" value="Onform Swing Video" maxlength="255"></label>
-                    <label><span>Camera view</span><select name="camera_view"><option value="">Select view</option><option>Face On</option><option>Down the Line</option><option>Other</option></select></label>
-                    <label><span>Club</span><input name="club" maxlength="100" placeholder="Example: 7 Iron"></label>
-                    <label><span>Notes</span><input name="notes" maxlength="5000" placeholder="Optional clip or swing note"></label>
-                    <button class="button button-primary" type="submit">Save Onform Link</button>
-                </form>
-                <div class="video-grid">
-                    {% for video in session_videos %}
-                    {% if video.video_type == "original_swing" or not video.video_type %}
-                    <article class="video-card original-swing-card">
-                        <div class="video-type-label">Onform Swing Video</div>
-                        {% if video.stored_filename %}
-                        <video controls preload="metadata" src="/sessions/{{ session.id }}/videos/{{ video.id }}/stream"></video>
-                        {% elif video.onform_url %}
-                        <a class="button button-secondary" href="{{ video.onform_url }}" target="_blank" rel="noopener noreferrer">Open Onform Video ↗</a>
-                        {% endif %}
-                        <div class="video-meta">
-                            <div><strong>{{ video.title or "Swing Video" }}</strong><span>{{ video.camera_view or "View not specified" }}{% if video.club %} · {{ video.club }}{% endif %}{% if video.shot_number %} · Shot {{ video.shot_number }}{% endif %}</span></div>
-                            {% if video.notes %}<p>{{ video.notes }}</p>{% endif %}
-                            <div class="video-actions">
-                                {% if video.stored_filename %}<a class="table-action" href="/sessions/{{ session.id }}/videos/{{ video.id }}/download">Download / Share</a>
-                                <a class="table-action" href="/swing-analysis/video/{{ video.id }}/open">Open GCIE Swing Review</a>{% endif %}
-                                {% if video.onform_url and video.stored_filename %}<a class="table-action" href="{{ video.onform_url }}" target="_blank" rel="noopener noreferrer">Open Onform Link</a>{% endif %}
-                                <form method="post" action="/sessions/{{ session.id }}/videos/{{ video.id }}/delete" onsubmit="return confirm('Delete this original swing?')">
-                                    <button class="table-action" type="submit">Delete</button>
-                                </form>
-                            </div>
-                        </div>
-                    </article>
-                    {% endif %}
-                    {% else %}
-                    <p class="video-empty">No swing videos are attached to this session.</p>
-                    {% endfor %}
-                </div>
-            </details>
         </section>
 
 
@@ -1369,6 +1358,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 <script src="/static/js/session_performance.js?v=5.3O"></script>
+<script src="/static/js/session_onform_metrics.js?v=5.2.8F"></script>
 
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>

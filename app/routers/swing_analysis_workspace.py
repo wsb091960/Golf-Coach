@@ -682,11 +682,12 @@ import json
 from pathlib import Path
 from uuid import uuid4
 from fastapi import File, Form, UploadFile
-from fastapi.responses import FileResponse
+from app.services.media_storage import MediaStore
 from app.models import SwingCheckpoint
 
 ONFORM_SCREENSHOT_DIR = Path("app/media/onform_screenshots")
 ONFORM_SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+ONFORM_STORAGE = MediaStore("onform_screenshots", ONFORM_SCREENSHOT_DIR)
 
 SHOT_SCREENSHOT_FIELDS = {
     "ball_speed", "club_speed", "smash_factor", "launch_angle",
@@ -739,7 +740,7 @@ def _latest_onform_import(analysis: SwingAnalysis) -> dict[str, Any] | None:
             f"/swing-analysis/{analysis.id}/workspace/"
             f"onform-screenshot/{stored_name}"
         )
-        saved["available"] = (ONFORM_SCREENSHOT_DIR / stored_name).is_file()
+        saved["available"] = ONFORM_STORAGE.exists(stored_name)
         screenshots.append(saved)
     screenshots.sort(key=lambda item: int(str(item.get("position") or "P99")[1:]) if str(item.get("position") or "").startswith("P") and str(item.get("position") or "P")[1:].isdigit() else item["slot"])
     result["screenshots"] = screenshots
@@ -800,8 +801,7 @@ async def _store_onform_screenshot(
 
     suffix = ALLOWED_SCREENSHOT_TYPES[content_type]
     stored_name = f"{session_id}_{analysis_id}_s{slot}_{uuid4().hex}{suffix}"
-    path = ONFORM_SCREENSHOT_DIR / stored_name
-    path.write_bytes(data)
+    ONFORM_STORAGE.save_bytes(stored_name, data, content_type)
     return {
         "stored_filename": stored_name,
         "original_filename": upload.filename or f"onform-screenshot-{slot}",
@@ -826,7 +826,7 @@ def _store_onform_image_bytes(
     suffix = ALLOWED_SCREENSHOT_TYPES[content_type]
     safe_label = re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_")
     stored_name = f"{session_id}_{analysis_id}_{safe_label}_{uuid4().hex}{suffix}"
-    (ONFORM_SCREENSHOT_DIR / stored_name).write_bytes(data)
+    ONFORM_STORAGE.save_bytes(stored_name, data, content_type)
     result = {
         "stored_filename": stored_name,
         "original_filename": filename,
@@ -917,7 +917,7 @@ async def onform_p_position_bundle(
     except Exception:
         db.rollback()
         for item in created:
-            (ONFORM_SCREENSHOT_DIR / item["stored_filename"]).unlink(missing_ok=True)
+            ONFORM_STORAGE.delete(item["stored_filename"])
         raise
     refreshed = get_analysis(db, analysis.id) or analysis
     return {"ok": True, "saved_import": _latest_onform_import(refreshed)}
@@ -956,7 +956,7 @@ def onform_p_position_delete(
 
     stored_name = str(deleted.get("stored_filename") or "")
     if stored_name and Path(stored_name).name == stored_name and stored_name.startswith(f"{analysis.session_id}_{analysis.id}_"):
-        (ONFORM_SCREENSHOT_DIR / stored_name).unlink(missing_ok=True)
+        ONFORM_STORAGE.delete(stored_name)
     screenshot_id = deleted.get("session_screenshot_id")
     screenshot = db.get(SessionScreenshot, str(screenshot_id)) if screenshot_id else None
     if screenshot and screenshot.session_id == analysis.session_id:
@@ -1071,7 +1071,7 @@ def onform_p_position_clear(
     for item in p_screenshots:
         stored_name = str(item.get("stored_filename") or "")
         if stored_name and Path(stored_name).name == stored_name and stored_name.startswith(f"{analysis.session_id}_{analysis.id}_"):
-            (ONFORM_SCREENSHOT_DIR / stored_name).unlink(missing_ok=True)
+            ONFORM_STORAGE.delete(stored_name)
 
     # Older ZIP imports may also have copied P-position images into the session gallery.
     legacy_rows = db.scalars(select(SessionScreenshot).where(
@@ -1419,7 +1419,7 @@ async def onform_screenshot_import(
     except Exception:
         db.rollback()
         for item in newly_stored:
-            (ONFORM_SCREENSHOT_DIR / item["stored_filename"]).unlink(missing_ok=True)
+            ONFORM_STORAGE.delete(item["stored_filename"])
         raise
 
     refreshed = get_analysis(db, analysis.id) or analysis
@@ -1440,6 +1440,7 @@ async def onform_screenshot_import(
 
 @router.get("/{analysis_id}/workspace/onform-screenshot/{stored_name}", name="onform_screenshot_evidence")
 def onform_screenshot_evidence(
+    request: Request,
     analysis_id: str,
     stored_name: str,
     db: Session = Depends(get_db),
@@ -1449,7 +1450,4 @@ def onform_screenshot_evidence(
         raise HTTPException(404, "Swing analysis not found")
     if Path(stored_name).name != stored_name or not stored_name.startswith(f"{analysis.session_id}_{analysis.id}_"):
         raise HTTPException(404, "Screenshot not found")
-    path = ONFORM_SCREENSHOT_DIR / stored_name
-    if not path.is_file():
-        raise HTTPException(404, "Screenshot not found")
-    return FileResponse(path)
+    return ONFORM_STORAGE.response(request, stored_name)

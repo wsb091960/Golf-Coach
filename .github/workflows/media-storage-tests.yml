@@ -1,0 +1,22 @@
+name: Media storage tests
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'tests/test_media_storage.py'
+      - 'tests/test_image_storage.py'
+      - 'tests/test_media_migration.py'
+      - 'scripts/migrate_media_to_r2.py'
+      - 'requirements.txt'
+      - '.github/workflows/media-storage-tests.yml'
+jobs:
+  media-storage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt pytest httpx
+      - run: python -m pytest -q tests/test_media_storage.py tests/test_image_storage.py tests/test_media_migration.py

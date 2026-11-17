@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.services.stored_images import resolve_image_data
 
 import json
 import base64
@@ -243,6 +244,10 @@ def generate_screenshot_lesson(
         raw = item.get("image_data")
         if not raw:
             continue
+        try:
+            raw = resolve_image_data(raw)
+        except Exception as error:
+            raise CoachingAIError("A saved screenshot could not be loaded. Retry when image storage is available.") from error
         encoded = base64.b64encode(raw).decode("ascii")
         mime = item.get("content_type") or "image/jpeg"
         content.append({"type": "input_text", "text": f"Screenshot: {item.get('filename') or 'Onform frame'}"})

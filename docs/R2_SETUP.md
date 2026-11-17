@@ -1,6 +1,7 @@
 # External media storage for Golf Coach
 
-R2 support is opt-in. This change prepares private video and screenshot storage;
+R2 support is opt-in. This change prioritizes private OCR screenshot storage,
+with video storage supported alongside it;
 it does not create a Cloudflare account/bucket, activate billing, migrate live
 files, or rewrite Git history. The default remains local until configured.
 
@@ -75,9 +76,51 @@ This command covers filesystem video/Onform images, not SQLite image blobs.
 
 New session screenshots and P-sheets can also store compact R2 references in
 their existing database columns; legacy raw-byte rows remain readable. Existing
-database image blobs require a separate verified migration before the SQLite
-file can shrink. Whole-student/session object retention and orphan cleanup need
+database image blobs can be copied with the separate migration described below.
+Whole-student/session object retention and orphan cleanup need
 an explicit retention procedure; no bulk object deletion is added here.
+
+### Existing images inside SQLite
+
+Use `scripts/migrate_database_images_to_r2.py` on the database host. Run its
+inventory mode first. Applying the migration requires a new SQLite backup file
+and a private progress manifest; keep both outside Git. Each image is uploaded
+and downloaded for checksum verification before its database bytes are replaced
+with a compact reference. A conditional update leaves a concurrently changed
+row alone. Existing references are skipped, and the backup retains the original
+image bytes. The migration does not run `VACUUM` or remove the backup. Reclaiming
+SQLite disk space is a separate operation after restore and playback checks.
+
+```sh
+python scripts/migrate_database_images_to_r2.py --database /var/data/golf_coach.db
+python scripts/migrate_database_images_to_r2.py --database /var/data/golf_coach.db --apply --backup /var/data/backups/pre-r2.sqlite --manifest /var/data/backups/r2-images.jsonl
+```
+
+Use the actual configured database path. `--table session_screenshots` or
+`--table session_p_sheets` can limit the migration; repeat `--table` to choose
+both explicitly. Do not run it on an empty local checkout expecting it to find
+the production database. Use a new backup and manifest path for each apply run.
+
+## Primary coaching workflow: Onform screenshots and OCR
+
+Screenshot imports are the most frequent workflow, by William's direction.
+Preserve each original image with its session/swing association and keep raw
+OCR text, reviewed metric values, P-position, and review state in the database.
+New Onform source records also retain file size and SHA-256 for traceability.
+The existing authenticated image URL remains usable for browser OCR after
+storage moves to R2. Saving reviewed metrics must retain the same source image
+metadata. Upload failure before a database save may clean up that new object;
+an error preparing the response after a successful commit must never delete
+the committed evidence.
+
+Capture multiple screenshot sets under their distinct swings for the planned
+baseline workflow. P1–P10 frames from one swing remain one swing sample.
+
+Onform's published local-cache policy describes moving video off the device
+while retaining cloud access; it does not establish a general 60-day video
+deletion deadline. Keep Golf Coach's archive under its own retention policy
+and preserve actual imported files independently of Onform sharing links.
+See [Onform offline/cache documentation](https://support.onform.com/article/149-working-offline-with-onform).
 
 ## Acceptance before removing any original
 

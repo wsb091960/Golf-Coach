@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import io
+import hashlib
 import re
 import zipfile
 from typing import Any
@@ -790,7 +791,7 @@ async def _store_onform_screenshot(
     session_id: str,
     analysis_id: str,
     slot: int,
-) -> dict[str, str]:
+) -> dict[str, Any]:
     content_type = (upload.content_type or "").lower()
     if content_type not in ALLOWED_SCREENSHOT_TYPES:
         raise HTTPException(415, "Use PNG, JPG/JPEG, or WEBP screenshots")
@@ -806,6 +807,8 @@ async def _store_onform_screenshot(
         "stored_filename": stored_name,
         "original_filename": upload.filename or f"onform-screenshot-{slot}",
         "content_type": content_type,
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "size_bytes": len(data),
     }
 
 
@@ -818,7 +821,7 @@ def _store_onform_image_bytes(
     analysis_id: str,
     label: str,
     position: str | None = None,
-) -> dict[str, str]:
+) -> dict[str, Any]:
     if content_type not in ALLOWED_SCREENSHOT_TYPES:
         raise HTTPException(415, "Use PNG, JPG/JPEG, or WEBP screenshots")
     if not data or len(data) > MAX_SCREENSHOT_BYTES:
@@ -833,6 +836,8 @@ def _store_onform_image_bytes(
         "content_type": content_type,
         "label": label,
         "kind": "p_position" if position else "kinematic_sequence",
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "size_bytes": len(data),
     }
     if position:
         result["position"] = position
@@ -1229,8 +1234,9 @@ async def onform_screenshot_import(
         if isinstance(item, dict) and item.get("slot")
     }
 
-    stored: list[dict[str, str]] = []
-    newly_stored: list[dict[str, str]] = []
+    stored: list[dict[str, Any]] = []
+    newly_stored: list[dict[str, Any]] = []
+    evidence_committed = False
     try:
         uploads = {1: screenshot_1, 2: screenshot_2, 3: screenshot_3}
         for slot in (1, 2, 3):
@@ -1254,6 +1260,8 @@ async def onform_screenshot_import(
                         "original_filename", f"onform-screenshot-{slot}"
                     ),
                     "content_type": previous_item.get("content_type", "image/png"),
+                    **{key: previous_item[key] for key in ("sha256", "size_bytes")
+                       if key in previous_item},
                 })
                 continue
 
@@ -1292,6 +1300,7 @@ async def onform_screenshot_import(
             })
             analysis.extra_metrics_json = json.dumps(extra)
             db.commit()
+            evidence_committed = True
 
             refreshed = get_analysis(db, analysis.id) or analysis
             return {
@@ -1416,10 +1425,14 @@ async def onform_screenshot_import(
         })
         analysis.extra_metrics_json = json.dumps(extra)
         db.commit()
+        evidence_committed = True
     except Exception:
         db.rollback()
-        for item in newly_stored:
-            ONFORM_STORAGE.delete(item["stored_filename"])
+        # A failed availability check while building the response must not
+        # delete evidence that the database has already committed.
+        if not evidence_committed:
+            for item in newly_stored:
+                ONFORM_STORAGE.delete(item["stored_filename"])
         raise
 
     refreshed = get_analysis(db, analysis.id) or analysis

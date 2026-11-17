@@ -101,6 +101,20 @@
             </div>
         </section>
 
+
+        <section class="performance-card" id="what-if-panel" aria-labelledby="what-if-title">
+          <div class="card-heading"><div><span class="section-kicker">GCIE · Exploratory model</span><h2 id="what-if-title">Swing What-If · Face &amp; Path</h2><p>Adjust body positions relative to baseline. These are illustrative estimates, not measured or validated causal effects.</p></div></div>
+          <div id="what-if-controls" class="sim-input-grid">
+            <label>Pelvis turn change <output id="wi-pelvis-out">0°</output><input id="wi-pelvis" type="range" min="-15" max="15" value="0"></label>
+            <label>Torso turn change <output id="wi-torso-out">0°</output><input id="wi-torso" type="range" min="-15" max="15" value="0"></label>
+            <label>Spine angle change <output id="wi-spine-out">0°</output><input id="wi-spine" type="range" min="-15" max="15" value="0"></label>
+            <label>Arm position change <output id="wi-arms-out">0°</output><input id="wi-arms" type="range" min="-15" max="15" value="0"></label>
+          </div>
+          <div class="sim-readout" aria-live="polite"><div><span>Estimated path</span><strong id="wi-path">—</strong></div><div><span>Estimated face</span><strong id="wi-face">—</strong></div><div><span>Estimated face-to-path</span><strong id="wi-f2p">—</strong></div><div><span>Path change</span><strong id="wi-path-delta">—</strong></div><div><span>Face change</span><strong id="wi-face-delta">—</strong></div></div>
+          <div class="sim-analysis-actions"><button type="button" class="workspace-button" id="wi-apply">Show What-If Flight</button><button type="button" class="sim-control" id="wi-reset">Reset What-If</button></div>
+          <p class="simulator-disclaimer">Demonstration sensitivity factors are hypothetical. Body measurements do not uniquely determine clubface or club path. Confirm predictions with Garmin R10 and actual shots. Applying the estimate updates the existing flight simulator, not the stored baseline.</p>
+          <div class="sim-analysis-note"><strong>Prediction vs Actual (optional)</strong><div class="sim-input-grid"><label>Measured club path (°)<input type="number" id="wi-actual-path" step="0.1" placeholder="R10 after change"></label><label>Measured face (°)<input type="number" id="wi-actual-face" step="0.1" placeholder="R10 after change"></label></div><p id="wi-comparison" aria-live="polite">Enter measured results after testing to compare against the estimate.</p></div>
+        </section>
         <section class="performance-card sim-input-card" aria-labelledby="flight-inputs-title">
             <div>
                 <span class="section-kicker">Adjust the flight</span>
@@ -150,4 +164,5 @@
     </div>
 </div>
 <script src="/static/js/standalone_flight_simulator.js?v=9"></script>
+<script src="/static/js/gcie_what_if.js?v=1"></script>
 {% endblock %}

@@ -5,11 +5,13 @@ from uuid import uuid4
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.models import SessionVideo
+from app.services.media_storage import MediaStore
 from app.swing_analysis_store import OBSERVATION_ONLY_SOURCE
 
 APP_DIR = Path(__file__).resolve().parent
 VIDEO_ROOT = APP_DIR / "media" / "session_videos"
 VIDEO_ROOT.mkdir(parents=True, exist_ok=True)
+VIDEO_STORAGE = MediaStore("session_videos", VIDEO_ROOT)
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".m4v", ".webm"}
 MAX_VIDEO_BYTES = 750 * 1024 * 1024
 
@@ -176,13 +178,11 @@ def delete_session_video(
     if row is None:
         return False
 
-    path = VIDEO_ROOT / row.stored_filename
-
     db.delete(row)
     db.commit()
 
-    if row.stored_filename and path.is_file():
-        path.unlink()
+    if row.stored_filename:
+        VIDEO_STORAGE.delete(row.stored_filename)
 
     return True
 

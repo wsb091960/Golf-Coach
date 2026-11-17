@@ -236,3 +236,10 @@ __pycache__/
 # Environment secrets
 .env
 .env.*
+
+# Runtime media and generated exports are stored outside source control
+app/media/
+app/uploads/
+data/
+logs/
+media-migration*.json

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.services.stored_images import resolve_image_data
 
 import base64
 import json
@@ -86,6 +87,10 @@ def analyze(sheets: list[dict]) -> tuple[dict, str]:
     if not api_key:
         raise PSheetAnalysisError("The coaching analysis API key is not configured.")
 
+    try:
+        sheets = [{**sheet, "image_data": resolve_image_data(sheet["image_data"])} for sheet in sheets]
+    except Exception as error:
+        raise PSheetAnalysisError("A saved P-Sheet could not be loaded. Retry when image storage is available.") from error
     total_bytes = sum(len(sheet["image_data"]) for sheet in sheets)
     if total_bytes > 18 * 1024 * 1024:
         raise PSheetAnalysisError("The selected sheets exceed the 18 MB analysis limit.")

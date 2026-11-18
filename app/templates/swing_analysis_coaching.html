@@ -108,6 +108,21 @@
         @media(max-width:900px){.gcie-sim-flight-grid{grid-template-columns:1fr 1fr}.gcie-sim-flight-view{grid-column:1/-1;min-height:180px}}
         @media(max-width:560px){.gcie-sim-flight-heading{align-items:flex-start;flex-direction:column}.gcie-sim-flight-grid{grid-template-columns:1fr}.gcie-sim-flight-view{grid-column:auto}.gcie-sim-flight-view{grid-template-columns:1fr}.gcie-sim-flight-view svg{max-height:180px}}
 
+
+        .gcie-main-panel{padding:14px}
+        [data-workspace-panel][hidden]{display:none!important}
+        .gcie-review-heading--compact{margin-bottom:12px}
+        .gcie-review-heading--compact h2{margin:4px 0}
+        .gcie-review-heading--compact p{margin:0;color:#6b7b73;font-size:13px}
+        .workspace-tabs--nested{position:static;margin:12px 0 16px;padding:5px;gap:6px;box-shadow:none;background:#f2f6f3}
+        .workspace-tabs--nested [role="tab"]{font-size:12px;padding:9px 13px}
+        .gcie-evidence-subpanel[hidden]{display:none!important}
+        .gcie-evidence-metrics-layout{display:grid;gap:12px}
+        .gcie-coaching-panel>.analysis-layout{margin:0}
+        .gc-overview-quick-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+        .gc-overview-quick-actions button{cursor:pointer}
+        @media(max-width:620px){.workspace-tabs--nested{overflow-x:auto;flex-wrap:nowrap}.workspace-tabs--nested [role="tab"]{white-space:nowrap}.gc-overview-quick-actions{flex-direction:column}}
+
 </style>
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
@@ -201,22 +216,22 @@
             </div>
         </header>
 
-        <div class="analysis-workflow-shell" id="analysis-workflow">
-            <div class="analysis-workflow-label">Analysis Workflow</div>
-            <nav class="analysis-step-nav" aria-label="Analysis workflow">
-            <a class="analysis-step-link" href="#onform-screenshot-import">Upload Screenshots</a>
-            <a class="analysis-step-link" href="/swing-analysis/{{ analysis.id }}/p-position">P-Position Analysis</a>
-            <a class="analysis-step-link active" href="/swing-analysis/{{ analysis.id }}/coaching">Coaching Analysis</a>
-        </nav>
-        </div>
         {% if is_preview %}<div class="gc-preview-banner" role="status"><strong>READ-ONLY PREVIEW</strong><span>Demo golfer and launch readings are synthetic. Changes are disabled and nothing is saved.</span></div>{% endif %}
 
+<nav class="workspace-tabs" role="tablist" data-workspace-tabs="coaching-analysis" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="evidence">Swing Evidence</button><button type="button" role="tab" data-workspace-tab="simulations">Simulations</button><button type="button" role="tab" data-workspace-tab="coaching">Coaching</button></nav>
+
+<section class="analysis-card gcie-main-panel" data-workspace-panel="evidence" data-workspace-group="coaching-analysis" hidden>
 <section class="gcie-review" aria-label="Swing review and biomechanics metrics" data-coaching-onform-package>
-    <div class="gcie-review-heading">
-        <div><span class="section-kicker">GCIE SCREENSHOT REVIEW</span><h2>Swing Analysis · Onform Screenshots</h2><p>{{ analysis.original_video.camera_view or analysis.camera_view or "Review the saved P-position screenshots" }}{% if analysis.club %} · {{ analysis.club }}{% endif %}</p></div>
-        <div class="gcie-review-actions"><a class="button button-secondary" href="/sessions/{{ analysis.session_id }}">Back to Session</a><a class="button button-secondary" href="#onform-screenshot-import">Upload P-position ZIP</a><button type="button" class="button button-primary" id="save-analysis" {% if is_preview %}disabled title="Read-only demo preview"{% endif %}>Save Analysis</button></div>
+    <div class="gcie-review-heading gcie-review-heading--compact">
+        <div><span class="section-kicker">SWING EVIDENCE</span><h2>Onform screenshots &amp; OCR</h2><p>{{ analysis.original_video.camera_view or analysis.camera_view or "Review saved P-position screenshots and metrics" }}{% if analysis.club %} · {{ analysis.club }}{% endif %}</p></div>
     </div>
-    <section class="analysis-card onform-screenshot-import" id="onform-screenshot-import" style="margin:0 0 18px;padding:18px">
+    <nav class="workspace-tabs workspace-tabs--nested" role="tablist" data-workspace-tabs="swing-evidence" data-default-tab="{% if latest_onform_import and latest_onform_import.screenshots %}screenshots{% else %}upload{% endif %}">
+        <button type="button" role="tab" data-workspace-tab="upload">Upload &amp; OCR</button>
+        <button type="button" role="tab" data-workspace-tab="screenshots">P-Positions</button>
+        <button type="button" role="tab" data-workspace-tab="metrics">OCR Metrics &amp; Review</button>
+    </nav>
+    <section class="gcie-evidence-subpanel" data-workspace-panel="upload" data-workspace-group="swing-evidence" hidden>
+<section class="analysis-card onform-screenshot-import" id="onform-screenshot-import" style="margin:0 0 18px;padding:18px">
         <div class="card-heading">
             <div><span class="section-kicker">ONFORM SCREENSHOT IMPORT</span><h3>Upload P-position screenshots</h3>
             <p>Select the ZIP containing between 1 and 10 Onform screenshots. Each screenshot includes its P-position metrics and kinematic-sequence data. The OCR results and images will be saved into this Coaching Analysis.</p></div>
@@ -240,6 +255,9 @@
             <div id="onform-screenshot-conflicts"></div>
         </div>
     </section>
+</section>
+
+<section class="gcie-evidence-subpanel" data-workspace-panel="screenshots" data-workspace-group="swing-evidence" hidden>
     <div class="gcie-review-grid">
         <article class="gcie-review-card gcie-video-card">
             {% set p_images = latest_onform_import.screenshots|selectattr('position')|list if latest_onform_import else [] %}
@@ -262,9 +280,12 @@
         </article>
 
     </div>
+</section>
 
 
 
+<section class="gcie-evidence-subpanel" data-workspace-panel="metrics" data-workspace-group="swing-evidence" hidden>
+<div class="gcie-evidence-metrics-layout">
     {% set metric_values = latest_onform_import.metrics if latest_onform_import and latest_onform_import.metrics else {} %}
     {% set conflicts = latest_onform_import.conflicts_at_extraction if latest_onform_import and latest_onform_import.conflicts_at_extraction else [] %}
     <article class="gcie-review-card gcie-metrics-card">
@@ -293,14 +314,18 @@
                 <div class="gcie-evidence-row"><span>Checkpoint timing</span><strong>{% set timed_points = analysis.checkpoints|selectattr('time_seconds')|list if analysis.checkpoints else [] %}{{ timed_points|length }} recorded</strong><small>P1–P10 coach review</small></div>
             </article>
             <article class="gcie-review-card gcie-observation-card">
-                <div class="gcie-card-heading"><div><span class="section-kicker">COACH REVIEW</span><h3>Coach observations</h3></div><a href="#analysis-workflow" class="gcie-edit-link">Edit below</a></div>
+                <div class="gcie-card-heading"><div><span class="section-kicker">COACH REVIEW</span><h3>Coach observations</h3></div><button type="button" class="gcie-edit-link" data-open-workspace-tab="coaching" data-workspace-group="coaching-analysis" data-open-nested-workspace-tab="priorities" data-nested-workspace-group="coaching-details">Edit coaching notes</button></div>
                 <p>{% if analysis.coaching_observations %}{{ analysis.coaching_observations }}{% elif analysis.primary_finding %}{{ analysis.primary_finding }}{% else %}No coach observation has been saved yet.{% endif %}</p>
                 {% if analysis.primary_priority %}<div class="gcie-priority-note"><b>Current focus</b><span>{{ analysis.primary_priority }}</span></div>{% endif %}
             </article>
         </div>
+</div>
 </section>
 
-<nav class="workspace-tabs" role="tablist" data-workspace-tabs="coaching-analysis" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="simulations">Simulations</button><button type="button" role="tab" data-workspace-tab="flight">Ball Flight</button><button type="button" role="tab" data-workspace-tab="tgm">TGM</button><button type="button" role="tab" data-workspace-tab="tpi">TPI</button><button type="button" role="tab" data-workspace-tab="measurements">Measurements</button><button type="button" role="tab" data-workspace-tab="priorities">Priorities</button></nav>
+</section>
+</section>
+
+
 
 <section class="gcie-simulations-tab" data-workspace-panel="simulations" data-workspace-group="coaching-analysis" hidden>
         {% if latest_onform_import and latest_onform_import.screenshots %}
@@ -429,7 +454,7 @@
         <article class="analysis-card gc-overview-video">
             <div class="gc-overview-card-head">
                 <div><span class="section-kicker">Onform screenshots</span><h2>Review the swing positions</h2></div>
-                <a class="gc-text-link" href="/swing-analysis/{{ analysis.id }}/onform-import">Add or replace screenshots ↗</a>
+                <div class="gc-overview-quick-actions"><button type="button" class="button button-secondary" data-open-workspace-tab="evidence" data-workspace-group="coaching-analysis">Open swing evidence</button><button type="button" class="button button-primary" data-open-workspace-tab="simulations" data-workspace-group="coaching-analysis">Open simulations</button></div>
             </div>
             <p class="gc-overview-note">P-position screenshots and their OCR readings are shown above. Select a position to review its numeric values, direction, and sequence text.</p>
         </article>
@@ -498,7 +523,7 @@
     <article class="analysis-card gc-coaching-plan">
         <div class="gc-coaching-plan-head">
             <div><span class="section-kicker">Coach’s next step</span><h2>Working hypothesis &amp; retest</h2></div>
-            <a class="button button-secondary" href="#analysis-workflow">Edit coaching notes</a>
+            <button type="button" class="button button-secondary" data-open-workspace-tab="coaching" data-workspace-group="coaching-analysis" data-open-nested-workspace-tab="priorities" data-nested-workspace-group="coaching-details">Edit coaching notes</button>
         </div>
         <div class="gc-coaching-plan-grid">
             <div><span class="gc-data-label">Primary priority</span><p>{% if analysis.primary_priority %}{{ analysis.primary_priority }}{% else %}Choose one evidence-backed principle to work on.{% endif %}</p></div>
@@ -509,9 +534,17 @@
     </article>
 </section>
 
+<section class="analysis-card gcie-main-panel gcie-coaching-panel" data-workspace-panel="coaching" data-workspace-group="coaching-analysis" hidden>
+<nav class="workspace-tabs workspace-tabs--nested" role="tablist" data-workspace-tabs="coaching-details" data-default-tab="flight">
+    <button type="button" role="tab" data-workspace-tab="flight">Ball Flight</button>
+    <button type="button" role="tab" data-workspace-tab="tgm">TGM</button>
+    <button type="button" role="tab" data-workspace-tab="tpi">TPI</button>
+    <button type="button" role="tab" data-workspace-tab="measurements">Measurements</button>
+    <button type="button" role="tab" data-workspace-tab="priorities">Priorities &amp; Notes</button>
+</nav>
 <section class="analysis-layout">
 
-            <article class="analysis-card" data-workspace-panel="flight" data-workspace-group="coaching-analysis">
+            <article class="analysis-card" data-workspace-panel="flight" data-workspace-group="coaching-details">
 
                 <div class="card-heading">
                     <div>
@@ -615,7 +648,7 @@
             </article>
 
 
-            <article class="analysis-card" data-workspace-panel="tgm" data-workspace-group="coaching-analysis" hidden>
+            <article class="analysis-card" data-workspace-panel="tgm" data-workspace-group="coaching-details" hidden>
 
                 <div class="card-heading">
                     <div>
@@ -719,7 +752,7 @@
             </article>
 
 
-            <article class="analysis-card" data-workspace-panel="tpi" data-workspace-group="coaching-analysis" hidden>
+            <article class="analysis-card" data-workspace-panel="tpi" data-workspace-group="coaching-details" hidden>
 
                 <div class="card-heading">
                     <div>
@@ -781,7 +814,7 @@
             </article>
 
 
-            <article class="analysis-card" data-workspace-panel="measurements" data-workspace-group="coaching-analysis" hidden>
+            <article class="analysis-card" data-workspace-panel="measurements" data-workspace-group="coaching-details" hidden>
 
                 <div class="card-heading">
                     <div>
@@ -912,7 +945,7 @@
         </section>
 
 
-        <section class="analysis-card coaching-output" data-workspace-panel="priorities" data-workspace-group="coaching-analysis" hidden>
+        <section class="analysis-card coaching-output" data-workspace-panel="priorities" data-workspace-group="coaching-details" hidden>
 
             <div class="card-heading">
                 <div>
@@ -1014,6 +1047,8 @@
             </div>
 
         </section>
+</section>
+
 
 
         <script
@@ -1033,7 +1068,7 @@
 <script src="/static/js/swing_analysis_review.js?v=2"></script>
 <script src="/static/js/coaching_onform_positions.js?v=5.2.10C"></script>
 <script src="/static/js/screenshot_swing_simulator.js?v=3"></script>
-    <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
+    <script src="/static/js/unified_workspace_tabs.js?v=5.3E"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 <script src="/media-assets/tesseract/tesseract.min.js"></script>
 <script id="onform-saved-import" type="application/json">{{ latest_onform_import | tojson if latest_onform_import else "null" }}</script>

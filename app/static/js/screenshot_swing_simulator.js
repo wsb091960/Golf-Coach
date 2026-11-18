@@ -19,7 +19,6 @@
   const positionLabel = root.querySelector("[data-sim-position]");
   const range = root.querySelector("[data-sim-range]");
   const playButton = root.querySelector("[data-sim-play]");
-  const buttons = root.querySelector("[data-sim-position-button]");
   const controlNames = ["torso", "pelvis", "spine", "sway"];
   const control = (name) => root.querySelector('[data-sim-control="' + name + '"]');
   const output = (name) => root.querySelector('[data-sim-output="' + name + '"]');
@@ -69,7 +68,7 @@
     image.src = url;
     image.alt = frame.position + " Onform screenshot";
     imageLink.href = url;
-    positionLabel.textContent = frame.position;
+    root.querySelectorAll("[data-sim-position]").forEach((node) => { node.textContent = frame.position; });
     range.value = String(frameIndex);
     range.max = String(frames.length - 1);
     root.querySelector("[data-sim-range-output]").textContent = (frameIndex + 1) + " / " + frames.length;

@@ -117,14 +117,19 @@
     add("text", { x: 250, y: 94, "text-anchor": "middle", fill: "#77877f", "font-size": 12 }, "Save Onform data at P-positions to chart the swing");
     return;
   }
-  const values = series.flatMap((s) => points.map((p) => Number(latestByPoint.get(p)[s.key])).filter(Number.isFinite));
+  const valueFor = (point, key) => {
+    const raw = Number(latestByPoint.get(point)[key]);
+    if (!Number.isFinite(raw)) return null;
+    return key === "x_factor" ? Math.abs(raw) : raw;
+  };
+  const values = series.flatMap((s) => points.map((p) => valueFor(p, s.key)).filter(Number.isFinite));
   const low = Math.min(0, ...values);
   const high = Math.max(1, ...values);
   const span = high - low || 1;
   const xy = (index, value) => ({ x: points.length === 1 ? 262 : 38 + index * (448 / (points.length - 1)), y: 158 - ((value - low) / span) * 112 });
   series.forEach((s) => {
     const vals = points.map((p, index) => {
-      const value = Number(latestByPoint.get(p)[s.key]);
+      const value = valueFor(p, s.key);
       return Number.isFinite(value) ? { ...xy(index, value), value } : null;
     });
     const defined = vals.filter(Boolean);

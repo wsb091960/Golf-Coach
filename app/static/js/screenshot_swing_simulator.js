@@ -39,26 +39,51 @@
   const currentMetrics = () => metrics[String(currentFrame().position).toUpperCase()] || {};
   const baseValue = (key) => number(currentMetrics()[key]);
 
-  function updateFigure(values) {
+  function updateFigure(values, positionNumber) {
     const torso = Math.max(-90, Math.min(90, values.torso));
     const pelvis = Math.max(-90, Math.min(90, values.pelvis));
-    const spine = Math.max(-35, Math.min(35, values.spine));
+    const spine = Math.max(-25, Math.min(25, values.spine));
     const sway = Math.max(-8, Math.min(8, values.sway));
-    const width = (turn) => Math.max(11, 34 * (0.42 + 0.58 * Math.abs(Math.cos(turn * Math.PI / 180))));
+    const width = (turn) => Math.max(11, 33 * (0.45 + 0.55 * Math.abs(Math.cos(turn * Math.PI / 180))));
     const torsoRx = width(torso), pelvisRx = width(pelvis);
     const centerX = 160 + sway * 3.4;
-    root.querySelector("[data-figure-torso]").setAttribute("transform", "rotate(" + spine + " " + centerX + " 125)");
-    root.querySelector("[data-figure-shoulders]").setAttribute("rx", torsoRx);
+    const position = Number(positionNumber) || 1;
+    const liftByPosition = {1:0, 2:-7, 3:-19, 4:-34, 5:-23, 6:-9, 7:0, 8:-14, 9:-29, 10:-39};
+    const handLift = liftByPosition[position] ?? 0;
+    const handX = centerX + (position >= 5 && position <= 8 ? 4 : -3);
+    const handY = 158 + handLift;
+    const shoulderHalf = Math.max(11, torsoRx * 0.72);
+    const elbowY = 117 + handLift * 0.52;
+    const shirtHalf = Math.max(12, torsoRx * 0.56);
+
+    root.querySelector("[data-figure-lower]").setAttribute("transform", "translate(" + (centerX - 160) + " 0)");
+    root.querySelector("[data-figure-torso]").setAttribute("transform", "rotate(" + spine + " " + centerX + " 128)");
+    root.querySelector("[data-figure-shirt]").setAttribute("d", "M" + (centerX - shirtHalf) + " 86 Q" + centerX + " 74 " + (centerX + shirtHalf) + " 86 L" + (centerX + shirtHalf * 0.83) + " 145 Q" + centerX + " 157 " + (centerX - shirtHalf * 0.83) + " 145 Z");
+    root.querySelector("[data-figure-shoulders]").setAttribute("rx", shoulderHalf);
     root.querySelector("[data-figure-shoulders]").setAttribute("cx", centerX);
-    root.querySelector("[data-figure-pelvis]").setAttribute("rx", pelvisRx);
+    root.querySelector("[data-figure-pelvis]").setAttribute("rx", pelvisRx * 0.72);
     root.querySelector("[data-figure-pelvis]").setAttribute("cx", centerX);
     root.querySelector("[data-figure-spine]").setAttribute("x1", centerX);
     root.querySelector("[data-figure-spine]").setAttribute("x2", centerX);
     root.querySelector("[data-figure-neck]").setAttribute("x1", centerX);
     root.querySelector("[data-figure-neck]").setAttribute("x2", centerX);
     root.querySelector("[data-figure-head]").setAttribute("cx", centerX);
-    root.querySelector("[data-figure-left-arm]").setAttribute("d", "M" + centerX + " 91 L" + (centerX - torsoRx * 0.78) + " 132 L" + centerX + " 166");
-    root.querySelector("[data-figure-right-arm]").setAttribute("d", "M" + centerX + " 91 L" + (centerX + torsoRx * 0.78) + " 132 L" + centerX + " 166");
+    root.querySelector("[data-figure-left-arm]").setAttribute("d", "M" + (centerX - shoulderHalf * 0.72) + " 93 C" + (centerX - shoulderHalf * 1.05) + " " + (101 + handLift * 0.30) + " " + (handX - shoulderHalf * 0.62) + " " + elbowY + " " + handX + " " + handY);
+    root.querySelector("[data-figure-right-arm]").setAttribute("d", "M" + (centerX + shoulderHalf * 0.72) + " 93 C" + (centerX + shoulderHalf * 1.05) + " " + (101 + handLift * 0.30) + " " + (handX + shoulderHalf * 0.62) + " " + elbowY + " " + handX + " " + handY);
+
+    const clubTips = {1:[centerX-3,221],2:[centerX-42,128],3:[centerX-58,83],4:[centerX-35,50],5:[centerX+35,83],6:[centerX+23,153],7:[centerX+2,221],8:[centerX+57,84],9:[centerX+48,60],10:[centerX+30,46]};
+    const [tipX, tipY] = clubTips[position] || clubTips[1];
+    root.querySelector("[data-figure-club]").setAttribute("x1", handX);
+    root.querySelector("[data-figure-club]").setAttribute("y1", handY);
+    root.querySelector("[data-figure-club]").setAttribute("x2", tipX);
+    root.querySelector("[data-figure-club]").setAttribute("y2", tipY);
+    root.querySelector("[data-figure-grip]").setAttribute("x1", handX);
+    root.querySelector("[data-figure-grip]").setAttribute("y1", handY);
+    root.querySelector("[data-figure-grip]").setAttribute("x2", handX + (tipX - handX) * 0.15);
+    root.querySelector("[data-figure-grip]").setAttribute("y2", handY + (tipY - handY) * 0.15);
+    root.querySelector("[data-figure-hands]").setAttribute("cx", handX);
+    root.querySelector("[data-figure-hands]").setAttribute("cy", handY);
+    root.querySelector("[data-figure-clubhead]").setAttribute("transform", "translate(" + (tipX - 156) + " " + (tipY - 221) + ")");
   }
 
   function render() {
@@ -99,7 +124,7 @@
     const baseX = baseValue("x_factor");
     const deltaX = Number(control("torso").value) - Number(control("pelvis").value);
     root.querySelector("[data-sim-readout='xfactor']").textContent = baseX === null ? "—" : signed(baseX + deltaX, "°");
-    updateFigure(projected);
+    updateFigure(projected, Number(String(frame.position).replace("P", "")));
 
     const pelvisDelta = Number(control("pelvis").value);
     const torsoDelta = Number(control("torso").value);

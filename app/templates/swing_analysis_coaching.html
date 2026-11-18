@@ -328,22 +328,49 @@
             <div class="gcie-swing-whatif">
                 <div class="gcie-sim-frame-head"><strong>What-if body model</strong><span>Selected position: <b data-sim-position>P1</b></span></div>
                 <div class="gcie-sim-figure-stage">
-                    <svg viewBox="0 0 320 250" role="img" aria-label="Illustrative stick-figure model based on the selected position's OCR turn and sway values">
-                        <path d="M24 219 H296" stroke="#dce6e0" stroke-width="2"/>
-                        <g fill="none" stroke="#1b624b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M151 163 L130 203 L116 216 M169 163 L190 203 L207 216"/>
+                    <svg viewBox="0 0 320 260" role="img" aria-label="Stylized golfer in a swing pose, adjusted from selected OCR turn and sway values">
+                        <defs>
+                            <linearGradient id="golfer-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7faf8"/><stop offset="1" stop-color="#e8f0eb"/></linearGradient>
+                            <linearGradient id="golfer-shirt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#27795f"/><stop offset="1" stop-color="#124a39"/></linearGradient>
+                            <linearGradient id="golfer-pants" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#344741"/><stop offset="1" stop-color="#1d302b"/></linearGradient>
+                        </defs>
+                        <rect width="320" height="260" rx="18" fill="url(#golfer-sky)"/>
+                        <circle cx="262" cy="52" r="26" fill="#e4ede7"/>
+                        <path d="M18 222 Q83 212 145 221 T302 218" fill="none" stroke="#c8d8ce" stroke-width="2"/>
+                        <path d="M35 222 H290" stroke="#d5a638" stroke-width="2" stroke-dasharray="7 6" opacity=".75"/>
+                        <path d="M99 196 Q116 66 218 48" fill="none" stroke="#9ebcaf" stroke-width="2" stroke-dasharray="5 5"/>
+                        <ellipse cx="160" cy="226" rx="63" ry="9" fill="#d1ddd5" opacity=".65"/>
+                        <g data-figure-lower>
+                            <path d="M143 151 Q160 160 178 151 L184 176 L174 187 L160 179 L145 187 L135 176 Z" fill="url(#golfer-pants)" stroke="#1e362e" stroke-width="2"/>
+                            <path d="M143 174 L133 194 L123 217 L108 220 L116 207 L121 184 L133 169" fill="url(#golfer-pants)" stroke="#1e362e" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M176 174 L187 193 L198 216 L214 220 L207 207 L203 183 L188 169" fill="url(#golfer-pants)" stroke="#1e362e" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M108 217 Q118 215 126 218 L126 224 L103 224 Q102 220 108 217Z" fill="#f5ead0" stroke="#a99d82" stroke-width="1.5"/>
+                            <path d="M199 217 Q208 215 216 218 L220 224 L197 224 Q195 220 199 217Z" fill="#f5ead0" stroke="#a99d82" stroke-width="1.5"/>
                         </g>
-                        <g data-figure-torso fill="none" stroke="#1b624b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
-                            <line data-figure-spine x1="160" y1="96" x2="160" y2="157"/>
-                            <ellipse data-figure-shoulders cx="160" cy="91" rx="30" ry="10" stroke="#d3a337" stroke-width="6"/>
-                            <path data-figure-left-arm d="M160 91 L136 132 L160 160"/>
-                            <path data-figure-right-arm d="M160 91 L184 132 L160 160"/>
-                            <line data-figure-neck x1="160" y1="67" x2="160" y2="78" stroke-width="6"/>
-                            <circle data-figure-head cx="160" cy="52" r="14" fill="#f1dfb0" stroke="#d3a337" stroke-width="4"/>
+                        <ellipse data-figure-pelvis cx="160" cy="158" rx="25" ry="9" fill="none" stroke="#d4a638" stroke-width="2.5" stroke-dasharray="4 3"/>
+                        <g data-figure-torso>
+                            <path data-figure-shirt d="M142 86 Q160 74 178 86 L185 145 Q160 157 135 145 Z" fill="url(#golfer-shirt)" stroke="#164b3a" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M142 91 Q160 101 178 91" fill="none" stroke="#76a28e" stroke-width="2" opacity=".8"/>
+                            <line data-figure-spine x1="160" y1="99" x2="160" y2="148" stroke="#e6d9ad" stroke-width="2" stroke-dasharray="3 4" opacity=".75"/>
+                            <ellipse data-figure-shoulders cx="160" cy="91" rx="28" ry="8" fill="none" stroke="#e0b64b" stroke-width="2.5"/>
+                            <path data-figure-left-arm d="M141 93 C130 108 139 127 155 157" fill="none" stroke="#d0a77d" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path data-figure-right-arm d="M179 93 C190 108 181 127 165 157" fill="none" stroke="#e0b78e" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M140 92 Q146 89 151 97 L147 110 Q139 111 136 105 Z" fill="#1d674e"/>
+                            <path d="M180 92 Q174 89 169 97 L173 110 Q181 111 184 105 Z" fill="#1d674e"/>
+                            <line data-figure-neck x1="160" y1="68" x2="160" y2="80" stroke="#d7b28a" stroke-width="9" stroke-linecap="round"/>
+                            <circle data-figure-head cx="160" cy="52" r="15" fill="#e7c9a4" stroke="#c3a47f" stroke-width="1.5"/>
+                            <path d="M145 50 Q147 34 160 34 Q174 35 176 50 L168 48 Q157 43 145 50Z" fill="#21483a"/>
+                            <path d="M146 49 Q160 43 176 49" fill="none" stroke="#d6ad4c" stroke-width="2"/>
                         </g>
-                        <ellipse data-figure-pelvis cx="160" cy="158" rx="26" ry="10" fill="none" stroke="#d3a337" stroke-width="6"/>
-                        <text x="18" y="242" fill="#718078" font-size="10">TORSO</text>
-                        <text x="250" y="242" fill="#718078" font-size="10">PELVIS</text>
+                        <g aria-hidden="true">
+                            <line data-figure-club x1="160" y1="157" x2="157" y2="219" stroke="#7b8c8b" stroke-width="3" stroke-linecap="round"/>
+                            <line data-figure-grip x1="159" y1="159" x2="161" y2="170" stroke="#263a34" stroke-width="5" stroke-linecap="round"/>
+                            <circle data-figure-hands cx="160" cy="158" r="6" fill="#e8c49b" stroke="#a9825e" stroke-width="1.5"/>
+                            <path data-figure-clubhead d="M147 220 Q156 217 165 220 L166 224 Q156 226 147 224 Z" fill="#8b9994" stroke="#4c5d57" stroke-width="1.5"/>
+                            <circle cx="144" cy="224" r="4" fill="#fff" stroke="#aebbb4" stroke-width="1.5"/>
+                        </g>
+                        <text x="18" y="247" fill="#728279" font-size="9" font-weight="700">ILLUSTRATIVE GOLFER</text>
+                        <text x="302" y="247" text-anchor="end" fill="#728279" font-size="9">OCR-BASED MODEL</text>
                     </svg>
                     <div class="gcie-sim-angle-readouts">
                         <div><span>Torso turn</span><strong data-sim-readout="torso">—</strong></div>
@@ -1005,7 +1032,7 @@
 <script src="/static/js/swing_analysis_workspace.js?v=5.2.6"></script>
 <script src="/static/js/swing_analysis_review.js?v=2"></script>
 <script src="/static/js/coaching_onform_positions.js?v=5.2.10C"></script>
-<script src="/static/js/screenshot_swing_simulator.js?v=2"></script>
+<script src="/static/js/screenshot_swing_simulator.js?v=3"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3D"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 <script src="/media-assets/tesseract/tesseract.min.js"></script>

@@ -38,4 +38,11 @@
       if(nav)activate(nav,button.dataset.openWorkspaceTab,true);
     });
   });
+  document.querySelectorAll("[data-open-nested-workspace-tab]").forEach(function(button){
+    button.addEventListener("click",function(){
+      var group=button.dataset.nestedWorkspaceGroup;
+      var nav=document.querySelector('[data-workspace-tabs="'+group+'"]');
+      if(nav)activate(nav,button.dataset.openNestedWorkspaceTab,true);
+    });
+  });
 })();

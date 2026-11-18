@@ -83,6 +83,31 @@
         @media(max-width:760px){.gcie-swing-simulator-grid{grid-template-columns:1fr}.gcie-swing-replay>a{height:clamp(230px,65vw,390px)}}
         @media(max-width:460px){.gcie-swing-simulator{padding:12px}.gcie-swing-simulator-heading{align-items:flex-start;flex-direction:column}.gcie-sim-figure-stage{grid-template-columns:1fr}.gcie-sim-figure-stage svg{max-height:190px}.gcie-sim-playback{grid-template-columns:1fr auto}.gcie-sim-playback input{grid-column:1/-1;grid-row:2}.gcie-sim-controls{grid-template-columns:1fr}}
 
+
+        .gcie-simulations-tab{margin:0 0 18px}
+        .gcie-sim-flight{margin-top:14px;padding:16px;border:1px solid #dce6df;border-radius:13px;background:#fff}
+        .gcie-sim-flight-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+        .gcie-sim-flight-heading h4{margin:4px 0;color:#174f40}
+        .gcie-sim-flight-heading p{margin:0;color:#718078;font-size:12px}
+        .gcie-sim-flight-heading .button{white-space:nowrap}
+        .gcie-sim-flight-grid{display:grid;grid-template-columns:minmax(180px,.7fr) minmax(240px,1fr) minmax(250px,1fr);gap:10px;align-items:stretch}
+        .gcie-sim-base-fields{display:grid;gap:8px}
+        .gcie-sim-base-fields label{padding:9px;border:1px solid #dce6df;border-radius:9px;background:#fbfcfb;color:#52645b;font-size:10px;font-weight:750}
+        .gcie-sim-base-fields input{display:block;width:100%;margin-top:6px;padding:8px;border:1px solid #ccd9d1;border-radius:7px;background:white;color:#153f33}
+        .gcie-sim-delivery-readouts{display:grid;grid-template-columns:1fr;gap:8px}
+        .gcie-sim-delivery-readouts>div{padding:10px;border:1px solid #dce6df;border-radius:9px;background:#fbfcfb}
+        .gcie-sim-delivery-readouts span,.gcie-sim-delivery-readouts strong{display:block}
+        .gcie-sim-delivery-readouts span{color:#718078;font-size:10px;font-weight:700}
+        .gcie-sim-delivery-readouts strong{margin-top:3px;color:#176149;font-size:18px;font-variant-numeric:tabular-nums}
+        .gcie-sim-flight-view{display:grid;grid-template-columns:1.2fr .8fr;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;background:linear-gradient(145deg,#f4f8f5,#edf3ef)}
+        .gcie-sim-flight-view svg{width:100%;height:auto;max-height:190px}
+        .gcie-sim-flight-callout{display:grid;gap:7px}
+        .gcie-sim-flight-callout strong{color:#174f40;font-size:12px}
+        .gcie-sim-flight-callout span{color:#65756d;font-size:10px;line-height:1.4}
+        .gcie-sim-flight-note{margin:10px 0 0;padding-top:9px;border-top:1px solid #e1e9e4;color:#78867f;font-size:10px;line-height:1.5}
+        @media(max-width:900px){.gcie-sim-flight-grid{grid-template-columns:1fr 1fr}.gcie-sim-flight-view{grid-column:1/-1;min-height:180px}}
+        @media(max-width:560px){.gcie-sim-flight-heading{align-items:flex-start;flex-direction:column}.gcie-sim-flight-grid{grid-template-columns:1fr}.gcie-sim-flight-view{grid-column:auto}.gcie-sim-flight-view{grid-template-columns:1fr}.gcie-sim-flight-view svg{max-height:180px}}
+
 </style>
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
@@ -239,7 +264,46 @@
     </div>
 
 
-    {% if latest_onform_import and latest_onform_import.screenshots %}
+
+    {% set metric_values = latest_onform_import.metrics if latest_onform_import and latest_onform_import.metrics else {} %}
+    {% set conflicts = latest_onform_import.conflicts_at_extraction if latest_onform_import and latest_onform_import.conflicts_at_extraction else [] %}
+    <article class="gcie-review-card gcie-metrics-card">
+        <div class="gcie-card-heading gcie-metrics-heading"><div><span class="section-kicker">GCIE BIOMECHANICS METRICS</span><h3>Movement through the swing</h3><p>{% if latest_onform_import %}<span data-selected-metric-position>{{ latest_onform_import.checkpoint_position or "P1" }}</span> · Onform screenshot data{% else %}Upload Onform screenshots to show measured values here.{% endif %}</p></div><span class="gcie-data-badge">{% if latest_onform_import and latest_onform_import.verified %}COACH VERIFIED{% elif latest_onform_import %}REVIEW NEEDED{% else %}AWAITING DATA{% endif %}</span></div>
+        {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-position-selector coaching-onform-metric-selector" role="group" aria-label="Select P-position metrics">{% for position_number in range(1, 11) %}{% set position_label = "P" ~ position_number %}{% if position_label in (p_images|map(attribute='position')|list) %}<button type="button" class="gcie-checkpoint{% if p_images and position_label == p_images[0].position %} is-selected{% endif %}" data-position="{{ position_label }}" aria-pressed="{{ 'true' if p_images and position_label == p_images[0].position else 'false' }}"><b>{{ position_label }}</b></button>{% endif %}{% endfor %}</div>{% endif %}
+        <div class="gcie-metrics-layout">
+            <div class="gcie-metric-tiles">
+                {% for key,label,unit,direction in [("torso_rotation","Torso turn","°","torso_rotation_direction"),("pelvis_rotation","Pelvis turn","°","pelvis_rotation_direction"),("x_factor","X-Factor","°",none),("torso_sway","Torso sway"," in","torso_sway_direction"),("pelvis_sway","Pelvis sway"," in","pelvis_sway_direction"),("pelvis_lift","Pelvis lift"," in","pelvis_lift_direction"),("torso_lift","Torso lift"," in","torso_lift_direction"),("torso_forward_bend","Torso forward bend","°","torso_forward_bend_direction"),("shoulder_tilt","Shoulder tilt","°",none),("hip_tilt","Hip / pelvis tilt","°",none),("spine_tilt","Spine tilt","°",none),("shaft_angle","Shaft angle","°",none)] %}
+                {% set value = metric_values.get(key) %}
+                {% set conflict = conflicts|selectattr('key','equalto',key)|list|length > 0 %}
+                <div class="gcie-metric-tile" data-metric-tile="{{ key }}" data-state="{% if conflict %}conflict{% elif latest_onform_import and latest_onform_import.verified and value is not none %}verified{% elif value is not none %}warning{% else %}missing{% endif %}"><span>{{ label }}</span><strong data-metric-value>{% if value is not none %}{{ value }}{{ unit }}{% else %}—{% endif %}</strong><small data-metric-detail>{% if direction and metric_values.get(direction) %}{{ metric_values.get(direction) }}{% elif conflict %}Conflict · compare screenshot{% elif value is not none and latest_onform_import.verified %}Verified reading{% elif value is not none %}Check reading{% else %}Awaiting value{% endif %}</small></div>
+                {% endfor %}
+            </div>
+            <div class="gcie-metrics-chart-wrap"><div class="gcie-card-heading"><div><span class="section-kicker">CHECKPOINT TREND</span><h4>Turns &amp; separation</h4></div><small>Onform imports</small></div><svg id="gcie-turn-chart" viewBox="0 0 500 205" role="img" aria-label="Chart of pelvis turn, torso turn, and X-Factor across imported swing checkpoints"></svg><div class="gcie-chart-legend"><span><i class="pelvis"></i>Pelvis turn</span><span><i class="torso"></i>Torso turn</span><span><i class="separation"></i>X-Factor</span></div><p class="gcie-chart-note">Values appear at checkpoints where Onform screenshots were saved. No missing points are estimated.</p></div>
+        </div>
+        <div class="gcie-status-legend"><span><i data-state="verified"></i>Verified · OCR reading checked</span><span><i data-state="warning"></i>Review · verify this OCR reading</span><span><i data-state="conflict"></i>Conflict · compare against screenshot</span></div>
+        <script id="gcie-onform-history" type="application/json">{{ onform_import_history|tojson }}</script>
+        {% if latest_onform_import %}<script id="gcie-onform-position-metrics" type="application/json">{{ latest_onform_import.position_metrics|tojson }}</script><script id="gcie-onform-position-images" type="application/json">{{ latest_onform_import.screenshots|tojson }}</script>{% endif %}
+    </article>
+            <div class="gcie-review-side">
+            <article class="gcie-review-card gcie-evidence-card">
+                <div class="gcie-card-heading"><div><span class="section-kicker">REVIEW STATUS</span><h3>Evidence at a glance</h3></div></div>
+                <div class="gcie-evidence-row"><span>Body landmarks</span><strong class="status-review">{% if latest_onform_import and latest_onform_import.verified %}Coach verified{% else %}Needs review{% endif %}</strong><small>Onform screenshot measurements</small></div>
+                {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-evidence-row"><span>OCR body values</span><strong data-coaching-ocr-count>Reading P1…</strong><small>Read from the selected P-position screenshot</small></div><div class="gcie-priority-note coaching-onform-sequence"><b>Recognized values · <span data-coaching-sequence-position>P1</span></b><small>Numeric readings for this position. View the screenshot above for the kinematic-sequence graph.</small><div data-coaching-sequence-text class="coaching-onform-summary">Loading recognized values…</div></div>{% endif %}
+                <div class="gcie-evidence-row"><span>Club path</span><strong>{% if analysis.shot and analysis.shot.club_path is not none %}{{ "%.1f"|format(analysis.shot.club_path) }}°{% else %}Not recorded{% endif %}</strong><small>Garmin R10, if linked</small></div>
+                <div class="gcie-evidence-row"><span>Checkpoint timing</span><strong>{% set timed_points = analysis.checkpoints|selectattr('time_seconds')|list if analysis.checkpoints else [] %}{{ timed_points|length }} recorded</strong><small>P1–P10 coach review</small></div>
+            </article>
+            <article class="gcie-review-card gcie-observation-card">
+                <div class="gcie-card-heading"><div><span class="section-kicker">COACH REVIEW</span><h3>Coach observations</h3></div><a href="#analysis-workflow" class="gcie-edit-link">Edit below</a></div>
+                <p>{% if analysis.coaching_observations %}{{ analysis.coaching_observations }}{% elif analysis.primary_finding %}{{ analysis.primary_finding }}{% else %}No coach observation has been saved yet.{% endif %}</p>
+                {% if analysis.primary_priority %}<div class="gcie-priority-note"><b>Current focus</b><span>{{ analysis.primary_priority }}</span></div>{% endif %}
+            </article>
+        </div>
+</section>
+
+<nav class="workspace-tabs" role="tablist" data-workspace-tabs="coaching-analysis" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="simulations">Simulations</button><button type="button" role="tab" data-workspace-tab="flight">Ball Flight</button><button type="button" role="tab" data-workspace-tab="tgm">TGM</button><button type="button" role="tab" data-workspace-tab="tpi">TPI</button><button type="button" role="tab" data-workspace-tab="measurements">Measurements</button><button type="button" role="tab" data-workspace-tab="priorities">Priorities</button></nav>
+
+<section class="gcie-simulations-tab" data-workspace-panel="simulations" data-workspace-group="coaching-analysis" hidden>
+        {% if latest_onform_import and latest_onform_import.screenshots %}
     <section class="gcie-swing-simulator" data-swing-simulator aria-label="Screenshot-based swing simulator">
         <div class="gcie-swing-simulator-heading">
             <div><span class="section-kicker">SWING SIMULATOR · SCREENSHOT MODE</span><h3>Replay &amp; adjust the swing</h3><p>Move through the saved P-positions, then explore how small changes affect the measured body values.</p></div>
@@ -294,50 +358,44 @@
                     <label>Pelvis turn <output data-sim-output="pelvis">+0°</output><input type="range" min="-15" max="15" step="1" value="0" data-sim-control="pelvis"></label>
                     <label>Spine tilt <output data-sim-output="spine">+0°</output><input type="range" min="-10" max="10" step="1" value="0" data-sim-control="spine"></label>
                     <label>Torso sway <output data-sim-output="sway">+0 in</output><input type="range" min="-2" max="2" step="0.1" value="0" data-sim-control="sway"></label>
+                    <label>Arm position <output data-sim-output="arms">+0°</output><input type="range" min="-15" max="15" step="1" value="0" data-sim-control="arms"></label>
                 </div>
                 <button type="button" class="button button-secondary gcie-sim-reset" data-sim-reset>Reset what-if</button>
                 <p class="gcie-sim-disclaimer">The screenshot replay is real evidence. The figure is a simple illustration using OCR angle and sway readings; it does not reconstruct the golfer’s joints or predict exact movement. Changes here are not saved to the student record.</p>
             </div>
         </div>
     </section>
+        <section class="gcie-sim-flight" aria-label="Estimated ball flight">
+            <div class="gcie-sim-flight-heading"><div><span class="section-kicker">BODY CHANGE → BALL FLIGHT</span><h4>Estimated delivery &amp; flight</h4><p>Adjust the body values above and see the illustrative face/path and shot shape update.</p></div><a class="button button-secondary" href="/ball-flight-simulator">Open full Ball Flight Simulator ↗</a></div>
+            <div class="gcie-sim-flight-grid">
+                <div class="gcie-sim-base-fields">
+                    <label>Starting club path (°)<input type="number" step="0.1" value="{{ analysis.shot.club_path if analysis.shot and analysis.shot.club_path is not none else 0 }}" data-sim-base="path"></label>
+                    <label>Starting club face (°)<input type="number" step="0.1" value="{{ analysis.shot.club_face if analysis.shot and analysis.shot.club_face is not none else 0 }}" data-sim-base="face"></label>
+                </div>
+                <div class="gcie-sim-delivery-readouts" aria-live="polite">
+                    <div><span>Estimated path</span><strong data-sim-delivery="path">—</strong></div>
+                    <div><span>Estimated face</span><strong data-sim-delivery="face">—</strong></div>
+                    <div><span>Face-to-path</span><strong data-sim-delivery="f2p">—</strong></div>
+                </div>
+                <div class="gcie-sim-flight-view">
+                    <svg viewBox="0 0 320 230" role="img" aria-label="Illustrative ball-flight start direction and curvature">
+                        <path d="M36 30 V202 M160 30 V202 M284 30 V202" stroke="#e5ebe7" stroke-width="1"/>
+                        <path d="M160 30 V202" stroke="#b9c8bf" stroke-width="2" stroke-dasharray="5 5"/>
+                        <text x="160" y="18" text-anchor="middle" fill="#718078" font-size="10">TARGET</text>
+                        <circle cx="160" cy="207" r="7" fill="#fff" stroke="#87968e" stroke-width="2"/>
+                        <path data-sim-flight-path d="M160 200 C160 150 160 75 160 30" fill="none" stroke="#1b7658" stroke-width="4" stroke-linecap="round"/>
+                        <circle data-sim-flight-end cx="160" cy="30" r="5" fill="#d3a337"/>
+                        <text x="38" y="220" text-anchor="middle" fill="#718078" font-size="9">LEFT</text><text x="282" y="220" text-anchor="middle" fill="#718078" font-size="9">RIGHT</text>
+                    </svg>
+                    <div class="gcie-sim-flight-callout"><strong data-sim-flight-shape>STRAIGHT</strong><span data-sim-flight-start>Start line near target</span><span data-sim-flight-curve>No meaningful curve estimate</span></div>
+                </div>
+            </div>
+            <p class="gcie-sim-flight-note">Illustrative sensitivity estimate only: body changes do not uniquely determine club delivery. The graphic uses a face-dominant start line and face-to-path curvature model for a right-handed golfer. Confirm the result with Garmin R10 and actual shots. No values are saved.</p>
+        </section>
+
     {% endif %}
 
-    {% set metric_values = latest_onform_import.metrics if latest_onform_import and latest_onform_import.metrics else {} %}
-    {% set conflicts = latest_onform_import.conflicts_at_extraction if latest_onform_import and latest_onform_import.conflicts_at_extraction else [] %}
-    <article class="gcie-review-card gcie-metrics-card">
-        <div class="gcie-card-heading gcie-metrics-heading"><div><span class="section-kicker">GCIE BIOMECHANICS METRICS</span><h3>Movement through the swing</h3><p>{% if latest_onform_import %}<span data-selected-metric-position>{{ latest_onform_import.checkpoint_position or "P1" }}</span> · Onform screenshot data{% else %}Upload Onform screenshots to show measured values here.{% endif %}</p></div><span class="gcie-data-badge">{% if latest_onform_import and latest_onform_import.verified %}COACH VERIFIED{% elif latest_onform_import %}REVIEW NEEDED{% else %}AWAITING DATA{% endif %}</span></div>
-        {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-position-selector coaching-onform-metric-selector" role="group" aria-label="Select P-position metrics">{% for position_number in range(1, 11) %}{% set position_label = "P" ~ position_number %}{% if position_label in (p_images|map(attribute='position')|list) %}<button type="button" class="gcie-checkpoint{% if p_images and position_label == p_images[0].position %} is-selected{% endif %}" data-position="{{ position_label }}" aria-pressed="{{ 'true' if p_images and position_label == p_images[0].position else 'false' }}"><b>{{ position_label }}</b></button>{% endif %}{% endfor %}</div>{% endif %}
-        <div class="gcie-metrics-layout">
-            <div class="gcie-metric-tiles">
-                {% for key,label,unit,direction in [("torso_rotation","Torso turn","°","torso_rotation_direction"),("pelvis_rotation","Pelvis turn","°","pelvis_rotation_direction"),("x_factor","X-Factor","°",none),("torso_sway","Torso sway"," in","torso_sway_direction"),("pelvis_sway","Pelvis sway"," in","pelvis_sway_direction"),("pelvis_lift","Pelvis lift"," in","pelvis_lift_direction"),("torso_lift","Torso lift"," in","torso_lift_direction"),("torso_forward_bend","Torso forward bend","°","torso_forward_bend_direction"),("shoulder_tilt","Shoulder tilt","°",none),("hip_tilt","Hip / pelvis tilt","°",none),("spine_tilt","Spine tilt","°",none),("shaft_angle","Shaft angle","°",none)] %}
-                {% set value = metric_values.get(key) %}
-                {% set conflict = conflicts|selectattr('key','equalto',key)|list|length > 0 %}
-                <div class="gcie-metric-tile" data-metric-tile="{{ key }}" data-state="{% if conflict %}conflict{% elif latest_onform_import and latest_onform_import.verified and value is not none %}verified{% elif value is not none %}warning{% else %}missing{% endif %}"><span>{{ label }}</span><strong data-metric-value>{% if value is not none %}{{ value }}{{ unit }}{% else %}—{% endif %}</strong><small data-metric-detail>{% if direction and metric_values.get(direction) %}{{ metric_values.get(direction) }}{% elif conflict %}Conflict · compare screenshot{% elif value is not none and latest_onform_import.verified %}Verified reading{% elif value is not none %}Check reading{% else %}Awaiting value{% endif %}</small></div>
-                {% endfor %}
-            </div>
-            <div class="gcie-metrics-chart-wrap"><div class="gcie-card-heading"><div><span class="section-kicker">CHECKPOINT TREND</span><h4>Turns &amp; separation</h4></div><small>Onform imports</small></div><svg id="gcie-turn-chart" viewBox="0 0 500 205" role="img" aria-label="Chart of pelvis turn, torso turn, and X-Factor across imported swing checkpoints"></svg><div class="gcie-chart-legend"><span><i class="pelvis"></i>Pelvis turn</span><span><i class="torso"></i>Torso turn</span><span><i class="separation"></i>X-Factor</span></div><p class="gcie-chart-note">Values appear at checkpoints where Onform screenshots were saved. No missing points are estimated.</p></div>
-        </div>
-        <div class="gcie-status-legend"><span><i data-state="verified"></i>Verified · OCR reading checked</span><span><i data-state="warning"></i>Review · verify this OCR reading</span><span><i data-state="conflict"></i>Conflict · compare against screenshot</span></div>
-        <script id="gcie-onform-history" type="application/json">{{ onform_import_history|tojson }}</script>
-        {% if latest_onform_import %}<script id="gcie-onform-position-metrics" type="application/json">{{ latest_onform_import.position_metrics|tojson }}</script><script id="gcie-onform-position-images" type="application/json">{{ latest_onform_import.screenshots|tojson }}</script>{% endif %}
-    </article>
-            <div class="gcie-review-side">
-            <article class="gcie-review-card gcie-evidence-card">
-                <div class="gcie-card-heading"><div><span class="section-kicker">REVIEW STATUS</span><h3>Evidence at a glance</h3></div></div>
-                <div class="gcie-evidence-row"><span>Body landmarks</span><strong class="status-review">{% if latest_onform_import and latest_onform_import.verified %}Coach verified{% else %}Needs review{% endif %}</strong><small>Onform screenshot measurements</small></div>
-                {% if latest_onform_import and latest_onform_import.position_metrics %}<div class="gcie-evidence-row"><span>OCR body values</span><strong data-coaching-ocr-count>Reading P1…</strong><small>Read from the selected P-position screenshot</small></div><div class="gcie-priority-note coaching-onform-sequence"><b>Recognized values · <span data-coaching-sequence-position>P1</span></b><small>Numeric readings for this position. View the screenshot above for the kinematic-sequence graph.</small><div data-coaching-sequence-text class="coaching-onform-summary">Loading recognized values…</div></div>{% endif %}
-                <div class="gcie-evidence-row"><span>Club path</span><strong>{% if analysis.shot and analysis.shot.club_path is not none %}{{ "%.1f"|format(analysis.shot.club_path) }}°{% else %}Not recorded{% endif %}</strong><small>Garmin R10, if linked</small></div>
-                <div class="gcie-evidence-row"><span>Checkpoint timing</span><strong>{% set timed_points = analysis.checkpoints|selectattr('time_seconds')|list if analysis.checkpoints else [] %}{{ timed_points|length }} recorded</strong><small>P1–P10 coach review</small></div>
-            </article>
-            <article class="gcie-review-card gcie-observation-card">
-                <div class="gcie-card-heading"><div><span class="section-kicker">COACH REVIEW</span><h3>Coach observations</h3></div><a href="#analysis-workflow" class="gcie-edit-link">Edit below</a></div>
-                <p>{% if analysis.coaching_observations %}{{ analysis.coaching_observations }}{% elif analysis.primary_finding %}{{ analysis.primary_finding }}{% else %}No coach observation has been saved yet.{% endif %}</p>
-                {% if analysis.primary_priority %}<div class="gcie-priority-note"><b>Current focus</b><span>{{ analysis.primary_priority }}</span></div>{% endif %}
-            </article>
-        </div>
 </section>
-
-<nav class="workspace-tabs" role="tablist" data-workspace-tabs="coaching-analysis" data-default-tab="overview"><button type="button" role="tab" data-workspace-tab="overview">Overview</button><button type="button" role="tab" data-workspace-tab="flight">Ball Flight</button><button type="button" role="tab" data-workspace-tab="tgm">TGM</button><button type="button" role="tab" data-workspace-tab="tpi">TPI</button><button type="button" role="tab" data-workspace-tab="measurements">Measurements</button><button type="button" role="tab" data-workspace-tab="priorities">Priorities</button></nav>
 
 <section class="analysis-layout gc-coach-overview" data-workspace-panel="overview" data-workspace-group="coaching-analysis">
     <div class="gc-overview-main">

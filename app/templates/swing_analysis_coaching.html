@@ -353,34 +353,33 @@
             <div class="gcie-swing-whatif">
                 <div class="gcie-sim-frame-head"><strong>Torso &amp; pelvis movement</strong><span>Selected position: <b data-sim-position>P1</b></span></div>
                 <div class="gcie-sim-figure-stage">
-                    <svg viewBox="0 0 360 310" role="img" aria-label="Movement map showing torso and pelvis rotation from selected OCR values">
+                    <svg viewBox="0 0 360 310" role="img" aria-label="Stick figure movement diagram with separate torso and pelvis turn indicators">
                         <defs>
-                            <linearGradient id="movement-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8fbf9"/><stop offset="1" stop-color="#eaf2ed"/></linearGradient>
+                            <linearGradient id="movement-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8fbf9"/><stop offset="1" stop-color="#edf4ef"/></linearGradient>
                             <marker id="movement-arrow" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z" fill="#20775b"/></marker>
                         </defs>
                         <rect width="360" height="310" rx="18" fill="url(#movement-bg)"/>
-                        <path d="M30 269 H330" stroke="#c8d8ce" stroke-width="2"/>
-                        <path d="M180 36 V269" stroke="#dce6e0" stroke-width="1.5" stroke-dasharray="4 6"/>
-                        <g data-figure-body>
-                            <circle cx="180" cy="48" r="16" fill="#dfc5a2" stroke="#a98b67" stroke-width="2"/>
-                            <path d="M164 47 Q166 29 180 29 Q194 30 196 47 L188 43 Q178 39 164 47Z" fill="#174c3c"/>
-                            <path d="M171 65 L171 79 L189 79 L189 65" fill="#dfc5a2"/>
-                            <path d="M137 88 Q180 70 223 88 L215 155 Q180 169 145 155 Z" fill="#1b654d" stroke="#124a39" stroke-width="3" stroke-linejoin="round"/>
-                            <path d="M142 94 L126 139 L138 146 M218 94 L234 139 L222 146" fill="none" stroke="#1b654d" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M147 155 Q180 168 213 155 L207 188 Q180 198 153 188 Z" fill="#314b42" stroke="#20382f" stroke-width="3"/>
-                            <path d="M157 187 L153 222 L165 260 M203 187 L207 222 L195 260" fill="none" stroke="#314b42" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M153 260 L140 266 L165 269 M195 260 L208 266 L183 269" fill="none" stroke="#e8dfce" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-                            <ellipse data-figure-shoulders cx="180" cy="101" rx="43" ry="12" fill="none" stroke="#d7a934" stroke-width="3"/>
-                            <ellipse data-figure-pelvis cx="180" cy="174" rx="34" ry="10" fill="none" stroke="#268267" stroke-width="3"/>
-                            <path data-figure-torso-arrow d="M145 96 A39 13 0 0 1 215 96" fill="none" stroke="#d7a934" stroke-width="2.5" marker-end="url(#movement-arrow)"/>
-                            <path data-figure-pelvis-arrow d="M151 171 A29 10 0 0 1 209 171" fill="none" stroke="#268267" stroke-width="2.5" marker-end="url(#movement-arrow)"/>
-                            <line x1="180" y1="110" x2="180" y2="155" stroke="#f1d98a" stroke-width="2" stroke-dasharray="4 4" opacity=".9"/>
+                        <path d="M34 263 H326" stroke="#d3dfd7" stroke-width="2"/>
+                        <path d="M180 35 V262" stroke="#dfe8e2" stroke-width="1.5" stroke-dasharray="4 6"/>
+                        <g data-figure-body fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="180" cy="42" r="14" fill="#174c3c" stroke="#174c3c" stroke-width="2"/>
+                            <path d="M174 56 V66" stroke="#d3a337" stroke-width="6"/>
+                            <path d="M180 87 V148" stroke="#1b654d" stroke-width="13"/>
+                            <path d="M145 84 L132 116 L151 131 M215 84 L228 116 L209 131" stroke="#1b654d" stroke-width="9"/>
+                            <circle cx="151" cy="132" r="4" fill="#d3a337" stroke="#d3a337"/>
+                            <circle cx="209" cy="132" r="4" fill="#d3a337" stroke="#d3a337"/>
+                            <path d="M164 154 L160 198 L173 247 M196 154 L200 198 L187 247" stroke="#314b42" stroke-width="12"/>
+                            <path d="M173 247 L162 254 M187 247 L198 254" stroke="#314b42" stroke-width="8"/>
+                            <ellipse data-figure-shoulders cx="180" cy="86" rx="41" ry="13" stroke="#d3a337" stroke-width="3"/>
+                            <ellipse data-figure-pelvis cx="180" cy="153" rx="32" ry="11" stroke="#268267" stroke-width="3"/>
+                            <path data-figure-torso-arrow d="M147 82 A37 12 0 0 1 213 82" stroke="#d3a337" stroke-width="2.5" marker-end="url(#movement-arrow)"/>
+                            <path data-figure-pelvis-arrow d="M153 150 A27 9 0 0 1 207 150" stroke="#268267" stroke-width="2.5" marker-end="url(#movement-arrow)"/>
                         </g>
-                        <g font-family="system-ui,sans-serif" font-size="11" font-weight="700">
-                            <text x="22" y="91" fill="#8a6815">TORSO</text>
-                            <text x="22" y="166" fill="#17654f">PELVIS</text>
+                        <g font-family="system-ui,sans-serif" font-size="10" font-weight="800" letter-spacing=".6">
+                            <text x="24" y="82" fill="#8a6815">TORSO</text>
+                            <text x="24" y="149" fill="#17654f">PELVIS</text>
                         </g>
-                        <text x="180" y="293" text-anchor="middle" fill="#718078" font-size="9" font-weight="700" letter-spacing=".8">ROTATION SCHEMATIC · OCR ANGLES · NOT TRACKED VIDEO</text>
+                        <text x="180" y="286" text-anchor="middle" fill="#718078" font-size="9" font-weight="700" letter-spacing=".8">OCR-BASED MOVEMENT SCHEMATIC · NOT TRACKED VIDEO</text>
                     </svg>
                     <div class="gcie-sim-angle-readouts">
                         <div><span>Torso turn</span><strong data-sim-readout="torso">—</strong></div>

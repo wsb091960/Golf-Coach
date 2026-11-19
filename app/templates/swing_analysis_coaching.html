@@ -126,6 +126,7 @@
 </style>
     <link rel="stylesheet" href="/static/css/header_removal.css?v=5.3D">
     <link rel="stylesheet" href="/static/css/unified_workspace.css?v=5.3D">
+<link rel="stylesheet" href="/static/css/swing_geometry_lab.css?v=20261119a">
 </head>
 
 <body>
@@ -164,7 +165,7 @@
                     <a class="sidebar-nav__link nav-item {% if 'gapping' in current_path %}is-active active{% endif %}" href="/gapping" {% if 'gapping' in current_path %}aria-current="page"{% endif %}>
                         <span class="sidebar-nav__icon" aria-hidden="true">↔</span><span>Gapping</span>
                     </a>
-                </div>
+<a class="sidebar-nav__link nav-item" href="/d-plane-lab"><span class="sidebar-nav__icon" aria-hidden="true">◇</span><span>D-Plane Lab</span></a><a class="sidebar-nav__link nav-item" href="/swing-geometry-lab"><span class="sidebar-nav__icon" aria-hidden="true">◈</span><span>Swing Geometry Lab</span></a>                </div>
             </nav>
     </aside>
 
@@ -328,6 +329,7 @@
 
 
 <section class="gcie-simulations-tab" data-workspace-panel="simulations" data-workspace-group="coaching-analysis" hidden>
+<p><a class="button button-secondary" href="/swing-geometry-lab">Open full Swing Geometry Lab</a></p>
         {% if latest_onform_import and latest_onform_import.screenshots %}
     <section class="gcie-swing-simulator" data-swing-simulator aria-label="Screenshot-based swing simulator">
         <div class="gcie-swing-simulator-heading">
@@ -351,60 +353,45 @@
                 <p class="gcie-sim-caption">The replay uses your saved screenshots in P-position order. Click the image to open the full screenshot.</p>
             </div>
             <div class="gcie-swing-whatif">
-                <div class="gcie-sim-frame-head"><strong>Torso &amp; pelvis movement</strong><span>Selected position: <b data-sim-position>P1</b></span></div>
-                <div class="gcie-sim-figure-stage">
-                    <svg viewBox="0 0 360 310" role="img" aria-label="Stick figure movement diagram with separate torso and pelvis turn indicators">
-                        <defs>
-                            <linearGradient id="movement-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8fbf9"/><stop offset="1" stop-color="#edf4ef"/></linearGradient>
-                            <marker id="movement-arrow" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z" fill="#20775b"/></marker>
-                        </defs>
-                        <rect width="360" height="310" rx="18" fill="url(#movement-bg)"/>
-                        <path d="M34 263 H326" stroke="#d3dfd7" stroke-width="2"/>
-                        <path d="M180 35 V262" stroke="#dfe8e2" stroke-width="1.5" stroke-dasharray="4 6"/>
-                        <g data-figure-body fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="180" cy="42" r="14" fill="#174c3c" stroke="#174c3c" stroke-width="2"/>
-                            <path d="M174 56 V66" stroke="#d3a337" stroke-width="6"/>
-                            <path d="M180 87 V148" stroke="#1b654d" stroke-width="13"/>
-                            <path d="M145 84 L132 116 L151 131 M215 84 L228 116 L209 131" stroke="#1b654d" stroke-width="9"/>
-                            <circle cx="151" cy="132" r="4" fill="#d3a337" stroke="#d3a337"/>
-                            <circle cx="209" cy="132" r="4" fill="#d3a337" stroke="#d3a337"/>
-                            <path d="M164 154 L160 198 L173 247 M196 154 L200 198 L187 247" stroke="#314b42" stroke-width="12"/>
-                            <path d="M173 247 L162 254 M187 247 L198 254" stroke="#314b42" stroke-width="8"/>
-                            <ellipse data-figure-shoulders cx="180" cy="86" rx="41" ry="13" stroke="#d3a337" stroke-width="3"/>
-                            <ellipse data-figure-pelvis cx="180" cy="153" rx="32" ry="11" stroke="#268267" stroke-width="3"/>
-                            <path data-figure-torso-arrow d="M147 82 A37 12 0 0 1 213 82" stroke="#d3a337" stroke-width="2.5" marker-end="url(#movement-arrow)"/>
-                            <path data-figure-pelvis-arrow d="M153 150 A27 9 0 0 1 207 150" stroke="#268267" stroke-width="2.5" marker-end="url(#movement-arrow)"/>
-                        </g>
-                        <g font-family="system-ui,sans-serif" font-size="10" font-weight="800" letter-spacing=".6">
-                            <text x="24" y="82" fill="#8a6815">TORSO</text>
-                            <text x="24" y="149" fill="#17654f">PELVIS</text>
-                        </g>
-                        <text x="180" y="286" text-anchor="middle" fill="#718078" font-size="9" font-weight="700" letter-spacing=".8">OCR-BASED MOVEMENT SCHEMATIC · NOT TRACKED VIDEO</text>
-                    </svg>
+                <div class="gcie-sim-frame-head"><strong>3D swing geometry</strong><span>Selected position: <b data-sim-position>P1</b></span></div>
+                <div class="gcie-body-geometry">
+                    <div class="sg-toolbar" role="group" aria-label="Body model camera"><button type="button" data-body-view="3d" aria-pressed="true">3D</button><button type="button" data-body-view="face" aria-pressed="false">Face-on</button><button type="button" data-body-view="dtl" aria-pressed="false">Down the line</button><button type="button" data-body-view="top" aria-pressed="false">Overhead</button></div>
+                    <canvas data-body-geometry tabindex="0" aria-label="Metric-driven 3D swing geometry; drag to orbit. Gray ghost shows the baseline."></canvas>
+                    <div class="sg-legend"><span class="sg-key-torso">Torso plane</span><span class="sg-key-pelvis">Pelvis plane</span><span class="sg-key-spine">Spine</span><span>Gray baseline ghost</span></div>
+
                     <div class="gcie-sim-angle-readouts">
                         <div><span>Torso turn</span><strong data-sim-readout="torso">—</strong></div>
                         <div><span>Pelvis turn</span><strong data-sim-readout="pelvis">—</strong></div>
                         <div><span>X-Factor</span><strong data-sim-readout="xfactor">—</strong></div>
-                        <div><span>Spine tilt</span><strong data-sim-readout="spine">—</strong></div>
+                        <div><span>Side bend</span><strong data-sim-readout="spine">—</strong></div>
                         <div><span>Torso sway</span><strong data-sim-readout="sway">—</strong></div>
                     </div>
                 </div>
                 <div class="gcie-sim-controls">
                     <label>Torso turn <output data-sim-output="torso">+0°</output><input type="range" min="-15" max="15" step="1" value="0" data-sim-control="torso"></label>
                     <label>Pelvis turn <output data-sim-output="pelvis">+0°</output><input type="range" min="-15" max="15" step="1" value="0" data-sim-control="pelvis"></label>
-                    <label>Spine tilt <output data-sim-output="spine">+0°</output><input type="range" min="-10" max="10" step="1" value="0" data-sim-control="spine"></label>
+                    <label>Side bend <output data-sim-output="spine">+0°</output><input type="range" min="-10" max="10" step="1" value="0" data-sim-control="spine"></label>
                     <label>Torso sway <output data-sim-output="sway">+0 in</output><input type="range" min="-2" max="2" step="0.1" value="0" data-sim-control="sway"></label>
-                    <label>Arm position <output data-sim-output="arms">+0°</output><input type="range" min="-15" max="15" step="1" value="0" data-sim-control="arms"></label>
+                    <label>Arm sweep <output data-sim-output="arms">+0°</output><input type="range" min="-15" max="15" step="1" value="0" data-sim-control="arms"></label>
+                    <label>Forward bend <output data-sim-output="bend">+0°</output><input type="range" min="-15" max="15" step="1" value="0" data-sim-control="bend"></label>
+                    <label>Arm elevation <output data-sim-output="elevation">+0°</output><input type="range" min="-20" max="20" step="1" value="0" data-sim-control="elevation"></label>
+                    <label>Wrist hinge <output data-sim-output="wrist">+0°</output><input type="range" min="-20" max="20" step="1" value="0" data-sim-control="wrist"></label>
                 </div>
                 <button type="button" class="button button-secondary gcie-sim-reset" data-sim-reset>Reset what-if</button>
-                <p class="gcie-sim-disclaimer">The screenshot replay is real evidence. The figure is a simple illustration using OCR angle and sway readings; it does not reconstruct the golfer’s joints or predict exact movement. Changes here are not saved to the student record.</p>
+                <p class="gcie-sim-disclaimer">Saved screenshots are evidence. OCR angles drive the 3D planes; unmeasured joints and proportions use example geometry. Review turn direction in the evidence before interpreting the model. Gray is the baseline; colored geometry is the what-if. No changes are saved.</p>
             </div>
         </div>
     </section>
         <section class="gcie-sim-flight" aria-label="Estimated ball flight">
-            <div class="gcie-sim-flight-heading"><div><span class="section-kicker">BODY CHANGE → BALL FLIGHT</span><h4>Estimated delivery &amp; flight</h4><p>Adjust the body values above and see the illustrative face/path and shot shape update.</p></div><a class="button button-secondary" href="/ball-flight-simulator">Open full Ball Flight Simulator ↗</a></div>
+            <div class="gcie-sim-flight-heading"><div><span class="section-kicker">BODY CHANGE → BALL FLIGHT</span><h4>Estimated delivery &amp; flight</h4><p>Explore the body geometry above. Set a delivery scenario below, or enable your own sensitivity hypothesis.</p></div><a class="button button-secondary" href="/ball-flight-simulator">Open full Ball Flight Simulator ↗</a></div>
             <div class="gcie-sim-flight-grid">
                 <div class="gcie-sim-base-fields">
+                    <label><input type="checkbox" data-sim-link-enabled> Apply body-to-impact hypothesis</label>
+                    <details><summary>Define sensitivities</summary><p>Degrees of delivery change per degree of body change. Default 0 means no assumed effect.</p>
+                    <label>Path per pelvis degree<input type="number" step="0.01" value="0" data-sim-coeff="pelvisPath"></label>
+                    <label>Path per torso degree<input type="number" step="0.01" value="0" data-sim-coeff="torsoPath"></label>
+                    <label>Path per arm-sweep degree<input type="number" step="0.01" value="0" data-sim-coeff="armsPath"></label>
+                    <label>Face per wrist-hinge degree<input type="number" step="0.01" value="0" data-sim-coeff="wristFace"></label></details>
                     <label>Starting club path (°)<input type="number" step="0.1" value="{{ analysis.shot.club_path if analysis.shot and analysis.shot.club_path is not none else 0 }}" data-sim-base="path"></label>
                     <label>Starting club face (°)<input type="number" step="0.1" value="{{ analysis.shot.club_face if analysis.shot and analysis.shot.club_face is not none else 0 }}" data-sim-base="face"></label>
                 </div>
@@ -426,7 +413,7 @@
                     <div class="gcie-sim-flight-callout"><strong data-sim-flight-shape>STRAIGHT</strong><span data-sim-flight-start>Start line near target</span><span data-sim-flight-curve>No meaningful curve estimate</span></div>
                 </div>
             </div>
-            <p class="gcie-sim-flight-note">Illustrative sensitivity estimate only: body changes do not uniquely determine club delivery. The graphic uses a face-dominant start line and face-to-path curvature model for a right-handed golfer. Confirm the result with Garmin R10 and actual shots. No values are saved.</p>
+            <p class="gcie-sim-flight-note">The body-to-impact link is off until you enable a coach-defined hypothesis. Its sensitivity coefficients are unvalidated and require before/after shots. The flight graphic is illustrative for a right-handed golfer. Confirm strike and delivery with Garmin R10. No values are saved.</p>
         </section>
 
     {% endif %}
@@ -1051,7 +1038,8 @@
 <script src="/static/js/swing_analysis_workspace.js?v=5.2.6"></script>
 <script src="/static/js/swing_analysis_review.js?v=2"></script>
 <script src="/static/js/coaching_onform_positions.js?v=5.2.10C"></script>
-<script src="/static/js/screenshot_swing_simulator.js?v=4"></script>
+<script src="/static/js/swing_geometry.js?v=20261119a"></script>
+<script src="/static/js/screenshot_swing_simulator.js?v=5"></script>
     <script src="/static/js/unified_workspace_tabs.js?v=5.3E"></script>
     <script src="/static/js/navigation_repair.js?v=5.3D"></script>
 <script src="/media-assets/tesseract/tesseract.min.js"></script>

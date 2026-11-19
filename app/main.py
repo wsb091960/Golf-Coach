@@ -20,6 +20,7 @@ from app.routers.importer import router as importer_router
 from app.routers.sessions import router as sessions_router
 from app.routers.ball_flight_simulator import router as ball_flight_simulator_router
 from app.routers.d_plane_lab import router as d_plane_lab_router
+from app.routers.swing_geometry_lab import router as swing_geometry_lab_router
 from app.routers.students import router as students_router
 from app.routers.videos import router as videos_router
 from app.routers.mediapipe_assets import router as mediapipe_assets_router
@@ -64,6 +65,7 @@ app.include_router(sessions_router)
 app.include_router(gcie_router)
 app.include_router(ball_flight_simulator_router)
 app.include_router(d_plane_lab_router)
+app.include_router(swing_geometry_lab_router)
 app.include_router(importer_router)
 app.include_router(analysis_router)
 app.include_router(videos_router)

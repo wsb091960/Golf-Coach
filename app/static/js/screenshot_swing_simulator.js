@@ -8,6 +8,7 @@
     catch { return {}; }
   };
   const images = parse("gcie-onform-position-images");
+  const flightRoot = root.closest(".gcie-simulations-tab") || root;
   const metrics = parse("gcie-onform-position-metrics");
   const frames = images
     .filter((item) => item && item.available !== false && item.position && item.url)
@@ -19,7 +20,7 @@
   const positionLabel = root.querySelector("[data-sim-position]");
   const range = root.querySelector("[data-sim-range]");
   const playButton = root.querySelector("[data-sim-play]");
-  const controlNames = ["torso", "pelvis", "spine", "sway", "arms"];
+  const controlNames = ["torso", "pelvis", "spine", "sway", "arms", "bend", "elevation", "wrist"];
   const control = (name) => root.querySelector('[data-sim-control="' + name + '"]');
   const output = (name) => root.querySelector('[data-sim-output="' + name + '"]');
   let frameIndex = 0;
@@ -39,17 +40,28 @@
   const currentMetrics = () => metrics[String(currentFrame().position).toUpperCase()] || {};
   const baseValue = (key) => number(currentMetrics()[key]);
 
-  function updateFigure(values) {
-    const torso = Math.max(-90, Math.min(90, Number(values.torso) || 0));
-    const pelvis = Math.max(-90, Math.min(90, Number(values.pelvis) || 0));
-    const sway = Math.max(-8, Math.min(8, Number(values.sway) || 0));
-    const width = (degrees, base) => Math.max(12, base * Math.abs(Math.cos(degrees * Math.PI / 180)));
-    const body = root.querySelector("[data-figure-body]");
-    body.setAttribute("transform", "translate(" + (sway * 2.5) + " 0)");
-    root.querySelector("[data-figure-shoulders]").setAttribute("rx", width(torso, 43));
-    root.querySelector("[data-figure-torso-arrow]").setAttribute("transform", "rotate(" + torso + " 180 101)");
-    root.querySelector("[data-figure-pelvis]").setAttribute("rx", width(pelvis, 34));
-    root.querySelector("[data-figure-pelvis-arrow]").setAttribute("transform", "rotate(" + pelvis + " 180 174)");
+  const bodyRenderer = window.SwingGeometry?.mount(root.querySelector('[data-body-geometry]'));
+  root.querySelectorAll('[data-body-view]').forEach(button => button.addEventListener('click', () => {
+    root.querySelectorAll('[data-body-view]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+    bodyRenderer?.setView(button.dataset.bodyView);
+  }));
+  function samplePose() {
+    const phase = Number(String(currentFrame().position).replace('P', ''));
+    const examples = window.SwingGeometry?.presets || {};
+    if (examples['P'+phase]) return {...examples['P'+phase]};
+    const key = phase < 4 ? 'P1' : phase < 6 ? 'P4' : phase < 7 ? 'P6' : 'P7';
+    return {...examples[key]};
+  }
+  function turnValue(key, fallback) {
+    const value = baseValue(key); if (value === null) return fallback;
+    const direction = String(currentMetrics()[key+'_direction'] || '').toLowerCase();
+    if (value < 0) return value;
+    if (/closed|away|back/.test(direction)) return -Math.abs(value);
+    if (/open|toward/.test(direction)) return Math.abs(value);
+    return Number(String(currentFrame().position).replace('P','')) <= 4 ? -Math.abs(value) : value;
+  }
+  function updateFigure(values, baseline) {
+    if (bodyRenderer) bodyRenderer.setPose(values, baseline);
   }
 
   function render() {
@@ -69,43 +81,43 @@
       button.setAttribute("aria-pressed", String(selected));
     });
 
-    const torso = baseValue("torso_rotation") ?? 0;
-    const pelvis = baseValue("pelvis_rotation") ?? 0;
-    const spine = baseValue("spine_tilt") ?? 0;
-    const sway = baseValue("torso_sway") ?? 0;
-    const projected = {
-      torso: torso + Number(control("torso").value),
-      pelvis: pelvis + Number(control("pelvis").value),
-      spine: spine + Number(control("spine").value),
-      sway: sway + Number(control("sway").value),
+    const sample = samplePose();
+    const baseline = {...sample,
+      torso: turnValue('torso_rotation', sample.torso),
+      pelvis: turnValue('pelvis_rotation', sample.pelvis),
+      side: baseValue('spine_tilt') ?? sample.side,
+      sway: baseValue('torso_sway') ?? sample.sway,
+      bend: baseValue('torso_forward_bend') ?? sample.bend,
     };
+    const projected = {...baseline};
+    const keys = {torso:'torso', pelvis:'pelvis', spine:'side', sway:'sway', arms:'arms', bend:'bend', elevation:'elevation', wrist:'wrist'};
     controlNames.forEach((name) => {
       const delta = Number(control(name).value);
-      output(name).textContent = signed(delta, name === "sway" ? " in" : "°");
+      projected[keys[name]] += delta;
+      output(name).textContent = signed(delta, name === 'sway' ? ' in' : '°');
     });
-    root.querySelector("[data-sim-readout='torso']").textContent = formatted(projected.torso) + "°";
-    root.querySelector("[data-sim-readout='pelvis']").textContent = formatted(projected.pelvis) + "°";
-    root.querySelector("[data-sim-readout='spine']").textContent = formatted(projected.spine) + "°";
-    root.querySelector("[data-sim-readout='sway']").textContent = formatted(projected.sway) + " in";
-    const baseX = baseValue("x_factor");
-    const deltaX = Number(control("torso").value) - Number(control("pelvis").value);
-    root.querySelector("[data-sim-readout='xfactor']").textContent = baseX === null ? "—" : signed(baseX + deltaX, "°");
-    updateFigure(projected, Number(String(frame.position).replace("P", "")));
+    [['torso','torso','torso_rotation'],['pelvis','pelvis','pelvis_rotation'],['spine','side','spine_tilt'],['sway','sway','torso_sway']].forEach(([readout,key,source])=>{
+      root.querySelector('[data-sim-readout="'+readout+'"]').textContent = (baseValue(source) === null ? 'Example ' : '') + formatted(projected[key]) + (key === 'sway' ? ' in' : '°');
+    });
+    root.querySelector('[data-sim-readout="xfactor"]').textContent = formatted(Math.abs(projected.torso-projected.pelvis))+'°';
+    updateFigure(projected, baseline);
 
     const pelvisDelta = Number(control("pelvis").value);
     const torsoDelta = Number(control("torso").value);
     const spineDelta = Number(control("spine").value);
     const armsDelta = Number(control("arms").value);
-    const pathDelta = -0.10 * pelvisDelta - 0.06 * torsoDelta + 0.025 * spineDelta + 0.12 * armsDelta;
-    const faceDelta = -0.025 * pelvisDelta - 0.035 * torsoDelta + 0.075 * armsDelta;
-    const basePath = number(root.querySelector('[data-sim-base="path"]').value) ?? 0;
-    const baseFace = number(root.querySelector('[data-sim-base="face"]').value) ?? 0;
+    const enabled = flightRoot.querySelector('[data-sim-link-enabled]')?.checked;
+    const coefficient = key => number(flightRoot.querySelector('[data-sim-coeff="'+key+'"]').value) ?? 0;
+    const pathDelta = enabled ? coefficient('pelvisPath')*pelvisDelta + coefficient('torsoPath')*torsoDelta + coefficient('armsPath')*armsDelta : 0;
+    const faceDelta = enabled ? coefficient('wristFace')*Number(control('wrist').value) : 0;
+    const basePath = number(flightRoot.querySelector('[data-sim-base="path"]').value) ?? 0;
+    const baseFace = number(flightRoot.querySelector('[data-sim-base="face"]').value) ?? 0;
     const estimatedPath = basePath + pathDelta;
     const estimatedFace = baseFace + faceDelta;
     const faceToPath = estimatedFace - estimatedPath;
-    root.querySelector('[data-sim-delivery="path"]').textContent = signed(estimatedPath, "°");
-    root.querySelector('[data-sim-delivery="face"]').textContent = signed(estimatedFace, "°");
-    root.querySelector('[data-sim-delivery="f2p"]').textContent = signed(faceToPath, "°");
+    flightRoot.querySelector('[data-sim-delivery="path"]').textContent = signed(estimatedPath, "°");
+    flightRoot.querySelector('[data-sim-delivery="face"]').textContent = signed(estimatedFace, "°");
+    flightRoot.querySelector('[data-sim-delivery="f2p"]').textContent = signed(faceToPath, "°");
     updateFlight(estimatedPath, estimatedFace, faceToPath);
 
     const metricButton = document.querySelector('.gcie-metrics-card [data-position="' + frame.position + '"]');
@@ -119,12 +131,12 @@
     const endX = clamp(startX + faceToPath * 3.2, 36, 284);
     const c1x = clamp(160 + launch * 1.0, 42, 278);
     const c2x = clamp(startX + faceToPath * 1.7, 36, 284);
-    root.querySelector("[data-sim-flight-path]").setAttribute("d", "M160 200 C" + c1x + " 154 " + c2x + " 82 " + endX + " 30");
-    root.querySelector("[data-sim-flight-end]").setAttribute("cx", String(endX));
-    const shape = faceToPath > 2.5 ? "FADE / CUT" : faceToPath < -2.5 ? "DRAW" : "STRAIGHT";
-    root.querySelector("[data-sim-flight-shape]").textContent = shape;
-    root.querySelector("[data-sim-flight-start]").textContent = Math.abs(launch) < 0.5 ? "Starts close to the target line" : "Starts " + (launch > 0 ? "right" : "left") + " of the target";
-    root.querySelector("[data-sim-flight-curve]").textContent = Math.abs(faceToPath) < 0.5
+    flightRoot.querySelector("[data-sim-flight-path]").setAttribute("d", "M160 200 C" + c1x + " 154 " + c2x + " 82 " + endX + " 30");
+    flightRoot.querySelector("[data-sim-flight-end]").setAttribute("cx", String(endX));
+    const shape = faceToPath > 0.5 ? "FADE / CUT" : faceToPath < -0.5 ? "DRAW" : "STRAIGHT";
+    flightRoot.querySelector("[data-sim-flight-shape]").textContent = shape;
+    flightRoot.querySelector("[data-sim-flight-start]").textContent = Math.abs(launch) < 0.5 ? "Starts close to the target line" : "Starts " + (launch > 0 ? "right" : "left") + " of the target";
+    flightRoot.querySelector("[data-sim-flight-curve]").textContent = Math.abs(faceToPath) < 0.5
       ? "Face and path are nearly matched"
       : Math.abs(faceToPath).toFixed(1) + "° face-to-path suggests " + (faceToPath > 0 ? "fade" : "draw") + " curvature";
   }
@@ -145,7 +157,7 @@
     controlNames.forEach((name) => { control(name).value = "0"; });
     render();
   });
-  root.querySelectorAll("[data-sim-base]").forEach((input) => input.addEventListener("input", render));
+  flightRoot.querySelectorAll("[data-sim-base]").forEach((input) => input.addEventListener("input", render));
   playButton.addEventListener("click", () => {
     if (timer) { stop(); return; }
     playButton.textContent = "Ⅱ Pause";
@@ -155,5 +167,6 @@
       render();
     }, 700);
   });
+  flightRoot.querySelectorAll("[data-sim-coeff], [data-sim-link-enabled]").forEach(input => input.addEventListener("input", render));
   render();
 })();

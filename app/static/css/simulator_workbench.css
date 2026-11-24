@@ -65,6 +65,7 @@
 #ball-flight-app .sim-input-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 #ball-flight-app .sim-input-grid label{font-size:14px;gap:3px}
 #ball-flight-app .sim-input-grid input{font-size:16px;min-height:40px;padding:6px 8px;width:100%}
+#ball-flight-app .sim-input-grid input[type=range]{height:32px;min-height:32px;padding:0;margin:0;accent-color:#155341}
 #ball-flight-app .sim-input-actions{flex-direction:row;justify-content:flex-start;flex-wrap:wrap}
 .portable:not([data-simulator=home]) .portable-header{padding:5px 10px;gap:8px;flex-wrap:nowrap;min-height:54px}
 .portable:not([data-simulator=home]) .portable-brand img{width:32px;height:32px}
@@ -97,4 +98,11 @@
  .portable:not([data-simulator=home]) .portable-brand span{display:none}
  .portable:not([data-simulator=home]) .portable-header nav{justify-content:flex-start}
 }
-@media(max-height:500px) and (min-width:700px){.simulator-compact .live-workbench{height:calc(100svh - 155px);min-height:220px}}
+@media(max-height:500px) and (min-width:700px){
+ .simulator-compact .live-workbench{height:calc(100svh - 155px);min-height:220px}
+ #ball-flight-app .live-preview .card-heading,#ball-flight-app .sim-speed{display:none}
+ #ball-flight-app .simulator-controls{flex-wrap:nowrap;gap:4px}
+ #ball-flight-app .simulator-camera,#ball-flight-app .simulator-playback{flex-wrap:nowrap;gap:3px}
+ #ball-flight-app .sim-control{padding:5px 6px;font-size:14px}
+ #ball-flight-app .live-preview .sim-readout>div:nth-child(3),#ball-flight-app .live-preview .sim-readout>div:nth-child(4),#ball-flight-app .live-preview .sim-readout>div:nth-child(6){display:none}
+}

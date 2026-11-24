@@ -135,6 +135,21 @@
         updateFlight(false);
     });
 
+    // Touch sliders let the common teaching inputs change without opening a keyboard.
+    const rangeInputs = ["club_face", "club_path", "club_speed_estimate", "launch_angle", "spin_rate"].map(name => {
+        const field = fields.namedItem(name), range = document.createElement("input");
+        range.type = "range";
+        range.id = "flight-range-" + name;
+        range.min = field.min; range.max = field.max; range.step = field.step; range.value = field.value;
+        range.setAttribute("aria-label", field.parentElement.firstChild.textContent.trim() + " slider");
+        range.addEventListener("input", () => {
+            field.value = range.value;
+            field.dispatchEvent(new Event("input", {bubbles: true}));
+        });
+        field.after(range);
+        return {field, range};
+    });
+
     function finishYards() {
         const start = Math.tan(shot.launch_direction * Math.PI / 180) * shot.carry_distance;
         const curveAngle = shot.spin_axis ?? shot.spin_axis_estimate;
@@ -282,6 +297,7 @@
     }
 
     function draw() {
+        rangeInputs.forEach(({field, range}) => { if (field.value !== "") range.value = field.value; });
         const box = canvas.getBoundingClientRect();
         const w = box.width, h = box.height, dpr = Math.min(window.devicePixelRatio || 1, 2);
         if (!w || !h) return;

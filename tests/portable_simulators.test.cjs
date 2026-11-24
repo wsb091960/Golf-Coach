@@ -69,6 +69,8 @@ const {once} = require('node:events');
       await page.goto(base + 'flight.html');
       await page.locator('#offline-status').filter({hasText: 'Available offline'}).waitFor();
       assert.equal(await page.locator('#start-coaching-analysis').count(), 0);
+      await page.locator('#flight-range-club_path').press('ArrowRight');
+      assert.equal(await page.locator('[data-readout=facePath]').innerText(), '-0.1°', 'Touch slider changes flight without keyboard or submit');
       const flightBefore=await page.locator('#standalone-flight-canvas').evaluate(el=>el.toDataURL());
       await page.locator('[name=club_face]').fill('-2');
       await page.locator('[name=club_path]').fill('4');

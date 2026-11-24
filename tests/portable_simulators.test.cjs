@@ -59,6 +59,8 @@ const {once} = require('node:events');
       await page.locator('[name=carry_distance]').fill('123');
       await page.locator('[name=total_distance]').fill('145');
       await page.getByRole('button', {name: 'Update Flight', exact: true}).click();
+      console.log('Flight check', JSON.stringify(await page.evaluate(() => ({invalid: [...document.querySelectorAll('#flight-input-form :invalid')].map(e => ({name:e.name, value:e.value, message:e.validationMessage})), values: Object.fromEntries(new FormData(document.getElementById('flight-input-form'))), scripts: [...document.scripts].map(s=>s.src)}))), errors);
+      assert.deepEqual(errors, [], 'Ball-flight script errors');
       assert.equal(await page.locator('[data-readout=facePath]').innerText(), '-6.0°');
       await page.locator('#preset-name').fill('Range draw');
       await page.locator('#save-preset').click();

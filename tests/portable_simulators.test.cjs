@@ -1,5 +1,5 @@
 // Browser integration: node tests/portable_simulators.test.cjs (requires Playwright).
-const {chromium} = require('playwright');
+const {chromium, webkit} = require('playwright');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const http = require('node:http');
@@ -28,7 +28,8 @@ const {once} = require('node:events');
     await once(server, 'listening');
     const port = server.address().port;
     const base = `http://127.0.0.1:${port}/static/simulators/`;
-    browser = await chromium.launch({headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? {executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH} : {})});
+    const engine = process.env.SIMULATOR_BROWSER === 'webkit' ? webkit : chromium;
+    browser = await engine.launch({headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? {executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH} : {})});
     for (const viewport of [{width: 820, height: 1180}, {width: 1180, height: 820}, {width: 393, height: 852}]) {
       const context = await browser.newContext({viewport, hasTouch: true, isMobile: true});
       const page = await context.newPage(), errors = [], external = [];
@@ -69,6 +70,8 @@ const {once} = require('node:events');
       await page.getByRole('button', {name: 'Side', exact: true}).click();
       await page.locator('#analyze-laws-principles').click();
       assert((await page.locator('#laws-principles-results').innerText()).includes('The six laws'));
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'No ball-flight horizontal overflow');
+      await page.screenshot({path: path.join('/tmp', `golf-simulators-flight-${viewport.width}.png`), fullPage: true});
       await page.reload();
       await page.locator('#saved-presets').selectOption('0');
       await page.locator('#load-preset').click();

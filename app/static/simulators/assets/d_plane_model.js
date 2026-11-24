@@ -12,7 +12,9 @@ function compute(p){
  // Axis azimuth is a model assumption, not a measured wrist-release relationship.
  const lean=p.lean??0,side=p.hand==='left'?1:-1,lie=60*rad;
  const axis=[-Math.sqrt(.75),-side*.5,0],t=lean*rad;
- const rotate=a=>add(add(mul(a,Math.cos(t)),mul(cross(axis,a),Math.sin(t))),mul(axis,dot(axis,a)*(1-Math.cos(t))));
+ const leanRotate=a=>add(add(mul(a,Math.cos(t)),mul(cross(axis,a),Math.sin(t))),mul(axis,dot(axis,a)*(1-Math.cos(t))));
+ const q=side*(p.lieOffset??0)*rad;
+ const rotate=a=>{const [x,y,z]=leanRotate(a);return [x*Math.cos(q)+z*Math.sin(q),y,-x*Math.sin(q)+z*Math.cos(q)];};
  const referenceNormal=direction(p.face,p.loft),n=unit(rotate(referenceNormal));
  const dynamicLoft=Math.atan2(n[2],Math.hypot(n[0],n[1]))*deg;
  const effectiveFace=Math.atan2(n[0],n[1])*deg;

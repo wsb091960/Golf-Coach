@@ -35,7 +35,7 @@ if(result.valid&&$('showPlane').checked){const tangent=M.unit(M.add(result.n,M.m
 line([0,0,0],M.mul(result.referenceNormal,1.52),'#f6bf6488',1.5,[5,4]);arrow(result.v,1.05,colors.path);arrow(result.n,1.52,colors.face);arrow(result.launch,1.28,colors.launch,2);
 label('Club velocity',M.mul(result.v,1.05),colors.path,10,19);label('Face normal',M.mul(result.n,1.52),colors.face,8,-16);label('Initial launch',M.mul(result.launch,1.28),colors.launch,8,2);
 // The shaft and face patch are illustrative; shaft lie is fixed at 60 degrees.
-const toe=M.unit(M.cross(result.n,[0,0,1])),faceUp=M.unit(M.cross(toe,result.n));
+const toe=result.toe,faceUp=result.faceUp;
 const mirror=state.hand==='left'?-1:1;
 const shape=[[-.20,-.085],[-.24,-.055],[-.25,.045],[-.21,.125],[-.14,.15],[.08,.12],[.19,.075],[.20,-.055],[.15,-.085]];
 const point=(a,b,d=0)=>M.add(M.add(M.mul(toe,a*mirror),M.mul(faceUp,b)),M.mul(result.n,d));

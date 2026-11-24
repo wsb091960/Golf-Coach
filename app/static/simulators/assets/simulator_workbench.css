@@ -106,3 +106,19 @@
  #ball-flight-app .sim-control{padding:5px 6px;font-size:14px}
  #ball-flight-app .live-preview .sim-readout>div:nth-child(3),#ball-flight-app .live-preview .sim-readout>div:nth-child(4),#ball-flight-app .live-preview .sim-readout>div:nth-child(6){display:none}
 }
+
+/* Flight-first layout: preserve the canvas instead of squeezing it between controls. */
+#ball-flight-app .flight-workbench{grid-template-columns:minmax(0,2fr) minmax(260px,1fr);height:clamp(460px,calc(100svh - 130px),850px)}
+#ball-flight-app #standalone-flight-canvas{min-height:260px}
+@media(max-width:699px){
+ #ball-flight-app .flight-workbench{height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto}
+ #ball-flight-app .live-preview{position:sticky;top:0;z-index:5;background:#fff}
+ #ball-flight-app #standalone-flight-canvas{flex:none;height:clamp(240px,40svh,420px);min-height:240px}
+ #ball-flight-app .live-controls{max-height:42svh}
+ #ball-flight-app .sim-readout{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-height:500px) and (min-width:700px){
+ #ball-flight-app .flight-workbench{height:auto;min-height:320px}
+ #ball-flight-app .live-controls{max-height:320px}
+ #ball-flight-app #standalone-flight-canvas{min-height:230px}
+}

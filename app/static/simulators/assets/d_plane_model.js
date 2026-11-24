@@ -17,6 +17,7 @@ function compute(p){
  const dynamicLoft=Math.atan2(n[2],Math.hypot(n[0],n[1]))*deg;
  const effectiveFace=Math.atan2(n[0],n[1])*deg;
  const v=direction(p.path,p.attack),c=cross(v,n),valid=norm(c)>1e-7,s=valid?unit(c):null;
+ const toe=rotate(unit(cross(referenceNormal,[0,0,1]))),faceUp=unit(cross(toe,n));
  const shaft=rotate([side*Math.cos(lie),0,Math.sin(lie)]);
  const launch=unit(add(mul(v,1-p.weight),mul(n,p.weight)));
  const spinLoft=Math.acos(Math.max(-1,Math.min(1,dot(v,n))))*deg;
@@ -24,7 +25,7 @@ function compute(p){
  const tilt=valid?Math.atan2(-s[2],Math.hypot(s[0],s[1]))*deg:null;
  const lift=valid?cross(s,launch):[0,0,0];
  const backspin=lift[2]>=-1e-7;
- return {v,n,s,shaft,lean,dynamicLoft,launch,spinLoft,start,elevation,tilt,lift,valid,backspin,effectiveFace,referenceNormal,f2p:effectiveFace-p.path};
+ return {v,n,s,shaft,lean,dynamicLoft,launch,spinLoft,start,elevation,tilt,lift,valid,backspin,effectiveFace,referenceNormal,toe,faceUp,f2p:effectiveFace-p.path};
 }
 const api={add,mul,dot,cross,norm,unit,direction,compute};
 if(typeof module!=='undefined')module.exports=api;else root.DPlane=api;

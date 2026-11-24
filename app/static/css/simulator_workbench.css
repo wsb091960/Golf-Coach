@@ -122,3 +122,48 @@
  #ball-flight-app .live-controls{max-height:320px}
  #ball-flight-app #standalone-flight-canvas{min-height:230px}
 }
+
+.simulator-display-bar {
+    display: flex;
+    justify-content: flex-end;
+    flex: none;
+    padding: 3px 8px;
+}
+.simulator-display-bar button {
+    border: 1px solid #668579;
+    border-radius: 8px;
+    background: #164337;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 650;
+    cursor: pointer;
+    min-height: 44px;
+    padding: 6px 12px;
+}
+html:has(body.simulator-display-expanded), body.simulator-display-expanded {
+    overflow: hidden;
+}
+#d-plane-lab.simulator-compact .visual.simulator-expanded,
+#ball-flight-app .live-preview.simulator-expanded {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    width: auto;
+    height: auto;
+    margin: 0;
+    border-radius: 0;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+        env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+#ball-flight-app .live-preview.simulator-expanded {
+    background: #fff;
+}
+#ball-flight-app .simulator-expanded #standalone-flight-canvas {
+    flex: 1;
+    height: 0;
+    min-height: 0;
+}
+#ball-flight-app .simulator-expanded .simulator-controls {
+    flex-wrap: wrap;
+}

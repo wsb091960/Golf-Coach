@@ -50,7 +50,7 @@
 
 {% endblock %}
 
-{% block workbench_styles %}<link rel="stylesheet" href="/static/css/simulator_workbench.css?v=20261123">{% endblock %}
+{% block workbench_styles %}<link rel="stylesheet" href="/static/css/simulator_workbench.css?v=20261124c">{% endblock %}
 {% block content %}
 <div class="workspace-shell standalone-simulator simulator-compact" id="ball-flight-app">
     <header class="simulator-hero">
@@ -64,6 +64,7 @@
 
     <div class="simulator-main">
 <div class="live-workbench flight-workbench">        <section class="performance-card live-preview" aria-labelledby="flight-replay-title">
+<div class="simulator-display-bar"><button type="button" data-expand-simulator aria-pressed="false">Full screen</button></div>
             <div class="card-heading">
                 <div>
                     <span class="section-kicker">Ball Flight · Interactive Replay</span>
@@ -168,6 +169,7 @@
         </section></details>
     </div>
 </div>
+<script src="/static/js/simulator_display.js?v=1" defer></script>
 <script src="/static/js/standalone_flight_simulator.js?v=10"></script>
 <script src="/static/js/gcie_what_if.js?v=1"></script>
 {% endblock %}

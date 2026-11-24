@@ -3,10 +3,11 @@
 <link rel="stylesheet" href="/static/css/d_plane_lab.css?v=20261124b">
 
 {% endblock %}
-{% block workbench_styles %}<link rel="stylesheet" href="/static/css/simulator_workbench.css?v=20261124b">{% endblock %}
+{% block workbench_styles %}<link rel="stylesheet" href="/static/css/simulator_workbench.css?v=20261124c">{% endblock %}
 {% block content %}
 <div id="d-plane-lab" class="simulator-compact"><div class="dplane-main"><div class="intro"><div><p class="eyebrow">IMPACT, EXPLAINED</p><h1>D-Plane Lab</h1><p class="lead">Adjust the club delivery on the fixed reference plane.</p></div><span class="reference">Inspired by Theodore P. Jorgensen<br><i>The Physics of Golf</i> · 2nd edition</span></div>
-<div class="lab live-workbench"><section class="visual"><div class="scene-bar"><div><span class="eyebrow">3D IMPACT GEOMETRY</span><h2 id="shotTitle">Push-draw</h2></div><span class="badge">Centered contact</span></div>
+<div class="lab live-workbench"><section class="visual">
+<div class="simulator-display-bar"><button type="button" data-expand-simulator aria-pressed="false">Full screen</button></div><div class="scene-bar"><div><span class="eyebrow">3D IMPACT GEOMETRY</span><h2 id="shotTitle">Push-draw</h2></div><span class="badge">Centered contact</span></div>
 <div class="views" role="group" aria-label="Camera view"><button data-view="perspective" class="active" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Top</button><button data-view="side" aria-pressed="false">Side</button><button data-view="behind" aria-pressed="false">Behind ball</button></div>
 <canvas id="scene" aria-label="Interactive 3D D-plane diagram. Drag to rotate. Exact delivery and calculated values are provided in the controls and results." tabindex="0"></canvas><div class="scene-tip">Drag to rotate · Use the view buttons for precise angles</div>
 <section class="results live-results" aria-label="Calculated results" aria-live="polite"><div><small>Face-path</small><strong id="f2p">−2.0°</strong><span id="f2pMeaning"></span></div><div><small>Dyn. loft</small><strong id="deliveredLoft">25.0°</strong></div><div><small>Start</small><strong id="launchDir"></strong><span id="launchHeight"></span></div><div><small>Axis</small><strong id="tilt"></strong><span id="curve"></span></div></section></section>
@@ -20,6 +21,7 @@
 </div></div>
 {% endblock %}
 {% block page_scripts %}
+<script src="/static/js/simulator_display.js?v=1" defer></script>
 <script src="/static/js/d_plane_model.js?v=20261124c"></script>
 <script src="/static/js/d_plane_lab.js?v=20261124c"></script>
 {% endblock %}

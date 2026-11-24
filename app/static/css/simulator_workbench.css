@@ -167,3 +167,38 @@ html:has(body.simulator-display-expanded), body.simulator-display-expanded {
 #ball-flight-app .simulator-expanded .simulator-controls {
     flex-wrap: wrap;
 }
+
+#d-plane-lab .plane-rotation {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 4px 8px;
+    flex-wrap: wrap;
+    padding: 4px 10px;
+    color: #e5f3eb;
+    font-size: 14px;
+}
+#d-plane-lab .plane-rotation input[type=range] {
+    flex: 1 1 65px;
+    max-width: 240px;
+    min-width: 65px;
+    margin: 0;
+    accent-color: #9cd3b9;
+}
+#d-plane-lab .plane-rotation input[type=number] {
+    width: 58px;
+    font-size: 16px;
+}
+#d-plane-lab .plane-rotation button {
+    min-height: 40px;
+    padding: 4px 8px;
+    border: 1px solid #668579;
+    border-radius: 8px;
+    background: #164337;
+    color: #fff;
+    cursor: pointer;
+}
+#d-plane-lab .plane-rotation button[aria-pressed=true] {
+    background: #c6ebd7;
+    color: #143c32;
+}

@@ -39,3 +39,22 @@ test('head attachment and every shaft point share fixed board without offset nec
     assert(a>=-.4&&a<=1.5&&b>=-.22&&b<=1.4,'Attachment lies inside visible board');
   }
 });
+
+test('turning the plane squares the delivered face and keeps the club on the plane', () => {
+  for (const hand of ['right', 'left']) {
+    const inputs = {path:4, face:2, attack:-4, loft:25, lean:10, weight:.75, hand};
+    const original = M.compute(inputs);
+    const square = M.compute({...inputs, planeRotation:-original.effectiveFace});
+    close(square.effectiveFace, 0);
+    close(square.path, original.path-original.effectiveFace);
+    close(square.dynamicLoft, original.dynamicLoft);
+    close(square.spinLoft, original.spinLoft);
+    close(square.f2p, original.f2p);
+    const club = M.clubGeometry(square, hand);
+    close(M.dot(club.hosel, club.planeNormal), 0);
+    close(M.dot(club.grip, club.planeNormal), 0);
+    const neutral = M.compute({...inputs, planeRotation:-original.effectiveFace, lean:0});
+    assert.deepEqual(square.planeForward, neutral.planeForward);
+    assert.deepEqual(square.referenceShaft, neutral.referenceShaft);
+  }
+});

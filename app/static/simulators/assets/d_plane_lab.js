@@ -3,24 +3,50 @@
 const lab=document.getElementById('d-plane-lab'); if(!lab)return;
 const $=id=>lab.querySelector('#'+id), M=DPlane, colors={path:'#52d6ef',face:'#f6bf64',launch:'#ffffff',spin:'#ed9bdd',plane:'#68c99b'};
 const defs=[['lean','Shaft lean',-10,25,0,'Back','Forward'],['lieOffset','Face lie adjustment',-10,10,0,'Toe down','Toe up'],['path','Swing direction',-15,15,4,'Left','Right'],['face','Face at zero lean',-15,15,2,'Left','Right'],['attack','Attack angle',-12,12,-4,'Down','Up'],['loft','Loft at zero lean',0,65,25,'Lower loft','Higher loft']];
-const state={lean:0,lieOffset:0,path:4,face:2,attack:-4,loft:25,weight:.75,hand:'right'};let result,view='perspective',yaw=.55,pitch=.32,lastPreset='draw',playStart=performance.now(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const state={planeRotation:0,lean:0,lieOffset:0,path:4,face:2,attack:-4,loft:25,weight:.75,hand:'right'};let result,view='perspective',yaw=.55,pitch=.32,lastPreset='draw',playStart=performance.now(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const signed=(n,d=1)=>(Math.abs(n)<.05?'0.0':(n>0?'+':'−')+Math.abs(n).toFixed(d))+'°';
 for(const [key,label,min,max,value,left,right]of defs){const row=document.createElement('div');row.className='slider-row';row.innerHTML=`<div class="slider-head"><label for="${key}">${label}</label><span class="value"><input id="${key}Number" type="number" min="${min}" max="${max}" step="0.1" value="${value}" aria-label="${label} degrees">°</span></div><input id="${key}" type="range" min="${min}" max="${max}" step="0.1" value="${value}" aria-label="${label}"><div class="limits"><span>${min}° ${left}</span><span>+${max}° ${right}</span></div>`;$('sliders').append(row);for(const id of[key,key+'Number'])$(id).addEventListener('input',()=>{if($(id).value===''||!Number.isFinite(+$(id).value))return;state[key]=Math.max(min,Math.min(max,+$(id).value));$(key).value=state[key];if(id===key)$(key+'Number').value=state[key];lastPreset=null;highlight();update();});$(key+'Number').addEventListener('change',()=>{$(key+'Number').value=state[key];});}
+const rotation = $('planeRotation');
+const rotationNumber = $('planeRotationNumber');
+function setRotation(angle, editingNumber = false) {
+    state.planeRotation = Math.max(-90, Math.min(90, Math.round(angle * 10) / 10));
+    rotation.value = state.planeRotation;
+    if (!editingNumber) rotationNumber.value = state.planeRotation;
+    lastPreset = null;
+    highlight();
+    update();
+}
+function syncRotation() {
+    rotation.value = rotationNumber.value = state.planeRotation;
+}
+for (const field of [rotation, rotationNumber]) {
+    field.addEventListener('input', () => {
+        if (field.value !== '' && Number.isFinite(+field.value)) setRotation(+field.value, field === rotationNumber);
+    });
+}
+rotationNumber.addEventListener('change', syncRotation);
+$('squareFace').addEventListener('click', () => setRotation(state.planeRotation - result.effectiveFace));
+const labelsButton = $('toggleLabels');
+labelsButton.addEventListener('click', () => {
+    const show = labelsButton.getAttribute('aria-pressed') !== 'true';
+    labelsButton.setAttribute('aria-pressed', String(show));
+    drawScene();
+});
 const presets={draw:[4,2],fade:[-4,-2],straight:[0,0],push:[4,4],slice:[2,6]};
-function setPreset(p){lastPreset=p;const mirror=state.hand==='left'?-1:1;state.path=presets[p][0]*mirror;state.face=presets[p][1]*mirror;sync();highlight();update();}
-function sync(){for(const[key]of defs){$(key).value=state[key];$(key+'Number').value=state[key];}}
+function setPreset(p){lastPreset=p;state.planeRotation=0;const mirror=state.hand==='left'?-1:1;state.path=presets[p][0]*mirror;state.face=presets[p][1]*mirror;sync();highlight();update();}
+function sync(){syncRotation();for(const[key]of defs){$(key).value=state[key];$(key+'Number').value=state[key];}}
 function highlight(){lab.querySelectorAll('[data-preset]').forEach(b=>{const yes=b.dataset.preset===lastPreset;b.classList.toggle('active',yes);b.setAttribute('aria-pressed',yes);});}
 lab.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>setPreset(b.dataset.preset));
 $('hand').onchange=()=>{state.hand=$('hand').value;if(lastPreset)setPreset(lastPreset);else update();};
 $('club').onchange=()=>{const club=$('club').value;state.weight=club==='driver'?.85:.75;state.attack=club==='driver'?3:-4;state.loft=({driver:14,iron:30,pw:46,sw:56})[club]??30;sync();update();};
-$('reset').onclick=()=>{Object.assign(state,{lean:0,lieOffset:0,path:4,face:2,attack:-4,loft:25,weight:.75,hand:'right'});$('hand').value='right';$('club').value='iron';setView('perspective');setPreset('draw');};
+$('reset').onclick=()=>{Object.assign(state,{planeRotation:0,lean:0,lieOffset:0,path:4,face:2,attack:-4,loft:25,weight:.75,hand:'right'});$('hand').value='right';$('club').value='iron';setView('perspective');setPreset('draw');};
 function setView(v){view=v;[yaw,pitch]=v==='top'?[0,Math.PI/2]:v==='side'?[Math.PI/2,0]:v==='behind'?[0,0]:[.55,.32];lab.querySelectorAll('[data-view]').forEach(b=>{const yes=b.dataset.view===v;b.classList.toggle('active',yes);b.setAttribute('aria-pressed',yes);});drawScene();}
 lab.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
 $('showPlane').onchange=drawScene;$('showAxis').onchange=drawScene;
 function classify(){if(!result.valid)return 'Zero spin loft';if(result.elevation<=0)return 'Below-horizon launch';if(!result.backspin)return 'Topspin delivery';const start=result.start,curve=result.tilt;const isLeft=state.hand==='left';const push=isLeft?start<-.2:start>.2;const pull=isLeft?start>.2:start<-.2;const draw=isLeft?curve>0:curve<0;
 if(Math.abs(curve)<.2)return push?'Straight push':pull?'Straight pull':'Straight';
 return (push?'Push-':pull?'Pull-':'')+(draw?'draw':'fade');}
-function update(){result=M.compute(state);$('deliveredLoft').textContent=signed(result.dynamicLoft);$('leanReadout').textContent=signed(state.lean);$('scene').dataset.lean=String(state.lean);$('scene').dataset.deliveredLoft=String(result.dynamicLoft);playStart=performance.now();const title=classify();$('shotTitle').textContent=title[0].toUpperCase()+title.slice(1);$('f2p').textContent=signed(result.f2p);if($('effectiveFace'))$('effectiveFace').textContent=signed(result.effectiveFace);if($('faceChange'))$('faceChange').textContent=signed(result.effectiveFace-state.face);const relative=Math.abs(result.f2p)<.05?'Face aligned to path':(result.f2p>0?'Face right of path':'Face left of path');$('f2pMeaning').textContent=relative;$('spinLoft').textContent=result.spinLoft.toFixed(1)+'°';$('launchDir').textContent=signed(result.start);$('launchHeight').textContent='Estimated vertical launch '+signed(result.elevation);$('tilt').textContent=result.valid?signed(result.tilt):'Undefined';$('curve').textContent=!result.valid?'No unique axis when vectors coincide':!result.backspin?'Atypical: topspin / downward lift':Math.abs(result.tilt)<.2?'Horizontal axis · no lateral curve':result.tilt>0?'Positive tilt · curves right':'Negative tilt · curves left';
+function update(){result=M.compute(state);$('deliveredLoft').textContent=signed(result.dynamicLoft);$('leanReadout').textContent=signed(state.lean);$('scene').dataset.lean=String(state.lean);$('scene').dataset.deliveredLoft=String(result.dynamicLoft);$('planeFace').textContent=signed(result.effectiveFace);playStart=performance.now();const title=classify();$('shotTitle').textContent=title[0].toUpperCase()+title.slice(1);$('f2p').textContent=signed(result.f2p);if($('effectiveFace'))$('effectiveFace').textContent=signed(result.effectiveFace);if($('faceChange'))$('faceChange').textContent=signed(result.effectiveFace-state.face-state.planeRotation);const relative=Math.abs(result.f2p)<.05?'Face aligned to path':(result.f2p>0?'Face right of path':'Face left of path');$('f2pMeaning').textContent=relative;$('spinLoft').textContent=result.spinLoft.toFixed(1)+'°';$('launchDir').textContent=signed(result.start);$('launchHeight').textContent='Estimated vertical launch '+signed(result.elevation);$('tilt').textContent=result.valid?signed(result.tilt):'Undefined';$('curve').textContent=!result.valid?'No unique axis when vectors coincide':!result.backspin?'Atypical: topspin / downward lift':Math.abs(result.tilt)<.2?'Horizontal axis · no lateral curve':result.tilt>0?'Positive tilt · curves right':'Negative tilt · curves left';
 const dir=Math.abs(result.start)<.2?'toward the target':result.start>0?'right of target':'left of target';const curve=!result.valid?'has no defined spin axis':Math.abs(result.tilt)<.2?'has no modeled lateral curve':result.tilt>0?'curves right':'curves left';$('summaryTitle').textContent=result.elevation<=0?'Launch is at or below the horizon.':'Starts '+dir+'.';$('explanation').textContent=(result.elevation<=0?'This estimate does not produce an airborne shot from level ground. Adjust loft or attack angle to raise launch. ':'')+`Swing direction ${signed(result.swingDirection)}, impact path ${signed(result.path)}. The ball launches ${dir} and ${curve}. ${relative}. The face normal and club velocity are ${result.spinLoft.toFixed(1)}° apart in 3D. ${!result.backspin?'This delivery produces topspin or downward lift and falls outside ordinary draw/fade examples.':result.valid?'The modeled spin axis is perpendicular to the calculated impact D-plane (not drawn).':'With identical directions, infinitely many planes could contain this single line.'}`;drawScene();drawFlight();}
 function surface(canvas){const box=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);if(canvas.width!==Math.round(box.width*dpr)||canvas.height!==Math.round(box.height*dpr)){canvas.width=Math.round(box.width*dpr);canvas.height=Math.round(box.height*dpr);}const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,box.width,box.height);return {ctx,w:box.width,h:box.height};}
 function drawScene(){if(!result)return;const{ctx,w,h}=surface($('scene')),scale=Math.min(w*.32,h*.48),ox=w*.47,oy=h*.66;
@@ -29,12 +55,12 @@ const impact=point(0,0,-.025),atImpact=p=>M.add(impact,p);
 const right=[Math.cos(yaw),Math.sin(yaw),0],up=[-Math.sin(pitch)*Math.sin(yaw),Math.sin(pitch)*Math.cos(yaw),Math.cos(pitch)];
 const project=a=>[ox+scale*M.dot(a,right),oy-scale*M.dot(a,up)];
 function line(a,b,color,width=1,dash=[]){const p=project(a),q=project(b);ctx.beginPath();ctx.moveTo(...p);ctx.lineTo(...q);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.stroke();ctx.setLineDash([]);}
-function label(text,p,color,dx=8,dy=0){const q=project(p);ctx.font='12px system-ui';ctx.textBaseline='middle';const tw=ctx.measureText(text).width;let x=Math.max(8,Math.min(w-tw-8,q[0]+dx)),y=Math.max(12,Math.min(h-12,q[1]+dy));ctx.fillStyle='#112c2ddb';ctx.fillRect(x-4,y-9,tw+8,18);ctx.fillStyle=color;ctx.fillText(text,x,y);}
+function label(text,p,color,dx=8,dy=0){if(labelsButton.getAttribute('aria-pressed')!=='true')return;const q=project(p);ctx.font='12px system-ui';ctx.textBaseline='middle';const tw=ctx.measureText(text).width;let x=Math.max(8,Math.min(w-tw-8,q[0]+dx)),y=Math.max(12,Math.min(h-12,q[1]+dy));ctx.fillStyle='#112c2ddb';ctx.fillRect(x-4,y-9,tw+8,18);ctx.fillStyle=color;ctx.fillText(text,x,y);}
 function arrow(v,length,color,width=2.5){const a=project(impact),b=project(atImpact(M.mul(v,length)));ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();const angle=Math.atan2(b[1]-a[1],b[0]-a[0]);ctx.beginPath();ctx.moveTo(...b);ctx.lineTo(b[0]-9*Math.cos(angle-.38),b[1]-9*Math.sin(angle-.38));ctx.lineTo(b[0]-9*Math.cos(angle+.38),b[1]-9*Math.sin(angle+.38));ctx.closePath();ctx.fillStyle=color;ctx.fill();}
 for(let x=-1.5;x<=1.5;x+=.25)line([x,-.3,0],[x,2.3,0],'#284440');for(let y=-.25;y<2.4;y+=.25)line([-1.5,y,0],[1.5,y,0],'#284440');
 line([0,-.25,0],[0,2,0],'#80a297',1.3,[5,6]);label('TARGET',[0,1.95,0],'#a2beb2',7,-8);label('RIGHT',[1,0,0],'#739487',0,22);
-const baseline=M.compute({hand:state.hand,lean:0,lieOffset:0,path:0,face:0,attack:0,loft:30,weight:.75});
-if(baseline.valid&&$('showPlane').checked){const tangent=baseline.referenceShaft;const pts=[[-.4,-.22],[1.5,-.22],[1.5,1.4],[-.4,1.4]].map(([a,b])=>project(M.add(M.mul(baseline.v,a),M.mul(tangent,b))));ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fillStyle='#59bd8c25';ctx.fill();ctx.strokeStyle='#65b99188';ctx.lineWidth=1;ctx.stroke();for(let i=0;i<=4;i++)line(M.add(M.mul(baseline.v,-.16),M.mul(tangent,i*.2)),M.add(M.mul(baseline.v,1.5),M.mul(tangent,i*.2)),'#65b99135');label('FIXED SHAFT PLANE',M.add(M.mul(baseline.v,.7),M.mul(tangent,.83)),'#9ddcba',0,-5);}
+const baseline=M.compute({hand:state.hand,lean:0,lieOffset:0,path:0,face:0,attack:0,loft:30,weight:.75,planeRotation:state.planeRotation});
+if(baseline.valid&&$('showPlane').checked){const tangent=baseline.referenceShaft;const pts=[[-.4,-.22],[1.5,-.22],[1.5,1.4],[-.4,1.4]].map(([a,b])=>project(M.add(M.mul(baseline.v,a),M.mul(tangent,b))));ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fillStyle='#59bd8c25';ctx.fill();ctx.strokeStyle='#65b99188';ctx.lineWidth=1;ctx.stroke();for(let i=0;i<=4;i++)line(M.add(M.mul(baseline.v,-.16),M.mul(tangent,i*.2)),M.add(M.mul(baseline.v,1.5),M.mul(tangent,i*.2)),'#65b99135');label('SHAFT PLANE '+signed(state.planeRotation),M.add(M.mul(baseline.v,.7),M.mul(tangent,.83)),'#9ddcba',0,-5);}
 line(impact,atImpact(M.mul(result.referenceNormal,1.52)),'#f6bf6488',1.5,[5,4]);line(impact,atImpact(M.mul(baseline.launch,1.28)),'#ffffff88',1.5,[4,4]);arrow(result.v,1.05,colors.path);arrow(result.n,1.52,colors.face);arrow(result.launch,1.28,colors.launch,2);
 label('Path '+signed(result.path),atImpact(M.mul(result.v,1.05)),colors.path,10,19);label('Face normal',atImpact(M.mul(result.n,1.52)),colors.face,8,-16);label('Initial launch',atImpact(M.mul(result.launch,1.28)),colors.launch,8,2);
 // One shared pose for head, hosel and shaft: no offset connector behind board.

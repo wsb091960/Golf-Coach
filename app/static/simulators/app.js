@@ -97,6 +97,9 @@
   const key = el => el.name || el.id;
   function capture() { return Object.fromEntries(fields().map(el => [key(el), el.type === 'checkbox' ? el.checked : el.value])); }
   function restore(values) {
+    if (kind === 'd-plane' && !Object.hasOwn(values, 'planeRotation')) {
+      values = {...values, planeRotation: '0', planeRotationNumber: '0'};
+    }
     // Presets saved before shaft lean existed represent zero-lean delivery.
     if (kind === 'd-plane' && !Object.hasOwn(values, 'lean')) {
       for (const id of ['lean', 'leanNumber']) {

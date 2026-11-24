@@ -24,22 +24,21 @@ function update(){result=M.compute(state);$('deliveredLoft').textContent=signed(
 const dir=Math.abs(result.start)<.2?'toward the target':result.start>0?'right of target':'left of target';const curve=!result.valid?'has no defined spin axis':Math.abs(result.tilt)<.2?'has no modeled lateral curve':result.tilt>0?'curves right':'curves left';$('summaryTitle').textContent=result.elevation<=0?'Launch is at or below the horizon.':'Starts '+dir+'.';$('explanation').textContent=(result.elevation<=0?'This estimate does not produce an airborne shot from level ground. Adjust loft or attack angle to raise launch. ':'')+`Swing direction ${signed(result.swingDirection)}, impact path ${signed(result.path)}. The ball launches ${dir} and ${curve}. ${relative}. The face normal and club velocity are ${result.spinLoft.toFixed(1)}° apart in 3D. ${!result.backspin?'This delivery produces topspin or downward lift and falls outside ordinary draw/fade examples.':result.valid?'The modeled spin axis is perpendicular to the calculated impact D-plane (not drawn).':'With identical directions, infinitely many planes could contain this single line.'}`;drawScene();drawFlight();}
 function surface(canvas){const box=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);if(canvas.width!==Math.round(box.width*dpr)||canvas.height!==Math.round(box.height*dpr)){canvas.width=Math.round(box.width*dpr);canvas.height=Math.round(box.height*dpr);}const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,box.width,box.height);return {ctx,w:box.width,h:box.height};}
 function drawScene(){if(!result)return;const{ctx,w,h}=surface($('scene')),scale=Math.min(w*.32,h*.48),ox=w*.47,oy=h*.66;
+const {point,hosel,grip}=M.clubGeometry(result,state.hand);
+const impact=point(0,0,-.025),atImpact=p=>M.add(impact,p);
 const right=[Math.cos(yaw),Math.sin(yaw),0],up=[-Math.sin(pitch)*Math.sin(yaw),Math.sin(pitch)*Math.cos(yaw),Math.cos(pitch)];
 const project=a=>[ox+scale*M.dot(a,right),oy-scale*M.dot(a,up)];
 function line(a,b,color,width=1,dash=[]){const p=project(a),q=project(b);ctx.beginPath();ctx.moveTo(...p);ctx.lineTo(...q);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.stroke();ctx.setLineDash([]);}
 function label(text,p,color,dx=8,dy=0){const q=project(p);ctx.font='12px system-ui';ctx.textBaseline='middle';const tw=ctx.measureText(text).width;let x=Math.max(8,Math.min(w-tw-8,q[0]+dx)),y=Math.max(12,Math.min(h-12,q[1]+dy));ctx.fillStyle='#112c2ddb';ctx.fillRect(x-4,y-9,tw+8,18);ctx.fillStyle=color;ctx.fillText(text,x,y);}
-function arrow(v,length,color,width=2.5){const a=project([0,0,0]),b=project(M.mul(v,length));ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();const angle=Math.atan2(b[1]-a[1],b[0]-a[0]);ctx.beginPath();ctx.moveTo(...b);ctx.lineTo(b[0]-9*Math.cos(angle-.38),b[1]-9*Math.sin(angle-.38));ctx.lineTo(b[0]-9*Math.cos(angle+.38),b[1]-9*Math.sin(angle+.38));ctx.closePath();ctx.fillStyle=color;ctx.fill();}
+function arrow(v,length,color,width=2.5){const a=project(impact),b=project(atImpact(M.mul(v,length)));ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();const angle=Math.atan2(b[1]-a[1],b[0]-a[0]);ctx.beginPath();ctx.moveTo(...b);ctx.lineTo(b[0]-9*Math.cos(angle-.38),b[1]-9*Math.sin(angle-.38));ctx.lineTo(b[0]-9*Math.cos(angle+.38),b[1]-9*Math.sin(angle+.38));ctx.closePath();ctx.fillStyle=color;ctx.fill();}
 for(let x=-1.5;x<=1.5;x+=.25)line([x,-.3,0],[x,2.3,0],'#284440');for(let y=-.25;y<2.4;y+=.25)line([-1.5,y,0],[1.5,y,0],'#284440');
 line([0,-.25,0],[0,2,0],'#80a297',1.3,[5,6]);label('TARGET',[0,1.95,0],'#a2beb2',7,-8);label('RIGHT',[1,0,0],'#739487',0,22);
 const baseline=M.compute({hand:state.hand,lean:0,lieOffset:0,path:0,face:0,attack:0,loft:30,weight:.75});
 if(baseline.valid&&$('showPlane').checked){const tangent=baseline.referenceShaft;const pts=[[-.4,-.22],[1.5,-.22],[1.5,1.4],[-.4,1.4]].map(([a,b])=>project(M.add(M.mul(baseline.v,a),M.mul(tangent,b))));ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fillStyle='#59bd8c25';ctx.fill();ctx.strokeStyle='#65b99188';ctx.lineWidth=1;ctx.stroke();for(let i=0;i<=4;i++)line(M.add(M.mul(baseline.v,-.16),M.mul(tangent,i*.2)),M.add(M.mul(baseline.v,1.5),M.mul(tangent,i*.2)),'#65b99135');label('FIXED SHAFT PLANE',M.add(M.mul(baseline.v,.7),M.mul(tangent,.83)),'#9ddcba',0,-5);}
-line([0,0,0],M.mul(result.referenceNormal,1.52),'#f6bf6488',1.5,[5,4]);line([0,0,0],M.mul(baseline.launch,1.28),'#ffffff88',1.5,[4,4]);arrow(result.v,1.05,colors.path);arrow(result.n,1.52,colors.face);arrow(result.launch,1.28,colors.launch,2);
-label('Path '+signed(result.path),M.mul(result.v,1.05),colors.path,10,19);label('Face normal',M.mul(result.n,1.52),colors.face,8,-16);label('Initial launch',M.mul(result.launch,1.28),colors.launch,8,2);
-// The shaft is an illustrative coplanar teaching aid, not a measured shaft lie.
-const toe=result.toe,faceUp=result.faceUp;
-const mirror=state.hand==='left'?1:-1;
+line(impact,atImpact(M.mul(result.referenceNormal,1.52)),'#f6bf6488',1.5,[5,4]);line(impact,atImpact(M.mul(baseline.launch,1.28)),'#ffffff88',1.5,[4,4]);arrow(result.v,1.05,colors.path);arrow(result.n,1.52,colors.face);arrow(result.launch,1.28,colors.launch,2);
+label('Path '+signed(result.path),atImpact(M.mul(result.v,1.05)),colors.path,10,19);label('Face normal',atImpact(M.mul(result.n,1.52)),colors.face,8,-16);label('Initial launch',atImpact(M.mul(result.launch,1.28)),colors.launch,8,2);
+// One shared pose for head, hosel and shaft: no offset connector behind board.
 const shape=[[-.20,-.085],[-.24,-.055],[-.25,.045],[-.21,.125],[-.14,.15],[.08,.12],[.19,.075],[.20,-.055],[.15,-.085]];
-const point=(a,b,d=0)=>M.add(M.add(M.mul(toe,a*mirror),M.mul(faceUp,b)),M.mul(result.n,d));
 function poly(points,fill,stroke){ctx.beginPath();points.map(project).forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}
 const front=shape.map(([a,b])=>point(a,b,-.025)),back=shape.map(([a,b])=>point(a*.92,b*.92,-.095));
 poly(back,'#65747c','#aab8bd');
@@ -49,22 +48,16 @@ const metal=ctx.createLinearGradient(...p0,...p1);metal.addColorStop(0,'#8799a3'
 poly(front,metal,'#f2f6f7');
 for(let i=0;i<6;i++){const b=-.055+i*.027;line(point(-.20,b,-.024),point(.13-i*.006,b,-.024),'#52636b',1.1);}
 const tangent=baseline.referenceShaft;
-const planeNormal=M.unit(M.cross(baseline.v,tangent));
-const onPlane=p=>M.add(p,M.mul(planeNormal,-M.dot(p,planeNormal)));
-const headHosel=point(.19,-.035,-.065);
-const hosel=onPlane(headHosel);
-const theta=state.lean*Math.PI/180;
 const displayShaft=result.shaft;
-const grip=M.add(hosel,M.mul(displayShaft,1.15));
-// Short neck connects the illustrative clubhead to the coplanar shaft.
-line(headHosel,hosel,'#aab8bd',6);
 line(hosel,M.add(hosel,M.mul(displayShaft,.16)),'#667983',10);
 line(hosel,M.add(hosel,M.mul(displayShaft,.16)),'#dce6e9',6);
 line(hosel,M.add(hosel,M.mul(tangent,1.15)),'#8aaba3',1,[4,4]);
 line(hosel,grip,'#e5b56a',4);line(M.add(hosel,M.mul(displayShaft,.92)),grip,'#fff0c7',7);
+// A visible joint makes the head/shaft/board intersection unambiguous.
+const joint=project(hosel);ctx.beginPath();ctx.arc(...joint,4,0,Math.PI*2);ctx.fillStyle='#fff0c7';ctx.fill();
 label('Shaft '+signed(state.lean),grip,'#f5d59c',-20,-15);
-const ball=project([0,0,0]);ctx.beginPath();ctx.arc(...ball,9,0,Math.PI*2);const grad=ctx.createRadialGradient(ball[0]-3,ball[1]-4,0,...ball,10);grad.addColorStop(0,'#fff');grad.addColorStop(1,'#9cb7ab');ctx.fillStyle=grad;ctx.fill();
-if(result.valid&&$('showAxis').checked){line(M.mul(result.s,-.52),M.mul(result.s,.52),colors.spin,3);label('Spin axis',M.mul(result.s,-.52),colors.spin,-30,22);const a=M.unit(M.cross(result.s,result.v)),b=M.unit(M.cross(result.s,a));ctx.beginPath();for(let i=0;i<=60;i++){let t=i/60*Math.PI*2;const p=project(M.add(M.mul(a,Math.cos(t)*.16),M.mul(b,Math.sin(t)*.16)));if(!i)ctx.moveTo(...p);else ctx.lineTo(...p);}ctx.strokeStyle='#ed9bdd77';ctx.lineWidth=1;ctx.stroke();}
+const ball=project(atImpact(M.mul(result.n,.04)));ctx.beginPath();ctx.arc(...ball,9,0,Math.PI*2);const grad=ctx.createRadialGradient(ball[0]-3,ball[1]-4,0,...ball,10);grad.addColorStop(0,'#fff');grad.addColorStop(1,'#9cb7ab');ctx.fillStyle=grad;ctx.fill();
+if(result.valid&&$('showAxis').checked){line(atImpact(M.mul(result.s,-.52)),atImpact(M.mul(result.s,.52)),colors.spin,3);label('Spin axis',atImpact(M.mul(result.s,-.52)),colors.spin,-30,22);const a=M.unit(M.cross(result.s,result.v)),b=M.unit(M.cross(result.s,a));ctx.beginPath();for(let i=0;i<=60;i++){let t=i/60*Math.PI*2;const p=project(atImpact(M.add(M.mul(a,Math.cos(t)*.16),M.mul(b,Math.sin(t)*.16))));if(!i)ctx.moveTo(...p);else ctx.lineTo(...p);}ctx.strokeStyle='#ed9bdd77';ctx.lineWidth=1;ctx.stroke();}
 if(!result.valid){ctx.fillStyle='#e9e0ba';ctx.font='13px system-ui';ctx.fillText('Zero spin loft: no unique D-plane or spin axis',16,26);}}
 function drawFlight(now=performance.now()){if(!result)return;const {ctx,w,h}=surface($('flight')),cx=w/2,y0=h-26,L=h-60;
 ctx.font='11px system-ui';ctx.fillStyle='#789086';ctx.fillText('LEFT',15,25);ctx.fillText('RIGHT',w-47,25);ctx.textAlign='center';ctx.fillText('TARGET',cx,16);ctx.textAlign='left';

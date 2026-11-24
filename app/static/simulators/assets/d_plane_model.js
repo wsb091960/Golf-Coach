@@ -30,6 +30,20 @@ function compute(p){
  const backspin=lift[2]>=-1e-7;
  return {v,n,s,shaft,referenceShaft,lean,dynamicLoft,launch,spinLoft,start,elevation,tilt,lift,valid,backspin,effectiveFace,referenceNormal,toe,faceUp,swingDirection,path,f2p:effectiveFace-path};
 }
-const api={add,mul,dot,cross,norm,unit,direction,compute};
+// Place the entire illustrative club on the fixed board. Translating just the
+// shaft leaves a disconnected hosel behind the board, even when its endpoints
+// pass a coplanarity check. Every head vertex uses the same translation here.
+function clubGeometry(r,hand){
+ const mirror=hand==='left'?1:-1;
+ const planeNormal=unit(cross([0,1,0],r.referenceShaft));
+ const localPoint=(a,b,d=0)=>add(add(mul(r.toe,a*mirror),mul(r.faceUp,b)),mul(r.n,d));
+ const rawHosel=localPoint(.19,-.035,-.065);
+ const shift=mul(planeNormal,-dot(rawHosel,planeNormal));
+ const point=(a,b,d=0)=>add(localPoint(a,b,d),shift);
+ const hosel=point(.19,-.035,-.065);
+ const grip=add(hosel,mul(r.shaft,1.15));
+ return {point,hosel,grip,planeNormal};
+}
+const api={add,mul,dot,cross,norm,unit,direction,compute,clubGeometry};
 if(typeof module!=='undefined')module.exports=api;else root.DPlane=api;
 })(typeof window!=='undefined'?window:globalThis);

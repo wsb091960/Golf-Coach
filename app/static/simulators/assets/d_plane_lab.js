@@ -36,9 +36,20 @@ arrow(result.v,1.05,colors.path);arrow(result.n,1.52,colors.face);arrow(result.l
 label('Club velocity',M.mul(result.v,1.05),colors.path,10,19);label('Face normal',M.mul(result.n,1.52),colors.face,8,-16);label('Initial launch',M.mul(result.launch,1.28),colors.launch,8,2);
 // The shaft and face patch are illustrative; shaft lie is fixed at 60 degrees.
 const toe=M.unit(M.cross(result.n,[0,0,1])),faceUp=M.unit(M.cross(toe,result.n));
-const corners=[[-.16,-.05],[.16,-.05],[.16,.08],[-.16,.08]].map(([a,b])=>project(M.add(M.mul(toe,a),M.mul(faceUp,b))));
-ctx.beginPath();corners.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fillStyle='#c9d7da';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke();
-const hosel=M.mul(toe,state.hand==='left'?.14:-.14),grip=M.add(hosel,M.mul(result.shaft,1.15));
+const mirror=state.hand==='left'?-1:1;
+const shape=[[-.20,-.085],[-.24,-.055],[-.25,.045],[-.21,.125],[-.14,.15],[.08,.12],[.19,.075],[.20,-.055],[.15,-.085]];
+const point=(a,b,d=0)=>M.add(M.add(M.mul(toe,a*mirror),M.mul(faceUp,b)),M.mul(result.n,d));
+function poly(points,fill,stroke){ctx.beginPath();points.map(project).forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}
+const front=shape.map(([a,b])=>point(a,b,-.025)),back=shape.map(([a,b])=>point(a*.92,b*.92,-.095));
+poly(back,'#65747c','#aab8bd');
+for(let i=0;i<front.length;i++){const j=(i+1)%front.length;poly([front[i],front[j],back[j],back[i]],i<4?'#83959d':'#52636d','#9baab0');}
+const p0=project(point(-.2,-.08)),p1=project(point(.18,.14));
+const metal=ctx.createLinearGradient(...p0,...p1);metal.addColorStop(0,'#8799a3');metal.addColorStop(.45,'#e7eef0');metal.addColorStop(.72,'#b4c2c9');metal.addColorStop(1,'#f7fafb');
+poly(front,metal,'#f2f6f7');
+for(let i=0;i<6;i++){const b=-.055+i*.027;line(point(-.20,b,-.024),point(.13-i*.006,b,-.024),'#52636b',1.1);}
+const hosel=point(.19,-.035,-.065),grip=M.add(hosel,M.mul(result.shaft,1.15));
+line(hosel,M.add(hosel,M.mul(result.shaft,.16)),'#667983',10);
+line(hosel,M.add(hosel,M.mul(result.shaft,.16)),'#dce6e9',6);
 line(hosel,M.add(hosel,M.mul(M.compute({...state,lean:0}).shaft,1.15)),'#8aaba3',1,[4,4]);
 line(hosel,grip,'#e5b56a',4);line(M.add(hosel,M.mul(result.shaft,.92)),grip,'#fff0c7',7);
 label('Shaft '+signed(state.lean),grip,'#f5d59c',-20,-15);

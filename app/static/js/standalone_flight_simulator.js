@@ -549,7 +549,7 @@
         document.getElementById("laws-analysis-title").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    document.getElementById("start-coaching-analysis").addEventListener("click", () => {
+    document.getElementById("start-coaching-analysis")?.addEventListener("click", () => {
         const metricNames = [
             "ball_speed", "club_speed_estimate", "smash_factor", "launch_angle",
             "launch_direction", "club_face", "club_path", "face_to_path",
@@ -581,6 +581,13 @@
         syncTotalFromCarry();
         const current = readInputs();
         updateFlight(estimateKey(current) !== lastEstimateKey);
+    });
+    // Restored local demonstration presets retain manually entered distances.
+    form.addEventListener("portable-restore", () => {
+        carryNeedsSync = false;
+        rolloutAllowance = Math.max(0, number("total_distance") - number("carry_distance"));
+        lastEstimateKey = estimateKey(readInputs());
+        updateFlight(false);
     });
     window.addEventListener("resize", draw);
     draw();

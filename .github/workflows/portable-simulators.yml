@@ -1,0 +1,35 @@
+name: Portable simulator offline checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/static/**'
+      - 'app/templates/**'
+      - 'scripts/*simulator*'
+      - 'tests/portable_simulators.test.cjs'
+      - '.github/workflows/portable-simulators.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --ipc=host
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install --no-save --package-lock=false playwright@1.64.1
+      - run: node tests/portable_simulators.test.cjs
+        env:
+          SIMULATOR_BROWSER: ${{ matrix.engine }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: simulator-tablet-phone-layouts-${{ matrix.engine }}
+          path: /tmp/golf-simulators-*.png
+          retention-days: 7

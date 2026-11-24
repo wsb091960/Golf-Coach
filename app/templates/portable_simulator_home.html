@@ -1,0 +1,13 @@
+{% extends 'portable_simulator_base.html' %}
+{% block content %}
+<section class="portable-hero">
+  <p class="section-kicker">WSBCO · Teaching tools</p>
+  <h1>See the flight.<br>Shape the lesson.</h1>
+  <p>Two interactive simulators. Ready for your next lesson, even at a range without Wi-Fi.</p>
+  <div class="simulator-tiles">
+    <a href="./flight.html"><span class="tile-symbol" aria-hidden="true">◌</span><h2>Ball flight</h2><p>Change face, path and speed. Replay the flight from three views.</p><span>Open Ball Flight</span></a>
+    <a href="./d-plane.html"><span class="tile-symbol" aria-hidden="true">◇</span><h2>D-plane</h2><p>Rotate impact geometry. Explore launch, spin axis and shot shape.</p><span>Open D-Plane</span></a>
+  </div>
+</section>
+<section class="range-note"><h2>Built for the range.</h2><p>Install once while online. Wait for “Available offline,” then use both simulators without a connection. Save your favorite demonstration settings on this device.</p><button type="button" id="show-install-help">How to install</button><p>Coaching AI and student records remain in Golf Coach and require internet. Reference links open online.</p></section>
+{% endblock %}

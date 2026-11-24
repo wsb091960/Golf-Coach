@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#153f35">
+  <meta name="description" content="WSBCO Golf Simulators. Explore ball flight and D-plane impact geometry, online or offline.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Golf Simulators">
+  <title>Ball Flight · WSBCO Golf Simulators</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-180.png">
+  
+<link rel="stylesheet" href="./assets/session_performance.css">
+<style>
+    .standalone-simulator { max-width: 1320px; margin: 0 auto; }
+    .simulator-hero { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:26px 30px; margin-bottom:18px; border-radius:20px; color:#fff; background:linear-gradient(115deg,#0c3f32,#17654f); box-shadow:0 10px 26px rgba(12,63,50,.16); }
+    .simulator-hero h2 { margin:6px 0 8px; font-family:Georgia,serif; font-size:clamp(2rem,4vw,3rem); line-height:1; }
+    .simulator-hero p { margin:0; color:#d9e9e3; }
+    .simulator-hero .section-kicker { color:#f0c95c; }
+    .simulator-hero__badge { padding:12px 16px; border:1px solid rgba(255,255,255,.2); border-radius:12px; color:#f5d46d; font-size:2rem; }
+    .simulator-main { display:grid; gap:16px; }
+    .simulator-main .performance-card { padding:22px; }
+    .simulator-main .card-heading h2 { font-size:17px; }
+    .simulator-controls { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+    .simulator-camera,.simulator-playback { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+    .sim-control { padding:8px 12px; border:1px solid #cedbd5; border-radius:9px; color:#174b3e; background:#fff; font:inherit; font-size:13px; font-weight:750; cursor:pointer; }
+    .sim-control.is-active { border-color:#155341; color:#fff; background:#155341; }
+    .sim-control-gold { border-color:#d3a52e; background:#e0ad24; color:#193e33; }
+    .sim-speed { display:flex; align-items:center; gap:7px; padding:6px 9px; border:1px solid #cedbd5; border-radius:9px; color:#174b3e; font-size:13px; font-weight:700; }
+    .sim-speed select { border:0; color:inherit; background:transparent; font:inherit; }
+    #standalone-flight-canvas { width:100%; aspect-ratio:1000/470; display:block; border:1px solid #d7e0dc; border-radius:11px; background:#dce9df; }
+    .sim-readout { display:grid; grid-template-columns:repeat(6,minmax(100px,1fr)); gap:9px; margin-top:12px; }
+    .sim-readout div { padding:11px 13px; border:1px solid #e0e8e4; border-radius:10px; background:#f7faf8; }
+    .sim-readout span { display:block; color:#718079; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+    .sim-readout strong { display:block; margin-top:5px; color:#143b30; font-size:17px; }
+    .sim-input-card { display:grid; grid-template-columns:1.1fr 2fr; align-items:center; gap:22px; }
+    .sim-input-card h3 { margin:5px 0; }
+    .sim-input-card p { margin:0; color:#68776f; font-size:13px; }
+    .sim-input-grid { display:grid; grid-template-columns:repeat(4,minmax(110px,1fr)); gap:10px; }
+    .sim-input-grid label { display:grid; gap:5px; color:#53645c; font-size:11px; font-weight:800; }
+    .sim-input-grid input { min-width:0; padding:10px; border:1px solid #d7e1dd; border-radius:9px; font:inherit; font-size:14px; }
+    .sim-input-grid input[readonly] { background:#edf3f0; color:#174b3e; font-weight:800; }
+    .sim-input-actions { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .sim-input-actions small { color:#718079; }
+    .simulator-disclaimer { grid-column:1/-1; margin:0; color:#718079; font-size:11px; }
+    .sim-analysis-actions { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0 16px; }
+    .sim-analysis-results { display:grid; gap:14px; }
+    .sim-analysis-results h3 { margin:0 0 8px; color:#143b30; font-size:16px; }
+    .sim-analysis-results p { margin:0; color:#56675f; font-size:13px; }
+    .sim-analysis-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+    .sim-analysis-item { padding:12px; border:1px solid #e0e8e4; border-radius:10px; background:#f7faf8; }
+    .sim-analysis-item.is-primary { border-color:#d9b34b; background:#fffaf0; }
+    .sim-analysis-item strong { display:block; margin-bottom:4px; color:#174b3e; font-size:13px; }
+    .sim-analysis-item small { color:#718079; font-size:11px; font-weight:750; }
+    .sim-analysis-note { padding:12px; border-left:4px solid #d6aa35; border-radius:6px; background:#fffaf0; }
+    @media(max-width:900px) { .sim-input-card { grid-template-columns:1fr; } .sim-input-grid { grid-template-columns:repeat(2,minmax(100px,1fr)); } }
+    @media(max-width:560px) { .simulator-hero { align-items:flex-start; padding:20px; } .simulator-hero__badge { display:none; } .sim-readout { grid-template-columns:repeat(2,1fr); } .sim-input-actions { align-items:flex-start; flex-direction:column; } .simulator-main .performance-card { padding:14px; } }
+</style>
+
+  <link rel="stylesheet" href="./app.css">
+</head>
+<body class="portable" data-simulator="flight">
+  <a class="skip-link" href="#main-content">Skip to simulator</a>
+  <header class="portable-header">
+    <a class="portable-brand" href="./index.html"><img src="./icon.svg" alt="" width="44" height="44"><span>WSBCO<strong>Golf Simulators</strong></span></a>
+    <nav aria-label="Simulators">
+      <a href="./flight.html" aria-current="page">Ball flight</a>
+      <a href="./d-plane.html" >D-plane</a>
+    </nav>
+    <button id="install-app" type="button">Install app</button>
+  </header>
+  <div class="portable-status" role="status"><span id="offline-status">Preparing offline use…</span><button id="retry-offline" hidden type="button">Retry download</button><button id="update-app" hidden type="button">Update ready · reload</button></div>
+  <section id="install-help" class="install-help" hidden aria-labelledby="install-title">
+    <h2 id="install-title">Take it to the range.</h2>
+    <p><strong>iPad:</strong> open this page in Safari, tap Share, then Add to Home Screen. Enable Open as Web App if shown.</p>
+    <p><strong>Android:</strong> open in Chrome, then use Install app or Add to Home Screen in its menu.</p>
+    <p>Wait for “Available offline” before leaving Wi-Fi. Then open the app once in airplane mode to check it. Updates download when you return online.</p>
+    <button id="close-install-help" type="button">Close instructions</button>
+  </section>
+  <main id="main-content">
+    
+    <section class="preset-bar" aria-label="Saved demonstration presets">
+      <label>Preset name<input id="preset-name" maxlength="40" placeholder="My lesson example" autocomplete="off"></label>
+      <button id="save-preset" type="button">Save preset</button>
+      <label>Saved on this device<select id="saved-presets"><option value="">Choose a preset</option></select></label>
+      <button id="load-preset" type="button">Load</button><button id="delete-preset" type="button">Delete</button>
+      <span id="preset-status" role="status">Presets stay in this browser on this device.</span>
+    </section>
+    
+    
+<div class="workspace-shell standalone-simulator">
+    <header class="simulator-hero">
+        <div>
+            <span class="section-kicker">TrackMan-style performance</span>
+            <h2>Ball Flight Simulator</h2>
+            <p>Explore a shot flight on its own. No student or session is required.</p>
+        </div>
+        <div class="simulator-hero__badge" aria-hidden="true">⛳</div>
+    </header>
+
+    <div class="simulator-main">
+        <section class="performance-card" aria-labelledby="flight-replay-title">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Ball Flight · Interactive Replay</span>
+                    <h2 id="flight-replay-title">Demo Flight · Driver · Estimated</h2>
+                </div>
+                <div class="selected-shape">Estimated</div>
+            </div>
+
+            <div class="simulator-controls">
+                <div class="simulator-camera" role="group" aria-label="Camera angle">
+                    <button type="button" class="sim-control is-active" data-camera="behind" aria-pressed="true">Behind</button>
+                    <button type="button" class="sim-control" data-camera="side" aria-pressed="false">Side</button>
+                    <button type="button" class="sim-control" data-camera="overhead" aria-pressed="false">Overhead</button>
+                </div>
+                <div class="simulator-playback">
+                    <button type="button" class="sim-control sim-control-gold" id="flight-replay">Replay</button>
+                    <button type="button" class="sim-control" id="flight-pause" aria-pressed="true">Resume</button>
+                    <label class="sim-speed">Speed
+                        <select id="flight-speed" aria-label="Replay speed">
+                            <option value="0.5">0.5×</option>
+                            <option value="1" selected>1×</option>
+                            <option value="2">2×</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <canvas id="standalone-flight-canvas" width="1000" height="470" role="img" aria-label="Animated estimated golf ball flight"></canvas>
+
+            <div class="sim-readout" aria-live="polite">
+                <div><span>Ball speed</span><strong data-readout="speed">150 mph</strong></div>
+                <div><span>Carry</span><strong data-readout="carry">250 yd</strong></div>
+                <div><span>Total</span><strong data-readout="total">270 yd</strong></div>
+                <div><span>Apex</span><strong data-readout="apex">90 ft</strong></div>
+                <div><span>Face-to-path</span><strong data-readout="facePath">0.0°</strong></div>
+                <div><span>Finish</span><strong data-readout="finish">0 yd</strong></div>
+            </div>
+        </section>
+
+
+        <section class="performance-card" id="what-if-panel" aria-labelledby="what-if-title">
+          <div class="card-heading"><div><span class="section-kicker">GCIE · Exploratory model</span><h2 id="what-if-title">Swing What-If · Face &amp; Path</h2><p>Adjust body positions relative to baseline. These are illustrative estimates, not measured or validated causal effects.</p></div></div>
+          <div id="what-if-controls" class="sim-input-grid">
+            <label>Pelvis turn change <output id="wi-pelvis-out">0°</output><input id="wi-pelvis" type="range" min="-15" max="15" value="0"></label>
+            <label>Torso turn change <output id="wi-torso-out">0°</output><input id="wi-torso" type="range" min="-15" max="15" value="0"></label>
+            <label>Spine angle change <output id="wi-spine-out">0°</output><input id="wi-spine" type="range" min="-15" max="15" value="0"></label>
+            <label>Arm position change <output id="wi-arms-out">0°</output><input id="wi-arms" type="range" min="-15" max="15" value="0"></label>
+          </div>
+          <div class="sim-readout" aria-live="polite"><div><span>Estimated path</span><strong id="wi-path">—</strong></div><div><span>Estimated face</span><strong id="wi-face">—</strong></div><div><span>Estimated face-to-path</span><strong id="wi-f2p">—</strong></div><div><span>Path change</span><strong id="wi-path-delta">—</strong></div><div><span>Face change</span><strong id="wi-face-delta">—</strong></div></div>
+          <div class="sim-analysis-actions"><button type="button" class="workspace-button" id="wi-apply">Show What-If Flight</button><button type="button" class="sim-control" id="wi-reset">Reset What-If</button></div>
+          <p class="simulator-disclaimer">Demonstration sensitivity factors are hypothetical. Body measurements do not uniquely determine clubface or club path. Confirm predictions with Garmin R10 and actual shots. Applying the estimate updates the existing flight simulator, not the stored baseline.</p>
+          <div class="sim-analysis-note"><strong>Prediction vs Actual (optional)</strong><div class="sim-input-grid"><label>Measured club path (°)<input type="number" id="wi-actual-path" step="0.1" placeholder="R10 after change"></label><label>Measured face (°)<input type="number" id="wi-actual-face" step="0.1" placeholder="R10 after change"></label></div><p id="wi-comparison" aria-live="polite">Enter measured results after testing to compare against the estimate.</p></div>
+        </section>
+        <section class="performance-card sim-input-card" aria-labelledby="flight-inputs-title">
+            <div>
+                <span class="section-kicker">Adjust the flight</span>
+                <h3 id="flight-inputs-title">Launch inputs</h3>
+                <p>Changing club speed recalculates ball speed using the assumed smash factor. Smash factor stays fixed unless you change it.</p>
+            </div>
+            <form id="flight-input-form" class="sim-input-grid" data-local-submit>
+                <label>Ball speed (mph)<input name="ball_speed" type="number" min="20" max="250" step="0.1" value="150"></label>
+                <label>Smash factor (assumed)<input name="smash_factor" type="number" min="1.0" max="1.6" step="0.01" value="1.50"></label>
+                <label>Club speed (mph)<input name="club_speed_estimate" type="number" min="20" max="200" step="0.1" value="100.0"></label>
+                <label>Launch angle (°)<input name="launch_angle" type="number" min="0" max="60" step="0.1" value="14"></label>
+                <label>Start direction (°)<input name="launch_direction" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Club face to target (°)<input name="club_face" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Club path (°)<input name="club_path" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Spin rate (rpm)<input name="spin_rate" type="number" min="0" max="15000" step="100" value="2600"></label>
+                <label>Face-to-path (° · auto)<input name="face_to_path" type="number" value="0" readonly aria-readonly="true"></label>
+                <label>Estimated spin axis (°)<input name="spin_axis_estimate" type="number" value="0" readonly aria-readonly="true"></label>
+                <label>Spin axis override (optional °)<input name="spin_axis" type="number" min="-45" max="45" step="0.1" value="" placeholder="Use estimate"></label>
+                <label>Carry (yd)<input name="carry_distance" type="number" min="1" max="450" step="1" value="250"></label>
+                <label>Total (yd)<input name="total_distance" type="number" min="1" max="500" step="1" value="270"></label>
+                <label>Apex (ft)<input name="apex_height" type="number" min="1" max="250" step="1" value="90"></label>
+                <div class="sim-input-actions">
+                    <small>Club speed and ball speed stay linked through the assumed smash factor. Ball speed, launch angle, and spin rate recalculate estimated carry, total, and apex. F2P = face − path; spin axis is estimated from F2P and typical driver spin loft. Enter a measured spin axis as an override. You can still edit distances directly.</small>
+                    <button class="workspace-button" type="submit">Update Flight</button>
+                </div>
+            </form>
+            <p class="simulator-disclaimer">The flight drawing is an estimate; values you enter can be measured launch-monitor readings.</p>
+        </section>
+
+        <section class="performance-card sim-analysis-card" aria-labelledby="laws-analysis-title">
+            <div class="card-heading">
+                <div>
+                    <span class="section-kicker">Coaching interpretation</span>
+                    <h2 id="laws-analysis-title">Laws &amp; Principles</h2>
+                    <p>Analyze the current flight inputs and identify which laws and swing principles to coach.</p>
+                </div>
+            </div>
+            <div class="sim-analysis-actions">
+                <button type="button" class="workspace-button" id="analyze-laws-principles">Analyze Laws &amp; Principles</button>
+                
+                <button type="button" class="sim-control" id="clear-flight-metrics">Clear Metrics</button>
+            </div>
+            <div id="laws-principles-results" class="sim-analysis-results" aria-live="polite">
+                <p>Enter the shot metrics, then select <strong>Analyze Laws &amp; Principles</strong>. Clear Metrics restores the demo starting values.</p>
+            </div>
+        </section>
+    </div>
+</div>
+<script src="./assets/standalone_flight_simulator.js"></script>
+<script src="./assets/gcie_what_if.js"></script>
+
+  </main>
+  <footer class="portable-footer">William Burton · WSBCO Golf<br>Teaching illustrations and estimated flight. Verify changes with measured shots. <a href="/dashboard">Open Golf Coach (internet required)</a></footer>
+  
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 'use strict';
 const lab=document.getElementById('d-plane-lab'); if(!lab)return;
 const $=id=>lab.querySelector('#'+id), M=DPlane, colors={path:'#52d6ef',face:'#f6bf64',launch:'#ffffff',spin:'#ed9bdd',plane:'#68c99b'};
-const defs=[['lean','Shaft lean',-10,25,0,'Back','Forward'],['lieOffset','Dynamic lie offset',-10,10,0,'Toe down','Toe up'],['path','Swing direction',-15,15,4,'Left','Right'],['face','Face at zero lean',-15,15,2,'Left','Right'],['attack','Attack angle',-12,12,-4,'Down','Up'],['loft','Loft at zero lean',0,65,25,'Lower loft','Higher loft']];
+const defs=[['lean','Shaft lean',-10,25,0,'Back','Forward'],['lieOffset','Face lie adjustment',-10,10,0,'Toe down','Toe up'],['path','Swing direction',-15,15,4,'Left','Right'],['face','Face at zero lean',-15,15,2,'Left','Right'],['attack','Attack angle',-12,12,-4,'Down','Up'],['loft','Loft at zero lean',0,65,25,'Lower loft','Higher loft']];
 const state={lean:0,lieOffset:0,path:4,face:2,attack:-4,loft:25,weight:.75,hand:'right'};let result,view='perspective',yaw=.55,pitch=.32,lastPreset='draw',playStart=performance.now(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const signed=(n,d=1)=>(Math.abs(n)<.05?'0.0':(n>0?'+':'−')+Math.abs(n).toFixed(d))+'°';
 for(const [key,label,min,max,value,left,right]of defs){const row=document.createElement('div');row.className='slider-row';row.innerHTML=`<div class="slider-head"><label for="${key}">${label}</label><span class="value"><input id="${key}Number" type="number" min="${min}" max="${max}" step="0.1" value="${value}" aria-label="${label} degrees">°</span></div><input id="${key}" type="range" min="${min}" max="${max}" step="0.1" value="${value}" aria-label="${label}"><div class="limits"><span>${min}° ${left}</span><span>+${max}° ${right}</span></div>`;$('sliders').append(row);for(const id of[key,key+'Number'])$(id).addEventListener('input',()=>{if($(id).value===''||!Number.isFinite(+$(id).value))return;state[key]=Math.max(min,Math.min(max,+$(id).value));$(key).value=state[key];if(id===key)$(key+'Number').value=state[key];lastPreset=null;highlight();update();});$(key+'Number').addEventListener('change',()=>{$(key+'Number').value=state[key];});}
@@ -32,7 +32,7 @@ function arrow(v,length,color,width=2.5){const a=project([0,0,0]),b=project(M.mu
 for(let x=-1.5;x<=1.5;x+=.25)line([x,-.3,0],[x,2.3,0],'#284440');for(let y=-.25;y<2.4;y+=.25)line([-1.5,y,0],[1.5,y,0],'#284440');
 line([0,-.25,0],[0,2,0],'#80a297',1.3,[5,6]);label('TARGET',[0,1.95,0],'#a2beb2',7,-8);label('RIGHT',[1,0,0],'#739487',0,22);
 const baseline=M.compute({hand:state.hand,lean:0,lieOffset:0,path:0,face:0,attack:0,loft:30,weight:.75});
-if(baseline.valid&&$('showPlane').checked){const tangent=M.unit(M.add(baseline.n,M.mul(baseline.v,-M.dot(baseline.v,baseline.n))));const pts=[[-.4,-.22],[1.5,-.22],[1.5,1.4],[-.4,1.4]].map(([a,b])=>project(M.add(M.mul(baseline.v,a),M.mul(tangent,b))));ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fillStyle='#59bd8c25';ctx.fill();ctx.strokeStyle='#65b99188';ctx.lineWidth=1;ctx.stroke();for(let i=0;i<=4;i++)line(M.add(M.mul(baseline.v,-.16),M.mul(tangent,i*.2)),M.add(M.mul(baseline.v,1.5),M.mul(tangent,i*.2)),'#65b99135');label('REFERENCE D-PLANE',M.add(M.mul(baseline.v,.7),M.mul(tangent,.83)),'#9ddcba',0,-5);}
+if(baseline.valid&&$('showPlane').checked){const tangent=baseline.referenceShaft;const pts=[[-.4,-.22],[1.5,-.22],[1.5,1.4],[-.4,1.4]].map(([a,b])=>project(M.add(M.mul(baseline.v,a),M.mul(tangent,b))));ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fillStyle='#59bd8c25';ctx.fill();ctx.strokeStyle='#65b99188';ctx.lineWidth=1;ctx.stroke();for(let i=0;i<=4;i++)line(M.add(M.mul(baseline.v,-.16),M.mul(tangent,i*.2)),M.add(M.mul(baseline.v,1.5),M.mul(tangent,i*.2)),'#65b99135');label('FIXED SHAFT PLANE',M.add(M.mul(baseline.v,.7),M.mul(tangent,.83)),'#9ddcba',0,-5);}
 line([0,0,0],M.mul(result.referenceNormal,1.52),'#f6bf6488',1.5,[5,4]);line([0,0,0],M.mul(baseline.launch,1.28),'#ffffff88',1.5,[4,4]);arrow(result.v,1.05,colors.path);arrow(result.n,1.52,colors.face);arrow(result.launch,1.28,colors.launch,2);
 label('Path '+signed(result.path),M.mul(result.v,1.05),colors.path,10,19);label('Face normal',M.mul(result.n,1.52),colors.face,8,-16);label('Initial launch',M.mul(result.launch,1.28),colors.launch,8,2);
 // The shaft is an illustrative coplanar teaching aid, not a measured shaft lie.
@@ -48,13 +48,13 @@ const p0=project(point(-.2,-.08)),p1=project(point(.18,.14));
 const metal=ctx.createLinearGradient(...p0,...p1);metal.addColorStop(0,'#8799a3');metal.addColorStop(.45,'#e7eef0');metal.addColorStop(.72,'#b4c2c9');metal.addColorStop(1,'#f7fafb');
 poly(front,metal,'#f2f6f7');
 for(let i=0;i<6;i++){const b=-.055+i*.027;line(point(-.20,b,-.024),point(.13-i*.006,b,-.024),'#52636b',1.1);}
-const tangent=M.unit(M.add(baseline.n,M.mul(baseline.v,-M.dot(baseline.v,baseline.n))));
+const tangent=baseline.referenceShaft;
 const planeNormal=M.unit(M.cross(baseline.v,tangent));
 const onPlane=p=>M.add(p,M.mul(planeNormal,-M.dot(p,planeNormal)));
 const headHosel=point(.19,-.035,-.065);
 const hosel=onPlane(headHosel);
 const theta=state.lean*Math.PI/180;
-const displayShaft=M.add(M.mul(baseline.v,Math.sin(theta)),M.mul(tangent,Math.cos(theta)));
+const displayShaft=result.shaft;
 const grip=M.add(hosel,M.mul(displayShaft,1.15));
 // Short neck connects the illustrative clubhead to the coplanar shaft.
 line(headHosel,hosel,'#aab8bd',6);

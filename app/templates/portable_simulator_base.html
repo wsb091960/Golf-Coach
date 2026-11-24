@@ -13,6 +13,7 @@
   <link rel="apple-touch-icon" href="./icon-180.png">
   {% block page_styles %}{% endblock %}
   <link rel="stylesheet" href="./app.css">
+  {% block workbench_styles %}{% endblock %}
 </head>
 <body class="portable" data-simulator="{{ simulator | default('home') }}">
   <a class="skip-link" href="#main-content">Skip to simulator</a>
@@ -34,6 +35,7 @@
   </section>
   <main id="main-content">
     {% if simulator in ['flight', 'd-plane'] %}
+    <details class="preset-drawer"><summary>Saved presets</summary>
     <section class="preset-bar" aria-label="Saved demonstration presets">
       <label>Preset name<input id="preset-name" maxlength="40" placeholder="My lesson example" autocomplete="off"></label>
       <button id="save-preset" type="button">Save preset</button>
@@ -41,6 +43,7 @@
       <button id="load-preset" type="button">Load</button><button id="delete-preset" type="button">Delete</button>
       <span id="preset-status" role="status">Presets stay in this browser on this device.</span>
     </section>
+    </details>
     {% endif %}
     {% block content %}{% endblock %}
   </main>

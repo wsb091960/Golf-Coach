@@ -1,0 +1,100 @@
+/* A bounded teaching workbench: only the controls scroll, so the picture stays visible. */
+.simulator-compact .live-workbench{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,1fr);gap:10px;height:clamp(380px,calc(100svh - 160px),740px);min-width:0;align-items:stretch}
+#d-plane-lab.simulator-compact .lab.live-workbench{grid-template-columns:minmax(0,1.25fr) minmax(300px,1fr)}
+.simulator-compact .live-controls{overflow:auto;overscroll-behavior:contain;min-height:0;min-width:0;scrollbar-gutter:stable;scroll-padding:10px}
+.simulator-compact .live-controls:focus-visible{outline:2px solid #b88217;outline-offset:2px}
+.simulator-compact .supplemental{margin:12px 0;border:1px solid #cfddd4;border-radius:10px;background:#fff;padding:0 12px}
+.simulator-compact .supplemental>summary{padding:12px 0;min-height:44px;font-size:16px;font-weight:650;cursor:pointer}
+.simulator-compact [hidden]{display:none!important}
+#d-plane-lab.simulator-compact .dplane-main{padding:8px 0}
+#d-plane-lab.simulator-compact .intro{margin:0 0 8px;gap:8px}
+#d-plane-lab.simulator-compact h1{font-size:26px;letter-spacing:-.5px;margin:0}
+#d-plane-lab.simulator-compact .intro .eyebrow,#d-plane-lab.simulator-compact .reference,#d-plane-lab.simulator-compact .intro .lead{display:none}
+#d-plane-lab.simulator-compact .visual{min-height:0;display:flex;flex-direction:column;border-radius:12px}
+#d-plane-lab.simulator-compact .scene-bar{padding:8px 12px 0}
+#d-plane-lab.simulator-compact .scene-bar h2{font-size:21px;margin:0 0 4px}
+#d-plane-lab.simulator-compact .scene-bar .eyebrow,#d-plane-lab.simulator-compact .badge{display:none}
+#d-plane-lab.simulator-compact .views{padding:0 8px;gap:4px;flex-shrink:0}
+#d-plane-lab.simulator-compact .views button{min-height:40px;padding:5px 10px;font-size:14px}
+#d-plane-lab.simulator-compact .visual #scene{height:0;flex:1;min-height:100px;width:100%}
+#d-plane-lab.simulator-compact .scene-tip{font-size:14px;margin:0 4px 4px}
+#d-plane-lab.simulator-compact .results{flex-shrink:0;grid-template-columns:repeat(4,minmax(0,1fr));margin:0;border:0;border-radius:0;background:#1d4039;color:#fff}
+#d-plane-lab.simulator-compact .results>div{padding:6px 8px;border-color:#3c5b50;min-width:0;border-bottom:0}
+#d-plane-lab.simulator-compact .results small{font-size:14px;letter-spacing:0;color:#bfd4ca;white-space:nowrap}
+#d-plane-lab.simulator-compact .results strong{font-size:22px;letter-spacing:0;margin:2px 0}
+#d-plane-lab.simulator-compact .results span{display:none}
+#d-plane-lab.simulator-compact .controls{border-radius:12px;padding:10px 12px}
+#d-plane-lab.simulator-compact .controls h2{font-size:18px}
+#d-plane-lab.simulator-compact .muted{font-size:14px;line-height:1.4;margin:3px 0 7px}
+#d-plane-lab.simulator-compact .select-row{gap:8px;margin:0 0 8px}
+#d-plane-lab.simulator-compact .select-row label,#d-plane-lab.simulator-compact .select-row select{font-size:14px}
+#d-plane-lab.simulator-compact .select-row select{padding:6px 20px 6px 7px;min-height:40px;margin-top:3px}
+#d-plane-lab.simulator-compact .slider-row{margin:0 0 7px}
+#d-plane-lab.simulator-compact .slider-head{margin:0;min-height:36px}
+#d-plane-lab.simulator-compact .slider-head label{font-size:14px}
+#d-plane-lab.simulator-compact .value input{font-size:16px;min-height:36px;width:66px}
+#d-plane-lab.simulator-compact .slider-row input[type=range]{min-height:0;height:32px;margin:0}
+#d-plane-lab.simulator-compact .limits{display:none}
+#d-plane-lab.simulator-compact .lean-note,#d-plane-lab.simulator-compact .sign-note{font-size:14px;line-height:1.45;margin:8px 0}
+#d-plane-lab.simulator-compact .legend{padding:6px;gap:6px;font-size:14px;background:#edf4ef;color:#234b3c;border:0;border-radius:8px}
+#d-plane-lab.simulator-compact .legend label{min-height:36px}
+#d-plane-lab.simulator-compact .legend input{height:20px;width:20px}
+#d-plane-lab.simulator-compact .presets button{min-height:40px;font-size:14px;padding:6px 9px}
+#d-plane-lab.simulator-compact .below{gap:16px;padding:14px 0}
+#d-plane-lab.simulator-compact .theory{padding:10px 0;border:0}
+#ball-flight-app .simulator-hero{padding:0;margin:0 0 8px;border-radius:0;background:none;box-shadow:none;color:#173e33}
+#ball-flight-app .simulator-hero h2{font-family:inherit;font-size:26px;margin:0}
+#ball-flight-app .simulator-hero .section-kicker,#ball-flight-app .simulator-hero__badge,#ball-flight-app .simulator-hero p{display:none}
+#ball-flight-app .simulator-main{gap:0}
+#ball-flight-app .performance-card{padding:10px;border-radius:12px}
+#ball-flight-app .live-preview{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+#ball-flight-app .live-preview .card-heading{margin-bottom:6px}
+#ball-flight-app .live-preview .section-kicker,#ball-flight-app .selected-shape{display:none}
+#ball-flight-app .live-preview .card-heading h2{font-size:16px;margin:0}
+#ball-flight-app .simulator-controls{gap:6px;margin-bottom:6px}
+#ball-flight-app .sim-control,#ball-flight-app .sim-speed{min-height:40px;font-size:14px;padding:5px 9px}
+#ball-flight-app #standalone-flight-canvas{height:0;flex:1;min-height:100px;aspect-ratio:auto;object-fit:fill;width:100%}
+#ball-flight-app .sim-readout{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:6px;flex-shrink:0}
+#ball-flight-app .sim-readout>div{padding:5px 7px;min-width:0}
+#ball-flight-app .sim-readout span{font-size:14px;letter-spacing:0;text-transform:none;white-space:nowrap}
+#ball-flight-app .sim-readout strong{font-size:18px;margin-top:1px}
+#ball-flight-app .sim-input-card{display:block}
+#ball-flight-app .sim-input-card .section-kicker,#ball-flight-app .sim-input-actions small{display:none}
+#ball-flight-app .sim-input-card h3{font-size:18px;margin:0 0 4px}
+#ball-flight-app .sim-input-card p{font-size:14px;margin:0 0 8px;line-height:1.4}
+#ball-flight-app .sim-input-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#ball-flight-app .sim-input-grid label{font-size:14px;gap:3px}
+#ball-flight-app .sim-input-grid input{font-size:16px;min-height:40px;padding:6px 8px;width:100%}
+#ball-flight-app .sim-input-actions{flex-direction:row;justify-content:flex-start;flex-wrap:wrap}
+.portable:not([data-simulator=home]) .portable-header{padding:5px 10px;gap:8px;flex-wrap:nowrap;min-height:54px}
+.portable:not([data-simulator=home]) .portable-brand img{width:32px;height:32px}
+.portable:not([data-simulator=home]) .portable-brand span{font-size:12px}
+.portable:not([data-simulator=home]) .portable-brand strong{font-size:17px}
+.portable:not([data-simulator=home]) .portable-header nav{order:0;width:auto;flex:1;justify-content:center;gap:4px}
+.portable:not([data-simulator=home]) .portable-header nav a{flex:0 1 auto;padding:6px 10px;min-height:40px;font-size:14px;white-space:nowrap}
+.portable:not([data-simulator=home]) #install-app{font-size:14px;padding:6px 10px;min-height:40px}
+.portable:not([data-simulator=home]) .portable-status{padding:4px 10px;min-height:30px;font-size:14px}
+.portable:not([data-simulator=home]) main{padding:8px 12px}
+.portable .preset-drawer{margin:0 0 6px;font-size:14px}
+.portable .preset-drawer>summary{cursor:pointer;min-height:36px;padding:8px 0;font-weight:600}
+.portable .preset-drawer .preset-bar{margin:0 0 8px;padding:10px;gap:6px}
+@media(max-width:699px){
+ .simulator-compact .live-workbench{grid-template-columns:1fr;grid-template-rows:minmax(180px,.95fr) minmax(200px,1.05fr);height:clamp(390px,calc(100svh - 165px),850px);gap:8px}
+ #d-plane-lab.simulator-compact .lab.live-workbench{grid-template-columns:1fr}
+ #ball-flight-app .live-preview .card-heading{display:none}
+ #ball-flight-app .simulator-controls{flex-wrap:nowrap;gap:4px}
+ #ball-flight-app .simulator-camera,#ball-flight-app .simulator-playback{gap:3px;flex-wrap:nowrap}
+ #ball-flight-app .sim-control,#ball-flight-app .sim-speed{padding:5px 6px;font-size:14px}
+ #ball-flight-app .sim-speed{display:none}
+ #ball-flight-app .sim-readout span{font-size:14px}
+ #ball-flight-app .sim-readout strong{font-size:16px}
+ #ball-flight-app .live-preview{padding:7px}
+ #d-plane-lab.simulator-compact .scene-tip{display:none}
+ #d-plane-lab.simulator-compact .scene-bar h2{font-size:18px}
+ #d-plane-lab.simulator-compact .results strong{font-size:19px}
+ #d-plane-lab.simulator-compact .results>div{padding:5px 7px}
+ #d-plane-lab.simulator-compact .below{grid-template-columns:1fr}
+ .portable:not([data-simulator=home]) .portable-brand span{display:none}
+ .portable:not([data-simulator=home]) .portable-header nav{justify-content:flex-start}
+}
+@media(max-height:500px) and (min-width:700px){.simulator-compact .live-workbench{height:calc(100svh - 155px);min-height:220px}}

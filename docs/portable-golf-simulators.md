@@ -28,6 +28,23 @@ static mount. No student/session/CRM data is included or downloaded.
 
 ## Build and cache design
 
+### Compact live workbench and shaft lean
+
+Both online and installed simulators use a bounded workbench. The controls scroll
+inside their own panel while the preview remains beside them on tablets or above
+them on phones. Ball-flight delivery/distance inputs redraw immediately. Saved
+presets and extended explanations collapse to keep the working area compact.
+
+D-plane adds a visible shaft, a dashed zero-lean reference and a shaft-lean slider
+from -10° backward to +25° forward. This is a controlled teaching model: delivered
+loft equals the zero-lean reference face loft minus lean, with horizontal face angle
+held at its independently selected value. The reference loft is not necessarily
+the club's stamped loft. Shaft lie is illustratively fixed at 60° at zero lean;
+the display does not model shaft bending, wrist motion or a real golfer's automatic
+face-opening response. Both handednesses use positive lean toward the target.
+Old presets without lean load at zero lean. Analytic tests cover the geometry;
+browser tests check changing canvas pixels and simultaneous preview/input visibility.
+
 Run `python scripts/build_portable_simulators.py` after editing simulator source.
 Jinja2 is already an application dependency. The builder renders the same source
 templates against a portable shell and copies the same engines and styles into

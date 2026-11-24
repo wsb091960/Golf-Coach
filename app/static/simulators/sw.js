@@ -1,7 +1,7 @@
 /* Generated with a complete allowlist: this worker never caches Golf Coach data. */
 'use strict';
-const VERSION = '6987509b80b77df3';
-const FILES = ["app.css", "app.js", "assets/d_plane_lab.css", "assets/d_plane_lab.js", "assets/d_plane_model.js", "assets/gcie_what_if.js", "assets/session_performance.css", "assets/standalone_flight_simulator.js", "d-plane.html", "flight.html", "icon-180.png", "icon-192.png", "icon-512.png", "icon.svg", "index.html", "manifest.webmanifest"];
+const VERSION = 'f29df0fc8a06fc4c';
+const FILES = ["app.css", "app.js", "assets/d_plane_lab.css", "assets/d_plane_lab.js", "assets/d_plane_model.js", "assets/gcie_what_if.js", "assets/session_performance.css", "assets/simulator_workbench.css", "assets/standalone_flight_simulator.js", "d-plane.html", "flight.html", "icon-180.png", "icon-192.png", "icon-512.png", "icon.svg", "index.html", "manifest.webmanifest"];
 const PREFIX = 'wsbco-simulators-' + self.registration.scope;
 const CACHE = PREFIX + VERSION;
 const urls = FILES.map(path => new URL(path, self.registration.scope).href);

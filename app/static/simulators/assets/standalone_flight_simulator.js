@@ -118,10 +118,22 @@
     fields.namedItem("club_speed_estimate").addEventListener("input", () => updateFlight(true, "club_speed"));
     fields.namedItem("smash_factor").addEventListener("input", () => updateFlight(false, "ball_speed"));
     ["launch_angle", "spin_rate"].forEach(name => {
-        fields.namedItem(name).addEventListener("change", () => updateFlight(true));
+        fields.namedItem(name).addEventListener("input", () => {
+            if (fields.namedItem(name).value !== "" && fields.namedItem(name).checkValidity()) updateFlight(true);
+        });
     });
     refreshFaceToPath();
     refreshSpeedPair("ball_speed");
+
+    // Manual delivery and distance controls redraw immediately while editing.
+    form.addEventListener("input", event => {
+        const field = event.target;
+        if (!field.name || field.readOnly || field.value === "" || !field.checkValidity()) return;
+        if (["ball_speed", "club_speed_estimate", "smash_factor", "launch_angle", "spin_rate"].includes(field.name)) return;
+        if (field.name === "carry_distance") syncTotalFromCarry();
+        if (field.name === "total_distance") rolloutAllowance = Math.max(0, number("total_distance") - number("carry_distance"));
+        updateFlight(false);
+    });
 
     function finishYards() {
         const start = Math.tan(shot.launch_direction * Math.PI / 180) * shot.carry_distance;

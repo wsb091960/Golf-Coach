@@ -97,6 +97,13 @@
   const key = el => el.name || el.id;
   function capture() { return Object.fromEntries(fields().map(el => [key(el), el.type === 'checkbox' ? el.checked : el.value])); }
   function restore(values) {
+    // Presets saved before shaft lean existed represent zero-lean delivery.
+    if (kind === 'd-plane' && !Object.hasOwn(values, 'lean')) {
+      for (const id of ['lean', 'leanNumber']) {
+        const field = document.getElementById(id);
+        if (field) { field.value = '0'; field.dispatchEvent(new Event('input', {bubbles: true})); }
+      }
+    }
     // Only existing, editable simulator fields can be restored; no HTML or URLs.
     for (const el of fields()) {
       if (!Object.hasOwn(values, key(el))) continue;

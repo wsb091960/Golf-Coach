@@ -1,6 +1,6 @@
 /* Generated with a complete allowlist: this worker never caches Golf Coach data. */
 'use strict';
-const VERSION = '31f14925991697d7';
+const VERSION = '20261124-dplane-v2';
 const FILES = ["app.css", "app.js", "assets/d_plane_lab.css", "assets/d_plane_lab.js", "assets/d_plane_model.js", "assets/gcie_what_if.js", "assets/session_performance.css", "assets/simulator_workbench.css", "assets/standalone_flight_simulator.js", "d-plane.html", "flight.html", "icon-180.png", "icon-192.png", "icon-512.png", "icon.svg", "index.html", "manifest.webmanifest"];
 const PREFIX = 'wsbco-simulators-' + self.registration.scope;
 const CACHE = PREFIX + VERSION;

@@ -118,10 +118,37 @@
     fields.namedItem("club_speed_estimate").addEventListener("input", () => updateFlight(true, "club_speed"));
     fields.namedItem("smash_factor").addEventListener("input", () => updateFlight(false, "ball_speed"));
     ["launch_angle", "spin_rate"].forEach(name => {
-        fields.namedItem(name).addEventListener("change", () => updateFlight(true));
+        fields.namedItem(name).addEventListener("input", () => {
+            if (fields.namedItem(name).value !== "" && fields.namedItem(name).checkValidity()) updateFlight(true);
+        });
     });
     refreshFaceToPath();
     refreshSpeedPair("ball_speed");
+
+    // Manual delivery and distance controls redraw immediately while editing.
+    form.addEventListener("input", event => {
+        const field = event.target;
+        if (!field.name || field.readOnly || field.value === "" || !field.checkValidity()) return;
+        if (["ball_speed", "club_speed_estimate", "smash_factor", "launch_angle", "spin_rate"].includes(field.name)) return;
+        if (field.name === "carry_distance") syncTotalFromCarry();
+        if (field.name === "total_distance") rolloutAllowance = Math.max(0, number("total_distance") - number("carry_distance"));
+        updateFlight(false);
+    });
+
+    // Touch sliders let the common teaching inputs change without opening a keyboard.
+    const rangeInputs = ["club_face", "club_path", "club_speed_estimate", "launch_angle", "spin_rate"].map(name => {
+        const field = fields.namedItem(name), range = document.createElement("input");
+        range.type = "range";
+        range.id = "flight-range-" + name;
+        range.min = field.min; range.max = field.max; range.step = field.step; range.value = field.value;
+        range.setAttribute("aria-label", field.parentElement.firstChild.textContent.trim() + " slider");
+        range.addEventListener("input", () => {
+            field.value = range.value;
+            field.dispatchEvent(new Event("input", {bubbles: true}));
+        });
+        field.after(range);
+        return {field, range};
+    });
 
     function finishYards() {
         const start = Math.tan(shot.launch_direction * Math.PI / 180) * shot.carry_distance;
@@ -147,8 +174,8 @@
     }
 
     function drawBehind(w, h) {
-        const horizon = h * 0.27;
-        const ground = h - 46;
+        const horizon = h * (h < 220 ? 0.18 : 0.27);
+        const ground = h - (h < 220 ? 18 : 46);
         const sky = ctx.createLinearGradient(0, 0, 0, horizon + 30);
         sky.addColorStop(0, "#b6d5c5");
         sky.addColorStop(1, "#e9efe5");
@@ -183,7 +210,7 @@
     }
 
     function drawSide(w, h) {
-        const ground = h - 58;
+        const ground = h - (h < 220 ? 24 : 58);
         const sky = ctx.createLinearGradient(0, 0, 0, ground);
         sky.addColorStop(0, "#b6d5c5");
         sky.addColorStop(1, "#e9efe5");
@@ -262,16 +289,23 @@
         }
         if (sim.camera === "overhead") {
             const scale = (w * .30) / Math.max(35, Math.abs(finishYards()) * 1.35);
-            return { x: w / 2 + lateral * scale, y: h - 48 - distance / bounds.max * (h - 92) };
+            return { x: w / 2 + lateral * scale, y: h - Math.min(48, h * .16) - distance / bounds.max * (h - Math.min(92, h * .30)) };
         }
         const maxHeight = Math.max(50, Math.min(h * .46, shot.apex_height * 1.35));
         const yTravel = distance / bounds.max * (bounds.ground - bounds.horizon - 20);
-        return { x: w / 2 + lateral * 3.3, y: bounds.ground - yTravel - Math.sin(Math.PI * t) * maxHeight };
+        return { x: w / 2 + lateral * 3.3 * w / 1000, y: bounds.ground - yTravel - Math.sin(Math.PI * t) * maxHeight };
     }
 
     function draw() {
-        const w = canvas.width;
-        const h = canvas.height;
+        rangeInputs.forEach(({field, range}) => { if (field.value !== "") range.value = field.value; });
+        const box = canvas.getBoundingClientRect();
+        const w = box.width, h = box.height, dpr = Math.min(window.devicePixelRatio || 1, 2);
+        if (!w || !h) return;
+        if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+            canvas.width = Math.round(w * dpr);
+            canvas.height = Math.round(h * dpr);
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, w, h);
         const bounds = sim.camera === "side"
             ? drawSide(w, h)
@@ -330,6 +364,7 @@
                 ctx.arc(rollEnd.x, rollEnd.y, 6, 0, Math.PI * 2);
                 ctx.fill();
             }
+            if (h > 220) {
             ctx.fillStyle = "rgba(10,45,31,.88)";
             roundedRect(20, 20, 260, 62, 8);
             ctx.fillStyle = "#ffffff";
@@ -339,6 +374,7 @@
             ctx.fillStyle = "#f1c64e";
             ctx.font = "700 11px system-ui,sans-serif";
             ctx.fillText("ESTIMATED FLIGHT MODEL", 36, 66);
+            }
             if (sim.camera === "overhead") {
                 ctx.fillStyle = "#f1c64e";
                 ctx.beginPath();
@@ -590,5 +626,6 @@
         updateFlight(false);
     });
     window.addEventListener("resize", draw);
+    new ResizeObserver(draw).observe(canvas);
     draw();
 })();

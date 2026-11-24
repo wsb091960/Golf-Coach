@@ -24,6 +24,7 @@ def build():
         ('d-plane.html', 'd_plane_lab.html', 'd-plane', 'D-Plane'),
     ]:
         html = env.get_template(template).render(simulator_base='portable_simulator_base.html', portable=True, simulator=kind, page_title=title)
+        html = '\n'.join(line.rstrip() for line in html.splitlines()) + '\n'
         for original in re.findall(r'/static/(?:js|css)/[\w.]+(?:\?[^"\s]+)?', html):
             path = original.split('?')[0]
             asset = 'assets/' + path.rsplit('/', 1)[1]

@@ -11,7 +11,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icon-180.png">
-  
+
 <link rel="stylesheet" href="./assets/session_performance.css">
 <style>
     .standalone-simulator { max-width: 1320px; margin: 0 auto; }
@@ -59,7 +59,9 @@
     @media(max-width:560px) { .simulator-hero { align-items:flex-start; padding:20px; } .simulator-hero__badge { display:none; } .sim-readout { grid-template-columns:repeat(2,1fr); } .sim-input-actions { align-items:flex-start; flex-direction:column; } .simulator-main .performance-card { padding:14px; } }
 </style>
 
+
   <link rel="stylesheet" href="./app.css">
+  <link rel="stylesheet" href="./assets/simulator_workbench.css">
 </head>
 <body class="portable" data-simulator="flight">
   <a class="skip-link" href="#main-content">Skip to simulator</a>
@@ -80,7 +82,8 @@
     <button id="close-install-help" type="button">Close instructions</button>
   </section>
   <main id="main-content">
-    
+
+    <details class="preset-drawer"><summary>Saved presets</summary>
     <section class="preset-bar" aria-label="Saved demonstration presets">
       <label>Preset name<input id="preset-name" maxlength="40" placeholder="My lesson example" autocomplete="off"></label>
       <button id="save-preset" type="button">Save preset</button>
@@ -88,20 +91,21 @@
       <button id="load-preset" type="button">Load</button><button id="delete-preset" type="button">Delete</button>
       <span id="preset-status" role="status">Presets stay in this browser on this device.</span>
     </section>
-    
-    
-<div class="workspace-shell standalone-simulator">
+    </details>
+
+
+<div class="workspace-shell standalone-simulator simulator-compact" id="ball-flight-app">
     <header class="simulator-hero">
         <div>
             <span class="section-kicker">TrackMan-style performance</span>
             <h2>Ball Flight Simulator</h2>
-            <p>Explore a shot flight on its own. No student or session is required.</p>
+            <p>Adjust a value and watch the flight change immediately.</p>
         </div>
         <div class="simulator-hero__badge" aria-hidden="true">⛳</div>
     </header>
 
     <div class="simulator-main">
-        <section class="performance-card" aria-labelledby="flight-replay-title">
+<div class="live-workbench flight-workbench">        <section class="performance-card live-preview" aria-labelledby="flight-replay-title">
             <div class="card-heading">
                 <div>
                     <span class="section-kicker">Ball Flight · Interactive Replay</span>
@@ -142,7 +146,34 @@
         </section>
 
 
-        <section class="performance-card" id="what-if-panel" aria-labelledby="what-if-title">
+        <section class="performance-card sim-input-card live-controls" tabindex="0" aria-label="Ball flight controls" aria-labelledby="flight-inputs-title">
+            <div>
+                <span class="section-kicker">Adjust the flight</span>
+                <h3 id="flight-inputs-title">Launch inputs</h3>
+                <p>Changes appear immediately. Scroll these controls while the flight stays visible.</p>
+            </div>
+            <form id="flight-input-form" class="sim-input-grid" data-local-submit>
+                <label>Club face to target (°)<input name="club_face" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Club path (°)<input name="club_path" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Ball speed (mph)<input name="ball_speed" type="number" min="20" max="250" step="0.1" value="150"></label>
+                <label>Smash factor (assumed)<input name="smash_factor" type="number" min="1.0" max="1.6" step="0.01" value="1.50"></label>
+                <label>Club speed (mph)<input name="club_speed_estimate" type="number" min="20" max="200" step="0.1" value="100.0"></label>
+                <label>Launch angle (°)<input name="launch_angle" type="number" min="0" max="60" step="0.1" value="14"></label>
+                <label>Start direction (°)<input name="launch_direction" type="number" min="-30" max="30" step="0.1" value="0"></label>
+                <label>Spin rate (rpm)<input name="spin_rate" type="number" min="0" max="15000" step="100" value="2600"></label>
+                <label hidden>Face-to-path (° · auto)<input name="face_to_path" type="number" value="0" readonly aria-readonly="true"></label>
+                <label hidden>Estimated spin axis (°)<input name="spin_axis_estimate" type="number" value="0" readonly aria-readonly="true"></label>
+                <label>Spin axis override (optional °)<input name="spin_axis" type="number" min="-45" max="45" step="0.1" value="" placeholder="Use estimate"></label>
+                <label>Carry (yd)<input name="carry_distance" type="number" min="1" max="450" step="1" value="250"></label>
+                <label>Total (yd)<input name="total_distance" type="number" min="1" max="500" step="1" value="270"></label>
+                <label>Apex (ft)<input name="apex_height" type="number" min="1" max="250" step="1" value="90"></label>
+                <div class="sim-input-actions">
+                    <small>Club speed and ball speed stay linked through the assumed smash factor. Ball speed, launch angle, and spin rate recalculate estimated carry, total, and apex. F2P = face − path; spin axis is estimated from F2P and typical driver spin loft. Enter a measured spin axis as an override. You can still edit distances directly.</small>
+                    <button class="workspace-button" type="submit">Update Flight</button><button type="button" class="sim-control" id="clear-flight-metrics">Clear Metrics</button>
+                </div>
+            </form>
+            <p class="simulator-disclaimer">The flight drawing is an estimate; values you enter can be measured launch-monitor readings.</p>
+<details class="supplemental"><summary>Swing What-If</summary>        <section class="performance-card" id="what-if-panel" aria-labelledby="what-if-title">
           <div class="card-heading"><div><span class="section-kicker">GCIE · Exploratory model</span><h2 id="what-if-title">Swing What-If · Face &amp; Path</h2><p>Adjust body positions relative to baseline. These are illustrative estimates, not measured or validated causal effects.</p></div></div>
           <div id="what-if-controls" class="sim-input-grid">
             <label>Pelvis turn change <output id="wi-pelvis-out">0°</output><input id="wi-pelvis" type="range" min="-15" max="15" value="0"></label>
@@ -155,36 +186,12 @@
           <p class="simulator-disclaimer">Demonstration sensitivity factors are hypothetical. Body measurements do not uniquely determine clubface or club path. Confirm predictions with Garmin R10 and actual shots. Applying the estimate updates the existing flight simulator, not the stored baseline.</p>
           <div class="sim-analysis-note"><strong>Prediction vs Actual (optional)</strong><div class="sim-input-grid"><label>Measured club path (°)<input type="number" id="wi-actual-path" step="0.1" placeholder="R10 after change"></label><label>Measured face (°)<input type="number" id="wi-actual-face" step="0.1" placeholder="R10 after change"></label></div><p id="wi-comparison" aria-live="polite">Enter measured results after testing to compare against the estimate.</p></div>
         </section>
-        <section class="performance-card sim-input-card" aria-labelledby="flight-inputs-title">
-            <div>
-                <span class="section-kicker">Adjust the flight</span>
-                <h3 id="flight-inputs-title">Launch inputs</h3>
-                <p>Changing club speed recalculates ball speed using the assumed smash factor. Smash factor stays fixed unless you change it.</p>
-            </div>
-            <form id="flight-input-form" class="sim-input-grid" data-local-submit>
-                <label>Ball speed (mph)<input name="ball_speed" type="number" min="20" max="250" step="0.1" value="150"></label>
-                <label>Smash factor (assumed)<input name="smash_factor" type="number" min="1.0" max="1.6" step="0.01" value="1.50"></label>
-                <label>Club speed (mph)<input name="club_speed_estimate" type="number" min="20" max="200" step="0.1" value="100.0"></label>
-                <label>Launch angle (°)<input name="launch_angle" type="number" min="0" max="60" step="0.1" value="14"></label>
-                <label>Start direction (°)<input name="launch_direction" type="number" min="-30" max="30" step="0.1" value="0"></label>
-                <label>Club face to target (°)<input name="club_face" type="number" min="-30" max="30" step="0.1" value="0"></label>
-                <label>Club path (°)<input name="club_path" type="number" min="-30" max="30" step="0.1" value="0"></label>
-                <label>Spin rate (rpm)<input name="spin_rate" type="number" min="0" max="15000" step="100" value="2600"></label>
-                <label>Face-to-path (° · auto)<input name="face_to_path" type="number" value="0" readonly aria-readonly="true"></label>
-                <label>Estimated spin axis (°)<input name="spin_axis_estimate" type="number" value="0" readonly aria-readonly="true"></label>
-                <label>Spin axis override (optional °)<input name="spin_axis" type="number" min="-45" max="45" step="0.1" value="" placeholder="Use estimate"></label>
-                <label>Carry (yd)<input name="carry_distance" type="number" min="1" max="450" step="1" value="250"></label>
-                <label>Total (yd)<input name="total_distance" type="number" min="1" max="500" step="1" value="270"></label>
-                <label>Apex (ft)<input name="apex_height" type="number" min="1" max="250" step="1" value="90"></label>
-                <div class="sim-input-actions">
-                    <small>Club speed and ball speed stay linked through the assumed smash factor. Ball speed, launch angle, and spin rate recalculate estimated carry, total, and apex. F2P = face − path; spin axis is estimated from F2P and typical driver spin loft. Enter a measured spin axis as an override. You can still edit distances directly.</small>
-                    <button class="workspace-button" type="submit">Update Flight</button>
-                </div>
-            </form>
-            <p class="simulator-disclaimer">The flight drawing is an estimate; values you enter can be measured launch-monitor readings.</p>
+</details>
         </section>
 
-        <section class="performance-card sim-analysis-card" aria-labelledby="laws-analysis-title">
+</div>
+
+<details class="supplemental"><summary>Coaching interpretation</summary>        <section class="performance-card sim-analysis-card" aria-labelledby="laws-analysis-title">
             <div class="card-heading">
                 <div>
                     <span class="section-kicker">Coaching interpretation</span>
@@ -194,13 +201,13 @@
             </div>
             <div class="sim-analysis-actions">
                 <button type="button" class="workspace-button" id="analyze-laws-principles">Analyze Laws &amp; Principles</button>
-                
-                <button type="button" class="sim-control" id="clear-flight-metrics">Clear Metrics</button>
+
+
             </div>
             <div id="laws-principles-results" class="sim-analysis-results" aria-live="polite">
                 <p>Enter the shot metrics, then select <strong>Analyze Laws &amp; Principles</strong>. Clear Metrics restores the demo starting values.</p>
             </div>
-        </section>
+        </section></details>
     </div>
 </div>
 <script src="./assets/standalone_flight_simulator.js"></script>
@@ -208,7 +215,7 @@
 
   </main>
   <footer class="portable-footer">William Burton · WSBCO Golf<br>Teaching illustrations and estimated flight. Verify changes with measured shots. <a href="/dashboard">Open Golf Coach (internet required)</a></footer>
-  
+
   <script src="./app.js"></script>
 </body>
 </html>

@@ -8,9 +8,10 @@ const {once} = require('node:events');
 
 (async () => {
   const root = path.resolve(__dirname, '..');
-  let brokenAsset = false, revision = '';
+  let brokenAsset = false, networkUnavailable = false, revision = '';
   const server = http.createServer((req, res) => {
     const pathname = new URL(req.url, 'http://localhost').pathname;
+    if (networkUnavailable) { res.writeHead(503); res.end('Origin unavailable'); return; }
     if (!pathname.startsWith('/static/simulators/')) { res.writeHead(404); res.end('Not found'); return; }
     if (brokenAsset && pathname.endsWith('/assets/d_plane_model.js')) { res.writeHead(503); res.end('Simulated interrupted download'); return; }
     const file = path.resolve(root, 'app', '.' + pathname);
@@ -29,8 +30,16 @@ const {once} = require('node:events');
     const port = server.address().port;
     const base = `http://127.0.0.1:${port}/static/simulators/`;
     const engine = process.env.SIMULATOR_BROWSER === 'webkit' ? webkit : chromium;
+    // Playwright WebKit's setOffline can fail cached navigations internally.
+    // Exercise its worker with an unavailable origin; Chromium also uses actual
+    // browser network emulation, including navigator.onLine=false.
+    async function setOffline(context, offline) {
+      if (engine === webkit) networkUnavailable = offline;
+      else await context.setOffline(offline);
+    }
     browser = await engine.launch({headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? {executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH} : {})});
     for (const viewport of [{width: 820, height: 1180}, {width: 1180, height: 820}, {width: 393, height: 852}]) {
+      networkUnavailable = false;
       const context = await browser.newContext({viewport, hasTouch: true, isMobile: true});
       const page = await context.newPage(), errors = [], external = [];
       page.on('pageerror', e => errors.push(e.message));
@@ -50,7 +59,7 @@ const {once} = require('node:events');
       await page.getByRole('button', {name: 'Install app', exact: true}).click();
       assert(await page.locator('#install-help').isVisible());
       await page.getByRole('button', {name: 'Close instructions'}).click();
-      await context.setOffline(true);
+      await setOffline(context, true);
       await page.goto(base + 'flight.html');
       await page.locator('#offline-status').filter({hasText: 'Available offline'}).waitFor();
       assert.equal(await page.locator('#start-coaching-analysis').count(), 0);
@@ -110,7 +119,7 @@ const {once} = require('node:events');
       console.log(`PASS offline navigation, both engines, presets, touch layout ${viewport.width}×${viewport.height}`);
     }
     // Failed initial precache, recovery, cache eviction repair, then explicit update.
-    brokenAsset = true;
+    networkUnavailable = false; brokenAsset = true;
     const failure = await browser.newContext();
     const failedPage = await failure.newPage();
     await failedPage.goto(base + 'index.html');
@@ -132,7 +141,7 @@ const {once} = require('node:events');
     await Promise.all([failedPage.waitForEvent('load'), failedPage.locator('#update-app').click()]);
     await failedPage.locator('#offline-status').filter({hasText: 'Available offline'}).waitFor();
     assert.equal(await failedPage.evaluate(async () => (await caches.keys()).filter(k => k.startsWith('wsbco-simulators-')).length), 1);
-    await failure.setOffline(true);
+    await setOffline(failure, true);
     await failedPage.goto(base + 'd-plane.html');
     assert.equal(await failedPage.locator('#f2p').innerText(), '−2.0°');
     await failure.close();

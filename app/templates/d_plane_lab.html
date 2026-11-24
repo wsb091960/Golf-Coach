@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends simulator_base | default("base.html") %}
 {% block page_styles %}
 <link rel="stylesheet" href="/static/css/d_plane_lab.css?v=20261119">
 {% endblock %}

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends simulator_base | default("base.html") %}
 
 {% block page_styles %}
 <link rel="stylesheet" href="/static/css/session_performance.css?v=5.3O">
@@ -154,7 +154,7 @@
             </div>
             <div class="sim-analysis-actions">
                 <button type="button" class="workspace-button" id="analyze-laws-principles">Analyze Laws &amp; Principles</button>
-                <button type="button" class="workspace-button" id="start-coaching-analysis">Start Coaching Analysis</button>
+                {% if not portable %}<button type="button" class="workspace-button" id="start-coaching-analysis">Start Coaching Analysis</button>{% endif %}
                 <button type="button" class="sim-control" id="clear-flight-metrics">Clear Metrics</button>
             </div>
             <div id="laws-principles-results" class="sim-analysis-results" aria-live="polite">

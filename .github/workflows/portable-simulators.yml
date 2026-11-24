@@ -1,7 +1,5 @@
 name: Portable simulator offline checks
 on:
-  push:
-    branches: [feature/offline-golf-simulators]
   pull_request:
     branches: [main]
     paths:

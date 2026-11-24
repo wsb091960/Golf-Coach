@@ -108,12 +108,15 @@ const {once} = require('node:events');
       await page.getByRole('link', {name: 'D-plane', exact: true}).click();
       assert.equal(await page.locator('#f2p').innerText(), '−2.0°');
       const planeBefore=await page.locator('#scene').evaluate(el=>el.toDataURL());
+      await page.locator('#leanNumber').click();
       await page.locator('#leanNumber').fill('10');
       assert.equal(await page.locator('#deliveredLoft').innerText(), '+15.0°');
       assert.equal(await page.locator('#faceNumber').inputValue(), '2');
       assert.notEqual(await page.locator('#scene').evaluate(el=>el.toDataURL()),planeBefore);
       await visibleTogether(page,'#scene','#leanNumber');
       await page.screenshot({path:path.join('/tmp',`golf-simulators-lean-live-${viewport.width}.png`)});
+      // Click scrolls the lower input into the controls pane, as a user does.
+      await page.locator('#loftNumber').click();
       await page.locator('#loftNumber').fill('30');
       assert.equal(await page.locator('#deliveredLoft').innerText(), '+20.0°');
       await visibleTogether(page,'#scene','#loftNumber');

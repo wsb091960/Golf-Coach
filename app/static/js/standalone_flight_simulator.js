@@ -159,8 +159,8 @@
     }
 
     function drawBehind(w, h) {
-        const horizon = h * 0.27;
-        const ground = h - 46;
+        const horizon = h * (h < 220 ? 0.18 : 0.27);
+        const ground = h - (h < 220 ? 18 : 46);
         const sky = ctx.createLinearGradient(0, 0, 0, horizon + 30);
         sky.addColorStop(0, "#b6d5c5");
         sky.addColorStop(1, "#e9efe5");
@@ -195,7 +195,7 @@
     }
 
     function drawSide(w, h) {
-        const ground = h - 58;
+        const ground = h - (h < 220 ? 24 : 58);
         const sky = ctx.createLinearGradient(0, 0, 0, ground);
         sky.addColorStop(0, "#b6d5c5");
         sky.addColorStop(1, "#e9efe5");
@@ -274,16 +274,22 @@
         }
         if (sim.camera === "overhead") {
             const scale = (w * .30) / Math.max(35, Math.abs(finishYards()) * 1.35);
-            return { x: w / 2 + lateral * scale, y: h - 48 - distance / bounds.max * (h - 92) };
+            return { x: w / 2 + lateral * scale, y: h - Math.min(48, h * .16) - distance / bounds.max * (h - Math.min(92, h * .30)) };
         }
         const maxHeight = Math.max(50, Math.min(h * .46, shot.apex_height * 1.35));
         const yTravel = distance / bounds.max * (bounds.ground - bounds.horizon - 20);
-        return { x: w / 2 + lateral * 3.3, y: bounds.ground - yTravel - Math.sin(Math.PI * t) * maxHeight };
+        return { x: w / 2 + lateral * 3.3 * w / 1000, y: bounds.ground - yTravel - Math.sin(Math.PI * t) * maxHeight };
     }
 
     function draw() {
-        const w = canvas.width;
-        const h = canvas.height;
+        const box = canvas.getBoundingClientRect();
+        const w = box.width, h = box.height, dpr = Math.min(window.devicePixelRatio || 1, 2);
+        if (!w || !h) return;
+        if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+            canvas.width = Math.round(w * dpr);
+            canvas.height = Math.round(h * dpr);
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, w, h);
         const bounds = sim.camera === "side"
             ? drawSide(w, h)
@@ -342,6 +348,7 @@
                 ctx.arc(rollEnd.x, rollEnd.y, 6, 0, Math.PI * 2);
                 ctx.fill();
             }
+            if (h > 220) {
             ctx.fillStyle = "rgba(10,45,31,.88)";
             roundedRect(20, 20, 260, 62, 8);
             ctx.fillStyle = "#ffffff";
@@ -351,6 +358,7 @@
             ctx.fillStyle = "#f1c64e";
             ctx.font = "700 11px system-ui,sans-serif";
             ctx.fillText("ESTIMATED FLIGHT MODEL", 36, 66);
+            }
             if (sim.camera === "overhead") {
                 ctx.fillStyle = "#f1c64e";
                 ctx.beginPath();
@@ -602,5 +610,6 @@
         updateFlight(false);
     });
     window.addEventListener("resize", draw);
+    new ResizeObserver(draw).observe(canvas);
     draw();
 })();

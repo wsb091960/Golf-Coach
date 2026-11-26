@@ -5,6 +5,8 @@ on:
       - 'app/online_instruction.py'
       - 'app/routers/online_instruction.py'
       - 'app/routers/auth.py'
+      - 'app/routers/public_home.py'
+      - 'app/templates/public_home.html'
       - 'app/templates/online_*.html'
       - 'app/static/css/online_instruction.css'
       - 'app/static/js/online_instruction.js'

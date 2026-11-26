@@ -79,6 +79,7 @@
     if (focus) details.querySelector('textarea,select,input')?.focus({ preventScroll: true });
   };
   document.querySelector('[data-open-followup]')?.addEventListener('click', () => openDetails('#follow-up', true));
+  document.querySelector('[data-open-email]')?.addEventListener('click', () => openDetails('#email-intake', true));
   document.querySelector('[data-open-invite]')?.addEventListener('click', () => openDetails('#invite-student', true));
   document.querySelector('[data-focus-message]')?.addEventListener('click', (event) => {
     event.preventDefault();
@@ -87,6 +88,7 @@
     history.replaceState(null, '', '#questions');
   });
   if (location.hash === '#follow-up') openDetails('#follow-up');
+  if (location.hash === '#email-intake') openDetails('#email-intake');
   if (location.hash === '#invite-student') openDetails('#invite-student');
   for (const button of document.querySelectorAll('[data-queue-filter]')) {
     button.addEventListener('click', () => {

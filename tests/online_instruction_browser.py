@@ -171,6 +171,61 @@ try:
         other.add_cookies([cookie('__Host-golf_student', 'c' * 64)])
         assert other.request.get(origin + '/learn/submissions/' + identity).status == 404
         assert other.request.get(origin + '/online-instruction').status == 401
+        # Email-first entry: a public visitor starts without a code; the coach
+        # manually imports their email attachments before issuing portal access.
+        newcomer = browser.new_context(ignore_https_errors=True, viewport={'width': 390, 'height': 844})
+        inquiry = newcomer.new_page()
+        inquiry.on('pageerror', lambda error: errors.append(str(error)))
+        inquiry.goto(origin + '/')
+        inquiry.get_by_role('link', name='Send William Your Swing').click()
+        for width, height, name in [(390,844,'phone'), (820,1180,'tablet'), (1440,1000,'desktop')]:
+            inquiry.set_viewport_size(dict(width=width,height=height))
+            no_overflow(inquiry)
+            assert inquiry.get_by_role('link', name='Email William your swing').get_attribute('href').startswith('mailto:')
+            inquiry.screenshot(path=str(output / f'email-entry-{name}.png'), full_page=True)
+        coach.goto(origin + '/online-instruction')
+        coach.set_viewport_size(dict(width=390,height=844))
+        coach.get_by_role('link', name='Add email inquiry', exact=True).click()
+        coach.get_by_label('First name (new golfer)', exact=True).fill('Casey')
+        coach.get_by_label('Last name (new golfer, optional)', exact=True).fill('Demo')
+        coach.get_by_label('Sender email', exact=True).fill('casey@example.com')
+        coach.get_by_label('What would the golfer like help with?').fill('Improve driver contact.')
+        coach.get_by_text('Private email reference', exact=True).click()
+        coach.get_by_label('Source note (coach only)').fill('PRIVATE-EMAIL-REFERENCE')
+        no_overflow(coach)
+        coach.screenshot(path=str(output / 'email-intake-phone.png'), full_page=True)
+        coach.get_by_role('button', name='Save inquiry and add attachments', exact=True).click()
+        coach.wait_for_url('**/online-instruction/*')
+        imported_id = coach.url.rsplit('/', 1)[-1]
+        coach.get_by_label('Camera view', exact=True).select_option('Down-the-line')
+        coach.get_by_label('Email attachment', exact=True).set_input_files(str(work / 'swing.webm'))
+        assert coach.locator('[data-media-preview] video').is_visible()
+        coach.get_by_role('button', name='Save email attachment', exact=True).click()
+        coach.wait_for_url('**message=Email+attachment+saved.')
+        coach.get_by_role('button', name='Add swing to review queue', exact=True).click()
+        coach.wait_for_url('**message=Swing+added+to+review+queue.')
+        coach.get_by_label('Student summary', exact=True).fill('We will start with setup.')
+        coach.get_by_label('One main priority', exact=True).fill('Check your ball position.')
+        coach.get_by_label('Priority drills and practice instructions').fill('Rehearse setup, then hit ten balls.')
+        coach.get_by_label('Measurable practice test').fill('Count ten centered strikes.')
+        coach.get_by_role('button', name='Publish lesson', exact=True).click()
+        coach.wait_for_url('**message=Lesson+published+to+student.')
+        for width, height in [(390,844), (820,1180), (1440,1000)]:
+            coach.set_viewport_size(dict(width=width,height=height))
+            no_overflow(coach)
+        coach.get_by_role('button', name='Create this golfer’s private access link', exact=True).click()
+        coach.get_by_role('link', name='Open invitation email draft').wait_for()
+        invite_url = coach.locator('[data-invite-link]').input_value()
+        inquiry.goto(invite_url)
+        inquiry.get_by_role('button', name='Open my coaching space', exact=True).click()
+        inquiry.wait_for_url('**/learn')
+        inquiry.goto(origin + '/learn/submissions/' + imported_id)
+        inquiry.get_by_text('Check your ball position.', exact=True).wait_for()
+        assert inquiry.locator('#swing-evidence video').count() == 1
+        assert 'PRIVATE-EMAIL-REFERENCE' not in inquiry.content()
+        assert newcomer.request.get(origin + '/online-instruction').status == 401
+        assert other.request.get(origin + '/learn/submissions/' + imported_id).status == 404
+        print('PASS: public email entry, coach import, private source notes, publication, invitation, and original evidence visible without re-upload.')
         assert not errors, errors
         browser.close()
         print('PASS: complete browser lesson cycle, uploads, preview, filters, private drafts, publication, playback/seek, questions and follow-up.')

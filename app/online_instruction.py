@@ -74,6 +74,15 @@ class OnlineMedia(Base):
     created_at = Column(DateTime, default=now_utc, nullable=False)
 
 
+class OnlineEmailIntake(Base):
+    """Coach-entered provenance; never pass the original email to student views."""
+    __tablename__ = 'online_email_intakes'
+    submission_id = Column(String(64), ForeignKey('online_submissions.id'), primary_key=True)
+    sender_email = Column(String(255), nullable=False)
+    source_note = Column(Text, default='')
+    created_at = Column(DateTime, default=now_utc, nullable=False)
+
+
 class PublishedLesson(Base):
     __tablename__ = 'online_published_lessons'
     id = Column(String(64), primary_key=True)

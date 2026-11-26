@@ -1,8 +1,46 @@
 # Online instruction pilot — GCDevLog #21
 
-This development slice supports an invite-only asynchronous lesson cycle. It is
-disabled by default and does not activate a public offering, billing, email,
-automatic AI advice, or student access to the owner workspace.
+This pilot supports an invite-only asynchronous lesson cycle and an email-first
+inquiry path. Portal access remains disabled by default in unconfigured
+environments. The inquiry page opens a mail draft; it does not add automated
+email delivery, billing, automatic AI advice, or student access to the owner workspace.
+
+## Email-first inquiries — November 26, 2026
+
+The invite-only pilot is enabled on the existing live service. The new public
+`/send-your-swing` page lets a golfer begin with an email, without signing in or
+having a code. The homepage links to it. The button opens an email draft with
+name, goal and optional club prompts; the golfer attaches media in their email
+app and presses Send. The page also displays the destination for manual email.
+`GOLF_INQUIRY_EMAIL` optionally overrides the existing owner email. No mailbox
+connection, automatic email processing or automatic outbound message is added.
+
+Coach workflow:
+
+1. In **Online Instruction**, choose **Add email inquiry**. Select the confirmed
+   existing golfer or enter a new golfer's name and sender email. Save the goal
+   and optional club. A separate private source note can reference the email.
+   Matching email addresses require explicit selection rather than silent linking.
+2. Save each emailed attachment with its camera view, then choose **Add swing to
+   review queue**. Existing private storage, format/size limits and checksum retry
+   handling apply. No student portal access is created by this action.
+3. Review and publish the lesson, or invite the golfer earlier if more footage
+   is needed. **Create this golfer's private access link** uses the existing
+   one-use, seven-day invitation mechanism. **Open invitation email draft** opens
+   a prefilled message; the coach checks and sends it manually.
+4. Once invited, the golfer sees the original evidence and any published lesson
+   in the existing student portal, without re-uploading. Private email notes and
+   unpublished coach drafts remain owner-only.
+
+For a video that cannot be emailed, the public page asks the golfer to email
+name and goal first so William can provide a private portal upload link. There
+is no public anonymous upload endpoint or promise of a free lesson, turnaround
+time, price, or automatic reply.
+
+The provenance table is additive; existing Student and OnlineSubmission columns
+are unchanged. Inquiry creation uses a unique request key so retries do not
+create duplicate coaching sessions. No real student records, emails or
+invitations are needed for the isolated tests.
 
 ## First lesson
 

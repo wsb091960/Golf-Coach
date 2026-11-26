@@ -8,12 +8,13 @@ import re
 import secrets
 import shutil
 from uuid import UUID, uuid4
+from urllib.parse import quote, urlencode
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -21,7 +22,7 @@ from app.database import get_db
 from app.models import Student, CoachingSession
 from app.online_instruction import (
     INVITE_SECONDS, STUDENT_COOKIE, STUDENT_SESSION_SECONDS, STATUSES,
-    OnlineMedia, OnlineMessage, OnlineSubmission, PublishedLesson,
+    OnlineEmailIntake, OnlineMedia, OnlineMessage, OnlineSubmission, PublishedLesson,
     StudentInvite, StudentSession,
 )
 from app.routers.auth import digest, now_utc, public_origin
@@ -104,9 +105,68 @@ def coach_queue(request: Request, db: Session = Depends(get_db)):
     rows.sort(key=lambda item: priority.get(item[0].status, 6))
     return templates.TemplateResponse(request=request, name='online_coach.html', context=context(
         request, rows=rows, students=db.scalars(select(Student).order_by(Student.first_name)).all(),
-        page_title='Online Instruction', mode='queue',
+        page_title='Online Instruction', mode='queue', request_key=str(uuid4()),
+        email_inquiry_ids=set(db.scalars(select(OnlineEmailIntake.submission_id)).all()),
         storage_ready=bool(os.getenv('ONLINE_INSTRUCTION_MEDIA_DIR', '').startswith('/')),
     ))
+
+
+@router.post('/online-instruction/email-intake')
+def create_email_intake(request: Request, request_key: str = Form(...),
+        student: str = Form(''), first_name: str = Form(''), last_name: str = Form(''),
+        sender_email: str = Form(...), goal: str = Form(...), club: str = Form(''),
+        source_note: str = Form(''), db: Session = Depends(get_db)):
+    owner(request)
+    try:
+        key = str(UUID(request_key))
+    except ValueError:
+        raise HTTPException(422, 'Refresh the page and try again.')
+    old = db.scalar(select(OnlineSubmission).where(OnlineSubmission.request_key == key))
+    if old:
+        if not db.get(OnlineEmailIntake, old.id):
+            raise HTTPException(409, 'Refresh the page and try again.')
+        return RedirectResponse('/online-instruction/' + old.id, 303)
+    email = text(sender_email, 255, required=True).lower()
+    if not re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', email):
+        raise HTTPException(422, 'Enter the sender\'s email address, without a display name.')
+    clean_goal, clean_club = text(goal, required=True), text(club, 100)
+    note = text(source_note)
+    if student:
+        golfer = db.get(Student, student)
+        if not golfer:
+            raise HTTPException(404, 'Student not found.')
+        if golfer.email and golfer.email.strip().lower() != email:
+            raise HTTPException(409, 'This sender email differs from the selected student. Confirm the identity and update the student record before importing.')
+        if not golfer.email:
+            golfer.email = email
+    else:
+        # Never silently associate an unverified sender with an existing person.
+        if db.scalar(select(Student.id).where(func.lower(func.trim(Student.email)) == email)):
+            raise HTTPException(409, 'A student already uses this email. Select the correct existing student above.')
+        golfer = Student(id=str(uuid4()), first_name=text(first_name, 100, required=True),
+                         last_name=text(last_name, 100), email=email, primary_goal=clean_goal)
+        db.add(golfer)
+    session_key, row_key = str(uuid4()), str(uuid4())
+    try:
+        # Keep the import atomic and insert parents before children even when
+        # SQLite foreign-key checks are enabled. No partial inquiry is committed.
+        db.flush()
+        db.add(CoachingSession(id=session_key, student_id=golfer.id,
+            session_type='Online Instruction', name='Email swing inquiry', primary_club=clean_club,
+            session_date=datetime.now(ZoneInfo('America/Los_Angeles')).date()))
+        db.flush()
+        db.add(OnlineSubmission(id=row_key, request_key=key, student_id=golfer.id,
+            session_id=session_key, goal=clean_goal, club=clean_club))
+        db.flush()
+        db.add(OnlineEmailIntake(submission_id=row_key, sender_email=email, source_note=note))
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        old = db.scalar(select(OnlineSubmission).where(OnlineSubmission.request_key == key))
+        if not old or not db.get(OnlineEmailIntake, old.id):
+            raise
+        row_key = old.id
+    return RedirectResponse('/online-instruction/' + row_key, 303)
 
 
 @router.post('/online-instruction/invites')
@@ -122,8 +182,17 @@ def create_invite(request: Request, student: str = Form(...), db: Session = Depe
     db.add(StudentInvite(token_hash=digest(token), student_id=student,
                          expires_at=now_utc() + timedelta(seconds=INVITE_SECONDS)))
     db.commit()
+    invite_url = public_origin() + '/learn/invite/' + token
+    reply_url = ''
+    if row.email and re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', row.email):
+        reply_url = 'mailto:' + quote(row.email, safe='@') + '?' + urlencode({
+            'subject': 'Your WSBCO Golf coaching space',
+            'body': 'Hi ' + row.first_name + ',\n\nHere is your private coaching link:\n' + invite_url
+                    + '\n\nOpen this one-use link within seven days. You do not need to type a code.'
+                    + '\n\nWilliam Burton\nWSBCO Golf Coaching\n',
+        }, quote_via=quote)
     return templates.TemplateResponse(request=request, name='online_coach.html', context=context(
-        request, mode='invite', student=row, invite_url=public_origin() + '/learn/invite/' + token,
+        request, mode='invite', student=row, invite_url=invite_url, reply_url=reply_url,
         page_title='Student access link',
     ))
 
@@ -250,7 +319,8 @@ def coach_detail(identity: str, request: Request, db: Session = Depends(get_db))
         OnlineMedia.submission_id == identity, OnlineMedia.role == 'feedback'
     ).order_by(OnlineMedia.created_at.desc())).all()
     return templates.TemplateResponse(request=request, name='online_coach.html', context=context(
-        request, mode='detail', page_title='Online swing review', recordings=recordings, **detail_context(db, row)))
+        request, mode='detail', page_title='Online swing review', recordings=recordings,
+        email_intake=db.get(OnlineEmailIntake, identity), **detail_context(db, row)))
 
 
 def matches_file(header, extension):
@@ -348,6 +418,30 @@ async def coach_upload(identity: str, request: Request, file: UploadFile = File(
     row = submission(db, identity, request, coach=True)
     await save_media(db, row, file, 'feedback', 'Other')
     return RedirectResponse('/online-instruction/' + identity + '?message=Recording+uploaded.+Choose+it+in+your+lesson+below.', 303)
+
+
+@router.post('/online-instruction/{identity}/email-evidence')
+async def coach_email_evidence(identity: str, request: Request, file: UploadFile = File(...),
+        view: str = Form('Other'), db: Session = Depends(get_db)):
+    row = submission(db, identity, request, coach=True)
+    if not db.get(OnlineEmailIntake, identity):
+        raise HTTPException(409, 'Use the student upload flow for this review.')
+    await save_media(db, row, file, 'evidence', view)
+    return RedirectResponse('/online-instruction/' + identity + '?message=Email+attachment+saved.', 303)
+
+
+@router.post('/online-instruction/{identity}/email-submit')
+def submit_email_intake(identity: str, request: Request, db: Session = Depends(get_db)):
+    row = submission(db, identity, request, coach=True)
+    if not db.get(OnlineEmailIntake, identity):
+        raise HTTPException(409, 'Use the student submission flow for this review.')
+    if row.status in {'draft', 'needs_view'}:
+        if not db.scalar(select(OnlineMedia.id).where(OnlineMedia.submission_id == identity,
+                                                     OnlineMedia.role == 'evidence')):
+            raise HTTPException(422, 'Attach at least one emailed swing video or picture first.')
+        row.status, row.submitted_at = 'submitted', now_utc()
+        db.commit()
+    return RedirectResponse('/online-instruction/' + identity + '?message=Swing+added+to+review+queue.', 303)
 
 
 @router.get('/learn/media/{identity}')

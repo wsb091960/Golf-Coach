@@ -394,3 +394,19 @@ def test_email_import_preserves_parent_integrity_and_rolls_back_invalid_input(pi
     with pilot['db']() as db:
         assert db.execute(sql_text('PRAGMA foreign_key_check')).all() == []
         assert len(db.scalars(select(models.OnlineEmailIntake)).all()) == 1
+
+
+def test_invitation_creation_redirects_to_owner_only_preview_without_reissuing(pilot):
+    created = pilot['coach'].post('/online-instruction/invites', data={'student': 'a'}, follow_redirects=False)
+    assert created.status_code == 303
+    preview = created.headers['location']
+    first = pilot['coach'].get(preview)
+    assert first.status_code == 200
+    assert pilot['coach'].get(preview).text == first.text
+    assert pilot['visitor'].get(preview).status_code == 401
+    assert pilot['alex'].get(preview).status_code == 401
+    with pilot['db']() as db:
+        assert len(db.scalars(select(models.StudentInvite)).all()) == 1
+    token = preview.rsplit('/', 1)[-1]
+    assert pilot['visitor'].post('/learn/invite/' + token, follow_redirects=False).status_code == 303
+    assert pilot['coach'].get(preview).status_code == 410

@@ -182,6 +182,20 @@ def create_invite(request: Request, student: str = Form(...), db: Session = Depe
     db.add(StudentInvite(token_hash=digest(token), student_id=student,
                          expires_at=now_utc() + timedelta(seconds=INVITE_SECONDS)))
     db.commit()
+    # Use Post/Redirect/Get so enhanced forms and ordinary browser submissions
+    # both land on a readable page without repeating invitation creation.
+    return RedirectResponse('/online-instruction/access-links/' + token, 303)
+
+
+@router.get('/online-instruction/access-links/{token}')
+def show_invite(token: str, request: Request, db: Session = Depends(get_db)):
+    owner(request)
+    invite = db.get(StudentInvite, digest(token))
+    if not invite or invite.used_at is not None or invite.expires_at <= now_utc():
+        raise HTTPException(410, 'Create a new private access link from Online Instruction.')
+    row = db.get(Student, invite.student_id)
+    if not row:
+        raise HTTPException(404, 'Student not found.')
     invite_url = public_origin() + '/learn/invite/' + token
     reply_url = ''
     if row.email and re.fullmatch(r'[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+', row.email):

@@ -91,7 +91,7 @@ def digest(value):
 
 
 def service_endpoint(path, method):
-    if path in {'/', '/login', '/auth/google/start', '/health'} and method in {'GET', 'HEAD'}:
+    if path in {'/', '/send-your-swing', '/login', '/auth/google/start', '/health'} and method in {'GET', 'HEAD'}:
         return True
     # The isolated branch preview exposes only a read-only synthetic coaching
     # screen. The flag is set on the preview service only; all other paths

@@ -5,6 +5,8 @@ on:
       - 'app/online_instruction.py'
       - 'app/routers/online_instruction.py'
       - 'app/routers/auth.py'
+      - 'app/routers/public_home.py'
+      - 'app/templates/public_home.html'
       - 'app/templates/online_*.html'
       - 'app/static/css/online_instruction.css'
       - 'app/static/js/online_instruction.js'
@@ -19,6 +21,7 @@ jobs:
     timeout-minutes: 12
     env:
       DATABASE_URL: sqlite:////tmp/golf-ci-isolated.db
+      ONLINE_QA_OUTPUT: /tmp/golf-online-screenshots
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,3 +33,9 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: python -m playwright install --with-deps chromium
       - run: python tests/online_instruction_browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: online-instruction-synthetic-layouts
+          path: /tmp/golf-online-screenshots/*.png
+          retention-days: 7

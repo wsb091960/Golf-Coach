@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173c2f">
+  <meta name="description" content="Start online golf coaching with William Burton. Email a short swing video or a few pictures, then continue in your private coaching space.">
+  <title>Send William Your Swing | WSBCO Golf Coaching</title>
+  <link rel="stylesheet" href="/static/css/online_instruction.css">
+</head>
+<body class="student-portal">
+  <a class="oi-skip" href="#main">Skip to content</a>
+  <header class="portal-header"><a class="portal-brand" href="/">WSBCO<span>GOLF COACHING</span></a><span>William Burton · PGA Professional</span></header>
+  <main class="oi-wrap" id="main">
+    <section class="oi-hero">
+      <span class="oi-eyebrow">Start with your swing</span>
+      <h1>A simple first step.<br>A conversation about your golf.</h1>
+      <p>Send me a short swing video or a few pictures and tell me what you would like help with.</p>
+      {% if email_url %}<a class="oi-button" href="{{ email_url }}">Email William your swing →</a>{% endif %}
+      <p class="oi-small">No account, access code, or Onform subscription needed to get started.</p>
+    </section>
+    <div class="oi-grid oi-section">
+      <section class="oi-card">
+        <span class="oi-eyebrow">1 · Send your swing</span><h2>One video is enough to start.</h2>
+        <p>Attach a short video or a few JPG/PNG pictures. Add your name and one sentence about your goal or usual miss. Your reply email address comes with your message.</p>
+        <p class="oi-small">The button opens an email draft. Attach your files in your email app, then press Send.</p>
+        {% if email_address %}<p class="oi-small">Prefer to write your own email? Send it to <a href="{{ email_url }}">{{ email_address }}</a>.</p>{% else %}<p class="oi-notice">Email inquiries are being prepared. Please use the lesson request link on the home page.</p>{% endif %}
+        <details><summary>A quick filming tip</summary><p>Keep your whole body and club in view, with the camera steady around hand height. Film from face-on or down the target line. One view is welcome.</p></details>
+      </section>
+      <section class="oi-card">
+        <span class="oi-eyebrow">2 · Continue with William</span><h2>Your coaching starts with a conversation.</h2>
+        <p>I will look at your inquiry and reply about the next step. If we continue, I will send you a private link to your coaching space, with your original swing attached.</p>
+        <p>That is where you can receive your lesson, ask questions, and send a follow-up swing.</p>
+        <p class="oi-small">If your video is too large to email, send your name and goal first. I can provide a private upload link. Please share only media you have permission to send.</p>
+      </section>
+    </div>
+    <a href="/" class="oi-back">← Back to WSBCO Golf</a>
+  </main>
+  <footer class="oi-footer">WSBCO Golf Coaching · Reedsport, Oregon</footer>
+</body>
+</html>

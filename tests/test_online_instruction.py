@@ -16,6 +16,7 @@ from app.models import Student
 from app.routers import auth
 from app import online_instruction as models
 from app.routers.online_instruction import router
+from app.routers.public_home import router as public_router
 
 ORIGIN = 'https://golf.test'
 PNG = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aJKkAAAAASUVORK5CYII=')
@@ -44,6 +45,7 @@ def pilot(tmp_path, monkeypatch):
     app.add_middleware(auth.GolfOwnerAuthMiddleware)
     app.include_router(auth.router)
     app.include_router(router)
+    app.include_router(public_router)
     @app.get('/dashboard', name='dashboard')
     def dashboard():
         return {'private': True}
@@ -91,6 +93,114 @@ def submitted(pilot):
     assert upload(pilot['alex'], identity).status_code == 303
     assert pilot['alex'].post(f'/learn/submissions/{identity}/submit', follow_redirects=False).status_code == 303
     return identity
+
+
+def email_inquiry(pilot, **values):
+    payload = dict(request_key=str(uuid4()), sender_email='casey@example.com',
+                   first_name='Casey', last_name='Demo', goal='Improve driver start line',
+                   club='Driver', source_note='PRIVATE-EMAIL-REFERENCE')
+    payload.update(values)
+    return pilot['coach'].post('/online-instruction/email-intake', data=payload, follow_redirects=False)
+
+
+def test_public_email_entry_has_no_login_and_does_not_accept_anonymous_writes(pilot, monkeypatch):
+    from html import unescape
+    from urllib.parse import urlsplit, parse_qs
+    monkeypatch.setenv('GOLF_INQUIRY_EMAIL', 'coach+golf@example.com')
+    visitor = pilot['visitor']
+    page = visitor.get('/send-your-swing')
+    assert page.status_code == 200
+    assert 'No account, access code, or Onform' in page.text
+    assert '/send-your-swing' in visitor.get('/').text
+    href = unescape(re.search(r'href="(mailto:[^"]+)"', page.text).group(1))
+    assert 'coach%2Bgolf@example.com' in href
+    assert '+' not in urlsplit(href).query  # Mail clients need percent-encoded spaces.
+    fields = parse_qs(urlsplit(href).query)
+    assert 'My name:\nWhat I would like help with:' in fields['body'][0]
+    for client in [visitor, pilot['alex']]:
+        assert client.post('/online-instruction/email-intake', data={}).status_code == 401
+    assert visitor.post('/send-your-swing', data={}).status_code == 401
+    monkeypatch.delenv('ONLINE_INSTRUCTION_ENABLED')
+    assert visitor.get('/send-your-swing').status_code == 200
+    assert pilot['coach'].post('/online-instruction/email-intake', data={}).status_code == 404
+
+
+def test_email_inquiry_to_published_student_lesson_without_reupload(pilot):
+    response = email_inquiry(pilot)
+    assert response.status_code == 303
+    path = response.headers['location']
+    identity = path.rsplit('/', 1)[-1]
+    coach = pilot['coach']
+    assert 'PRIVATE-EMAIL-REFERENCE' in coach.get(path).text
+    assert coach.post(path + '/email-submit', follow_redirects=False).status_code == 422
+    assert coach.post(path + '/email-evidence', data={'view': 'Face-on'},
+        files={'file': ('emailed.png', PNG)}, follow_redirects=False).status_code == 303
+    assert coach.post(path + '/email-submit', follow_redirects=False).status_code == 303
+    assert publish(pilot, identity).status_code == 303
+    with pilot['db']() as db:
+        row = db.get(models.OnlineSubmission, identity)
+        sid = row.student_id
+        media = db.scalar(select(models.OnlineMedia).where(models.OnlineMedia.submission_id == identity))
+        mid = media.id
+        assert row.status == 'lesson_ready'
+        assert row.submitted_at is not None
+        assert db.get(Student, sid).email == 'casey@example.com'
+    invite = coach.post('/online-instruction/invites', data={'student': sid})
+    assert 'Open invitation email draft' in invite.text
+    url = re.search(r'https://golf.test/learn/invite/[a-f0-9]{64}', invite.text).group()
+    visitor = pilot['visitor']
+    assert visitor.get('/learn/media/' + mid).status_code == 401
+    assert visitor.post(url, follow_redirects=False).status_code == 303
+    page = visitor.get('/learn/submissions/' + identity)
+    assert page.status_code == 200
+    assert 'emailed.png' in page.text and 'Start with alignment.' in page.text
+    assert 'PRIVATE-EMAIL-REFERENCE' not in page.text
+    assert 'PRIVATE-COACH-NOTE' not in page.text
+    assert visitor.get('/learn/media/' + mid).content == PNG
+    assert pilot['alex'].get('/learn/submissions/' + identity).status_code == 404
+    assert pilot['alex'].get('/learn/media/' + mid).status_code == 404
+    assert visitor.post(path + '/email-evidence', files={'file': ('swing.png', PNG)}).status_code == 401
+    assert coach.post(path + '/email-evidence', files={'file': ('late.png', PNG)}).status_code == 409
+
+
+def test_email_intake_retries_identity_checks_and_existing_student(pilot):
+    key = str(uuid4())
+    first = email_inquiry(pilot, request_key=key)
+    assert email_inquiry(pilot, request_key=key).headers['location'] == first.headers['location']
+    assert email_inquiry(pilot).status_code == 409  # Explicitly select an existing identity.
+    with pilot['db']() as db:
+        rows = db.scalars(select(models.OnlineSubmission)).all()
+        assert len(rows) == 1
+        sid = rows[0].student_id
+        assert len(db.scalars(select(Student)).all()) == 3
+    assert email_inquiry(pilot, student=sid, sender_email='wrong@example.com').status_code == 409
+    assert email_inquiry(pilot, student=sid, sender_email='CASEY@example.com', first_name='').status_code == 303
+    assert email_inquiry(pilot, sender_email='not-an-email').status_code == 422
+    assert email_inquiry(pilot, sender_email='another@example.com', first_name='').status_code == 422
+    assert email_inquiry(pilot, student='missing', sender_email='another@example.com').status_code == 404
+    assert pilot['coach'].post('/online-instruction/email-intake', headers={'Origin': 'https://attacker.test'},
+        data={'request_key': str(uuid4()), 'sender_email': 'x@example.com', 'goal': 'test'}).status_code == 403
+    student_row = start(pilot['alex'])
+    assert pilot['coach'].post('/online-instruction/' + student_row + '/email-evidence',
+        files={'file': ('swing.png', PNG)}).status_code == 409
+
+
+def test_emailed_attachment_validation_and_retries(pilot):
+    response = email_inquiry(pilot)
+    path = response.headers['location']
+    endpoint = path + '/email-evidence'
+    coach = pilot['coach']
+    assert coach.post(endpoint, files={'file': ('bad.png', b'not an image')}).status_code == 422
+    assert coach.post(endpoint, files={'file': ('bad.svg', PNG)}).status_code == 422
+    assert coach.post(endpoint, files={'file': ('big.png', PNG + b'x' * (10 * 1024 * 1024))}).status_code == 413
+    assert not list(pilot['root'].glob('*'))
+    for _ in range(2):
+        assert coach.post(endpoint, data={'view': 'Face-on'}, files={'file': ('swing.png', PNG)},
+                          follow_redirects=False).status_code == 303
+    assert coach.post(endpoint, data={'view': 'Down-the-line'}, files={'file': ('swing.mp4', VIDEO)},
+                      follow_redirects=False).status_code == 303
+    with pilot['db']() as db:
+        assert len(db.scalars(select(models.OnlineMedia)).all()) == 2
 
 
 def test_student_cannot_enter_coach_workspace(pilot):
@@ -267,3 +377,36 @@ def test_mutations_require_origin_and_submitted_evidence_is_locked(pilot):
     assert response.status_code == 403
     assert pilot['coach'].post(f'/online-instruction/{identity}/status', data={'status': 'needs_view'}, follow_redirects=False).status_code == 303
     assert upload(pilot['alex'], identity, 'another.png', PNG + b'new').status_code == 303
+
+
+def test_email_import_preserves_parent_integrity_and_rolls_back_invalid_input(pilot):
+    from sqlalchemy import text as sql_text
+    from app.models import CoachingSession
+    with pilot['db']() as db:
+        db.execute(sql_text('PRAGMA foreign_keys = ON'))
+        db.commit()
+    assert email_inquiry(pilot, source_note='x' * 4001).status_code == 422
+    with pilot['db']() as db:
+        assert not db.scalars(select(models.OnlineSubmission)).all()
+        assert not db.scalars(select(CoachingSession)).all()
+        assert len(db.scalars(select(Student)).all()) == 2
+    assert email_inquiry(pilot).status_code == 303
+    with pilot['db']() as db:
+        assert db.execute(sql_text('PRAGMA foreign_key_check')).all() == []
+        assert len(db.scalars(select(models.OnlineEmailIntake)).all()) == 1
+
+
+def test_invitation_creation_redirects_to_owner_only_preview_without_reissuing(pilot):
+    created = pilot['coach'].post('/online-instruction/invites', data={'student': 'a'}, follow_redirects=False)
+    assert created.status_code == 303
+    preview = created.headers['location']
+    first = pilot['coach'].get(preview)
+    assert first.status_code == 200
+    assert pilot['coach'].get(preview).text == first.text
+    assert pilot['visitor'].get(preview).status_code == 401
+    assert pilot['alex'].get(preview).status_code == 401
+    with pilot['db']() as db:
+        assert len(db.scalars(select(models.StudentInvite)).all()) == 1
+    token = preview.rsplit('/', 1)[-1]
+    assert pilot['visitor'].post('/learn/invite/' + token, follow_redirects=False).status_code == 303
+    assert pilot['coach'].get(preview).status_code == 410

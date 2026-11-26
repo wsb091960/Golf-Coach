@@ -1,0 +1,32 @@
+name: Online instruction pilot
+on:
+  pull_request:
+    paths:
+      - 'app/online_instruction.py'
+      - 'app/routers/online_instruction.py'
+      - 'app/routers/auth.py'
+      - 'app/templates/online_*.html'
+      - 'app/static/css/online_instruction.css'
+      - 'app/static/js/online_instruction.js'
+      - 'scripts/check_online_instruction_storage.py'
+      - 'tests/*online*'
+      - '.github/workflows/online-instruction-tests.yml'
+permissions:
+  contents: read
+jobs:
+  private-lesson-workflow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      DATABASE_URL: sqlite:////tmp/golf-ci-isolated.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt pytest httpx playwright
+      - run: python -m pytest -q tests/test_online_instruction.py tests/test_online_storage_check.py
+      - run: node --check app/static/js/online_instruction.js
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: python -m playwright install --with-deps chromium
+      - run: python tests/online_instruction_browser.py

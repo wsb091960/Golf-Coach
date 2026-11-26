@@ -1,0 +1,47 @@
+{% macro upload_form(submission, storage_ready) -%}
+{% if storage_ready %}
+<form method="post" action="/learn/submissions/{{ submission.id }}/media" enctype="multipart/form-data" data-online data-upload>
+  <fieldset class="oi-view-picker"><legend>Camera view</legend>
+    {% for view in ['Face-on', 'Down-the-line', 'Other'] %}<label><input type="radio" name="view" value="{{ view }}" {% if loop.first %}checked{% endif %}><span>{{ view }}</span></label>{% endfor %}
+  </fieldset>
+  <label class="oi-file-picker">Choose video or screenshot<input type="file" name="file" accept=".mp4,.mov,.webm,.jpg,.jpeg,.png" required data-media-input></label>
+  <div class="oi-upload-preview" data-media-preview hidden></div>
+  <p class="oi-small">Phone videos welcome. Onform optional.</p>
+  <button class="oi-button oi-button--secondary">Upload swing</button>
+  <progress hidden max="100" value="0" aria-label="Upload progress"></progress>
+  <p class="oi-small" data-upload-status role="status"></p>
+</form>
+{% else %}<p class="oi-notice">Uploads are being prepared. William will let you know when your coaching space is ready.</p>{% endif %}
+{%- endmacro %}
+
+{% macro student_lesson(lesson, submission, evidence) -%}
+<section class="oi-card oi-section" id="my-lesson">
+  <span class="oi-badge oi-badge--lesson_ready">Lesson ready</span>
+  <h2 class="oi-lesson-title">Your {{ submission.club|lower if submission.club else 'swing' }} lesson</h2>
+  <div class="oi-lesson-layout">
+    <div>
+      {% if lesson.recording_id %}
+      <video class="oi-video oi-video--lesson" controls playsinline preload="metadata" src="/learn/media/{{ lesson.recording_id }}"></video>
+      <span class="oi-small">Your recorded lesson from William</span>
+      {% elif evidence %}{% set first = evidence[0] %}
+        {% if first.content_type.startswith('video/') %}<video class="oi-video oi-video--lesson" src="/learn/media/{{ first.id }}" controls playsinline preload="metadata"></video>
+        {% else %}<a href="/learn/media/{{ first.id }}" target="_blank" rel="noopener"><img class="oi-lesson-image" src="/learn/media/{{ first.id }}" alt="Your {{ first.view }} swing evidence"></a>{% endif %}
+        <span class="oi-small">Your submitted swing · {{ first.view }}</span>
+      {% endif %}
+      <p class="oi-preserve">{{ lesson.summary }}</p>
+    </div>
+    <div class="oi-practice-stack">
+      <div class="oi-priority"><span class="oi-eyebrow">Your main priority</span><h3 class="oi-preserve">{{ lesson.priority }}</h3></div>
+      <div class="oi-practice-test"><span class="oi-eyebrow">Practice test</span><p class="oi-preserve">{{ lesson.practice_test }}</p></div>
+    </div>
+  </div>
+  <details open><summary>Practice this</summary><p class="oi-preserve">{{ lesson.drills }}</p></details>
+  <div class="oi-actions oi-actions--wide"><a class="oi-button oi-button--secondary" href="#questions" data-focus-message>Ask William</a><a class="oi-button" href="#follow-up" data-open-followup>Send follow-up swing</a></div>
+</section>
+{%- endmacro %}
+
+{% macro conversation(messages, action, coach=False, student=None) -%}
+<section class="oi-card oi-section" id="questions"><h2>{{ 'Student conversation' if coach else 'Questions & practice updates' }}</h2>
+{% for message in messages %}<article class="oi-message"><strong>{% if message.author == 'coach' %}{{ 'You' if coach else 'William' }}{% else %}{{ student.name if coach else 'You' }}{% endif %}</strong><p class="oi-preserve">{{ message.text }}</p></article>{% else %}<p>Keep questions and practice results together here.</p>{% endfor %}
+<form method="post" action="{{ action }}" data-online><label>{{ 'Reply to student' if coach else 'Your message' }}<textarea name="message" required maxlength="4000"></textarea></label><button class="oi-button oi-button--secondary">{{ 'Send reply' if coach else 'Send to William' }}</button></form></section>
+{%- endmacro %}

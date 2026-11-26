@@ -1,10 +1,12 @@
 """First online-instruction slice: invite, submit, review, publish, follow up."""
 from datetime import datetime, timedelta
 import hashlib
+import errno
 import os
 from pathlib import Path
 import re
 import secrets
+import shutil
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 
@@ -65,7 +67,11 @@ def media_root():
     configured = os.getenv('ONLINE_INSTRUCTION_MEDIA_DIR', '').strip()
     if not configured or not Path(configured).is_absolute():
         raise HTTPException(503, 'Uploads are being prepared. Please contact your coach.')
-    return Path(configured).resolve()
+    root = Path(configured).resolve()
+    repository = Path(__file__).resolve().parents[2]
+    if root == Path('/') or root == repository or repository in root.parents:
+        raise HTTPException(503, 'Private upload storage must be outside the application directory.')
+    return root
 
 
 def context(request, **values):
@@ -93,7 +99,9 @@ def coach_queue(request: Request, db: Session = Depends(get_db)):
     owner(request)
     rows = db.execute(select(OnlineSubmission, Student).join(
         Student, OnlineSubmission.student_id == Student.id
-    ).order_by(OnlineSubmission.created_at.desc())).all()
+    ).order_by(OnlineSubmission.created_at)).all()
+    priority = {'submitted': 0, 'in_review': 1, 'needs_view': 2, 'follow_up_due': 3, 'lesson_ready': 4, 'draft': 5}
+    rows.sort(key=lambda item: priority.get(item[0].status, 6))
     return templates.TemplateResponse(request=request, name='online_coach.html', context=context(
         request, rows=rows, students=db.scalars(select(Student).order_by(Student.first_name)).all(),
         page_title='Online Instruction', mode='queue',
@@ -289,8 +297,13 @@ async def save_media(db, row, upload, role, view):
                 size += len(chunk)
                 if size > maximum:
                     raise HTTPException(413, 'Use a video under 100 MB or an image under 10 MB.')
+                # Leave breathing room for SQLite and the app on a shared pilot disk.
+                if shutil.disk_usage(root).free - len(chunk) < 64 * 1024 * 1024:
+                    raise HTTPException(507, 'Upload storage is full. Please contact your coach.')
                 checksum.update(chunk)
                 stream.write(chunk)
+            stream.flush()
+            os.fsync(stream.fileno())
         if not size:
             raise HTTPException(422, 'The selected file is empty.')
         duplicate = db.scalar(select(OnlineMedia).where(
@@ -310,10 +323,12 @@ async def save_media(db, row, upload, role, view):
         if role == 'feedback':
             row.draft_recording_id = record.id
         db.commit()
-    except Exception:
+    except Exception as error:
         db.rollback()
         temp.unlink(missing_ok=True)
         target.unlink(missing_ok=True)
+        if isinstance(error, OSError) and error.errno == errno.ENOSPC:
+            raise HTTPException(507, 'Upload storage is full. Please contact your coach.') from error
         raise
     finally:
         await upload.close()
@@ -332,7 +347,7 @@ async def coach_upload(identity: str, request: Request, file: UploadFile = File(
         db: Session = Depends(get_db)):
     row = submission(db, identity, request, coach=True)
     await save_media(db, row, file, 'feedback', 'Other')
-    return RedirectResponse('/online-instruction/' + identity, 303)
+    return RedirectResponse('/online-instruction/' + identity + '?message=Recording+uploaded.+Choose+it+in+your+lesson+below.', 303)
 
 
 @router.get('/learn/media/{identity}')
@@ -389,7 +404,8 @@ def save_review(identity: str, request: Request, summary: str = Form(''), priori
             recording_id=row.draft_recording_id))
         row.status = 'lesson_ready'
     db.commit()
-    return RedirectResponse('/online-instruction/' + identity, 303)
+    message = 'Lesson+published+to+student.' if action == 'publish' else 'Lesson+draft+saved.'
+    return RedirectResponse('/online-instruction/' + identity + '?message=' + message, 303)
 
 
 @router.post('/online-instruction/{identity}/status')

@@ -69,15 +69,62 @@ Interrupted uploads restart that file; there is no resumable chunk protocol.
 Run from the repository root:
 
 ```bash
-python -m pytest -q tests/test_online_instruction.py
+python -m pytest -q tests/test_online_instruction.py tests/test_online_storage_check.py
 node --check app/static/js/online_instruction.js
 git diff --check
 ```
 
-Before a real pilot, additionally test phone/iPad/desktop file selection,
-MP4/MOV playback and seeking, broken connections/retries, owner invite and revoke,
-two-student separation, draft/privacy boundaries, and a complete follow-up.
-Use synthetic records and a test service for this verification.
+For the full browser walkthrough, install the optional development dependencies
+`playwright` and `httpx`, Playwright Chromium, and system tools `ffmpeg`/`openssl`:
+
+```bash
+python tests/online_instruction_browser.py
+```
+
+`PLAYWRIGHT_EXECUTABLE_PATH` selects an available Chromium binary.
+`ONLINE_QA_OUTPUT` optionally retains synthetic test screenshots outside the
+repository. The script starts a local HTTPS app with its own database and
+synthetic students, drives the actual forms, previews/uploads a generated WebM,
+saves and publishes a lesson, tests playback/seek, questions and follow-up, then
+checks generated MOV MIME/range delivery and cross-student denial. It checks
+390px phone, 820px tablet and 1440px desktop layout widths. It creates no live
+student data and sends no invitations.
+
+The browser walkthrough passed locally on November 26, 2026 after correcting a
+draft-save button target issue revealed by the browser. It also verifies draft
+edits are kept private and unsaved coach text is not discarded by another form.
+Physical iPad/iPhone Safari and real camera codec combinations still need a
+device check; Chromium viewport emulation does not establish those results.
+Unsupported playback offers an authorized original download or MP4-copy path.
+
+## Paired storage recovery check
+
+The live Golf-Coach service in William's confirmed Render workspace reports an
+existing 1 GB disk at `/var/data` (read-only configuration inspection November
+26). That establishes an available candidate location; it does not establish
+which directory holds the active database, available disk space, or successful
+portal media persistence. No production settings were changed.
+
+With `DATABASE_URL` and `ONLINE_INSTRUCTION_MEDIA_DIR` configured for the intended
+test service, initialize one non-student probe and retain its returned marker:
+
+```bash
+python scripts/check_online_instruction_storage.py --initialize
+```
+
+After a restart/redeploy or backup restore, verify the same recorded marker:
+
+```bash
+python scripts/check_online_instruction_storage.py --expected-marker RECORDED_MARKER
+```
+
+Initialization writes one private marker and its checksum in a dedicated database
+table. Verification checks both without repairing/replacing missing data. A
+missing database, missing file or changed marker fails. Do not reinitialize to
+make a failed recovery check pass. The local cross-process probe test passed;
+an actual Render redeploy/restore cycle remains unverified. Uploads reject an
+application/repository directory and preserve 64 MB of disk space for the app
+and database, returning a useful error when space runs low.
 
 ## Remaining work
 

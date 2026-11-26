@@ -180,6 +180,21 @@ def test_oversized_image_is_removed_and_can_be_retried(pilot):
     assert upload(pilot['alex'], identity).status_code == 303
 
 
+def test_upload_rejects_public_app_storage(pilot, monkeypatch):
+    identity = start(pilot['alex'])
+    monkeypatch.setenv('ONLINE_INSTRUCTION_MEDIA_DIR', str(Path('app/static').resolve()))
+    assert upload(pilot['alex'], identity).status_code == 503
+
+
+def test_low_disk_space_cleans_partial_upload(pilot, monkeypatch):
+    import shutil
+    from types import SimpleNamespace
+    identity = start(pilot['alex'])
+    monkeypatch.setattr(shutil, 'disk_usage', lambda _: SimpleNamespace(free=1024))
+    assert upload(pilot['alex'], identity).status_code == 507
+    assert not list(pilot['root'].glob('*'))
+
+
 def test_expired_student_gets_student_handoff_not_owner_login(pilot):
     response = pilot['visitor'].get('/learn', headers={'Accept': 'text/html'}, follow_redirects=False)
     assert response.status_code == 401

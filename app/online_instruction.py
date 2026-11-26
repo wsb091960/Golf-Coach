@@ -95,6 +95,13 @@ class OnlineMessage(Base):
     created_at = Column(DateTime, default=now_utc, nullable=False)
 
 
+class OnlineStorageProbe(Base):
+    """One non-student marker for an explicit database/media durability check."""
+    __tablename__ = 'online_storage_probe'
+    id = Column(String(20), primary_key=True)
+    marker_hash = Column(String(64), nullable=False)
+
+
 def student_endpoint(path):
     return path == '/learn' or path.startswith('/learn/')
 

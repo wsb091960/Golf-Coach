@@ -31,7 +31,7 @@
 {% if submission.status in ['draft', 'needs_view'] %}
 <p>Attach the emailed videos or pictures below, then add this swing to the review queue. The golfer will see these same files when you invite them.</p>
 {% if storage_ready %}<form method="post" action="/online-instruction/{{ submission.id }}/email-evidence" enctype="multipart/form-data" data-online data-upload>
-<label>Camera view<select name="view"><option>Other</option><option>Face-on</option><option>Down-the-line</option></select></label>
+<label for="email-camera-view">Camera view</label><select id="email-camera-view" name="view"><option>Other</option><option>Face-on</option><option>Down-the-line</option></select>
 <label>Email attachment<input type="file" name="file" accept=".mp4,.mov,.webm,.jpg,.jpeg,.png" required data-media-input></label>
 <div data-media-preview hidden></div><p class="oi-small">Add one file at a time, up to six. Video under 100 MB; JPG/PNG under 10 MB. Each file keeps its selected camera view.</p>
 <button class="oi-button oi-button--secondary">Save email attachment</button><progress hidden max="100" value="0" aria-label="Upload progress"></progress><p class="oi-small" role="status" data-upload-status></p>

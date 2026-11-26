@@ -7,6 +7,7 @@ No production services, credentials or student records are used.
 import base64
 from datetime import timedelta
 import os
+import re
 from pathlib import Path
 import socket
 import subprocess
@@ -195,7 +196,9 @@ try:
         no_overflow(coach)
         coach.screenshot(path=str(output / 'email-intake-phone.png'), full_page=True)
         coach.get_by_role('button', name='Save inquiry and add attachments', exact=True).click()
-        coach.wait_for_url('**/online-instruction/*')
+        coach.wait_for_url(re.compile(re.escape(origin) + r'/online-instruction/[a-f0-9-]{36}$'))
+        coach.get_by_role('heading', name='Continue from their first swing.', exact=True).wait_for()
+        coach.screenshot(path=str(output / 'email-import-phone.png'), full_page=True)
         imported_id = coach.url.rsplit('/', 1)[-1]
         coach.get_by_label('Camera view', exact=True).select_option('Down-the-line')
         coach.get_by_label('Email attachment', exact=True).set_input_files(str(work / 'swing.webm'))
@@ -231,6 +234,16 @@ try:
         print('PASS: complete browser lesson cycle, uploads, preview, filters, private drafts, publication, playback/seek, questions and follow-up.')
         print('PASS: phone/tablet/desktop layout, MOV range delivery, and cross-student denial; no browser JavaScript errors.')
         print('Screenshots:', output)
+except Exception:
+    for name in ['page', 'coach', 'inquiry']:
+        active = locals().get(name)
+        if active:
+            try:
+                active.screenshot(path=str(output / f'failure-{name}.png'), full_page=True)
+                print('Failure page:', name, active.url)
+            except Exception:
+                pass
+    raise
 finally:
     server.should_exit = True
     thread.join(timeout=10)

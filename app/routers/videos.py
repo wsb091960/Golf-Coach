@@ -13,7 +13,7 @@ from fastapi import (
     Request,
     UploadFile,
 )
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -23,10 +23,10 @@ from app.video_store import (
     ALLOWED_EXTENSIONS,
     MAX_VIDEO_BYTES,
     VIDEO_ROOT,
+    VIDEO_STORAGE,
     create_session_video,
     delete_session_video,
     get_session_video,
-    safe_video_path,
 )
 
 
@@ -96,29 +96,23 @@ async def _save_upload_file(
         video_file.filename,
     )
 
-    content = await video_file.read()
-
-    if not content:
-        raise HTTPException(
-            400,
-            "Video file is empty",
-        )
-
-    if len(content) > MAX_VIDEO_BYTES:
-        raise HTTPException(
-            413,
-            "Video exceeds 750 MB",
-        )
-
     stored = f"{session_id}_{uuid4().hex}{ext}"
     destination = VIDEO_ROOT / stored
-
-    destination.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    destination.write_bytes(content)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    size = 0
+    try:
+        with destination.open("wb") as output:
+            while block := await video_file.read(1024 * 1024):
+                size += len(block)
+                if size > MAX_VIDEO_BYTES:
+                    raise HTTPException(413, "Video exceeds 750 MB")
+                output.write(block)
+        if not size:
+            raise HTTPException(400, "Video file is empty")
+        VIDEO_STORAGE.save_file(stored, destination, video_file.content_type)
+    except Exception:
+        destination.unlink(missing_ok=True)
+        raise
 
     return original, stored
 
@@ -127,10 +121,7 @@ def _remove_saved_file(stored_filename: str) -> None:
     if not stored_filename:
         return
 
-    path = VIDEO_ROOT / stored_filename
-
-    if path.exists():
-        path.unlink()
+    VIDEO_STORAGE.delete(stored_filename)
 
 
 def _require_original_video(
@@ -405,6 +396,7 @@ async def upload_onform_analysis(
     name="session_video_stream",
 )
 def stream_session_video(
+    request: Request,
     session_id: str,
     video_id: str,
     db: Session = Depends(get_db),
@@ -420,22 +412,9 @@ def stream_session_video(
             "Video not found",
         )
 
-    path = safe_video_path(
-        row.stored_filename
-    )
+    return VIDEO_STORAGE.response(request, row.stored_filename,
+        row.content_type, row.original_filename)
 
-    if not path.exists():
-        raise HTTPException(
-            404,
-            "Video file is missing",
-        )
-
-    return FileResponse(
-        str(path),
-        media_type=row.content_type,
-        filename=row.original_filename,
-        content_disposition_type="inline",
-    )
 
 
 # ============================================================
@@ -447,6 +426,7 @@ def stream_session_video(
     name="session_video_download",
 )
 def download_session_video(
+    request: Request,
     session_id: str,
     video_id: str,
     db: Session = Depends(get_db),
@@ -462,21 +442,9 @@ def download_session_video(
             "Video not found",
         )
 
-    path = safe_video_path(
-        row.stored_filename
-    )
+    return VIDEO_STORAGE.response(request, row.stored_filename,
+        row.content_type, row.original_filename, download=True)
 
-    if not path.exists():
-        raise HTTPException(
-            404,
-            "Video file is missing",
-        )
-
-    return FileResponse(
-        str(path),
-        media_type=row.content_type,
-        filename=row.original_filename,
-    )
 
 
 # ============================================================
@@ -773,6 +741,9 @@ async def finalize_chunked_video(
             if shot_number is None:
                 shot_number = parent.shot_number
 
+        VIDEO_STORAGE.save_file(stored, destination,
+            str(payload.get("content_type") or "video/mp4"))
+
         saved_video = create_session_video(
             db,
             session_id=str(session_id),
@@ -825,8 +796,7 @@ async def finalize_chunked_video(
             db.commit()
 
     except Exception:
-        if destination.exists():
-            destination.unlink()
+        _remove_saved_file(stored)
         raise
 
     finally:

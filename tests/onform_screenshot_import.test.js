@@ -11,7 +11,7 @@ const elements = new Map([
   ["onform-screenshot-extract", { addEventListener() {} }],
   ["onform-screenshot-save", { addEventListener() {} }],
   ["onform-screenshot-status", {}], ["onform-screenshot-verified", {}],
-  ["onform-screenshot-shot", {}], ["onform-screenshot-checkpoint", {}],
+  ["onform-screenshot-shot", { addEventListener() {} }], ["onform-screenshot-checkpoint", { addEventListener() {} }],
   ["onform-screenshot-conflicts", {}],
 ]);
 const context = {
@@ -82,6 +82,17 @@ assert(p.x_factor === -4, "x factor");
 assert(p.torso_sway === 0.1 && p.torso_sway_direction === "AWAY", "torso sway");
 assert(p.pelvis_sway === 0.1 && p.pelvis_sway_direction === "TOWARDS", "pelvis sway");
 assert(p.pelvis_lift === 0.1 && p.pelvis_lift_direction === "DOWN", "pelvis lift");
+
+// The rightmost metric must survive a cropped/truncated Onform label. This
+// guards the previously reported missing final torso-forward-bend tile.
+const forwardWords = words2.concat([
+  word("TORSO",1080,15,1130,31), word("FORWARD",1134,15,1200,31),
+  word("26.5°",1135,58,1188,79), word("FORWARD",1124,91,1195,108),
+]);
+p = parseSpatialWords(forwardWords, 1220).metrics;
+assert(p.torso_forward_bend === 26.5, "rightmost truncated torso forward bend");
+assert(p.pelvis_lift === 0.1, "final metric must not replace pelvis lift");
+assert(!("torso_forward_bend" in parseSpatialWords(words2, 1200).metrics), "missing forward bend stays blank");
 
 // Conservative text fallback: only adjacent label/value pairs are accepted.
 let t = parseRibbonText("BACK SPIN 5509 RPM BALL SPEED 99.2 MPH");

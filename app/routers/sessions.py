@@ -5,7 +5,7 @@ import re
 from datetime import date
 from pathlib import Path
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -14,6 +14,7 @@ from app.models import PPositionAnalysis, PPositionSheet, SessionScreenshot, Swi
 from app.services.p_sheet_analyzer import PSheetAnalysisError, analyze as analyze_p_sheets
 from app.store import add_session, add_shot, delete_session, delete_shot, get_session, get_session_shots, get_student, list_sessions, list_students, update_session, update_shot
 from app.video_store import list_session_videos
+from app.services.stored_images import store_image_data, image_response, cleanup_image_data
 
 APP_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(APP_DIR / 'templates'))
@@ -122,20 +123,28 @@ async def session_screenshot_upload(session_id: str, request: Request, db: Sessi
         filename = Path(str(getattr(upload, 'filename', '') or 'Screenshot')).name[:255]
         staged.append((filename, content_type, data))
 
-    for filename, content_type, data in staged:
-        db.add(SessionScreenshot(
-            id=__import__('uuid').uuid4().hex,
-            session_id=session_id,
-            original_filename=filename,
-            content_type=content_type,
-            image_data=data,
-        ))
-    db.commit()
+    stored_values = []
+    try:
+        for filename, content_type, data in staged:
+            stored = store_image_data(data, content_type, "session_screenshots")
+            stored_values.append(stored)
+            db.add(SessionScreenshot(
+                id=__import__('uuid').uuid4().hex,
+                session_id=session_id,
+                original_filename=filename,
+                content_type=content_type,
+                image_data=stored,
+            ))
+        db.commit()
+    except Exception:
+        db.rollback()
+        cleanup_image_data(stored_values)
+        raise
     return RedirectResponse(f'/sessions/{session_id}?tab=screenshots&screenshots_added={len(staged)}', status_code=303)
 
 
 @router.get('/{session_id}/screenshots/{screenshot_id}/image', name='session_screenshot_image')
-def session_screenshot_image(session_id: str, screenshot_id: str, db: Session = Depends(get_db)):
+def session_screenshot_image(session_id: str, screenshot_id: str, request: Request, db: Session = Depends(get_db)):
     require_session(session_id, db)
     screenshot = db.query(SessionScreenshot).filter(
         SessionScreenshot.id == screenshot_id,
@@ -143,11 +152,7 @@ def session_screenshot_image(session_id: str, screenshot_id: str, db: Session = 
     ).first()
     if screenshot is None:
         raise HTTPException(404, 'Screenshot not found')
-    return Response(
-        content=screenshot.image_data,
-        media_type=screenshot.content_type,
-        headers={'Cache-Control': 'private, max-age=3600'},
-    )
+    return image_response(request, screenshot.image_data, screenshot.content_type)
 
 
 @router.post('/{session_id}/screenshots/{screenshot_id}/delete', name='session_screenshot_delete')
@@ -159,8 +164,10 @@ def session_screenshot_delete(session_id: str, screenshot_id: str, db: Session =
     ).first()
     if screenshot is None:
         raise HTTPException(404, 'Screenshot not found')
+    stored = screenshot.image_data
     db.delete(screenshot)
     db.commit()
+    cleanup_image_data([stored])
     return RedirectResponse(f'/sessions/{session_id}?tab=screenshots', status_code=303)
 
 
@@ -195,11 +202,16 @@ async def p_sheet_upload(session_id: str, request: Request, db: Session = Depend
         title=title,
         original_filename=filename,
         content_type=content_type,
-        image_data=image_data,
+        image_data=store_image_data(image_data, content_type, "p_position_sheets"),
         library_url=library_url,
     )
-    db.add(sheet)
-    db.commit()
+    try:
+        db.add(sheet)
+        db.commit()
+    except Exception:
+        db.rollback()
+        cleanup_image_data([sheet.image_data])
+        raise
     return RedirectResponse(f"/sessions/{session_id}?tab=p-sheets", status_code=303)
 
 
@@ -237,7 +249,7 @@ def p_sheet_analyze(session_id: str, db: Session = Depends(get_db)):
 
 
 @router.get('/{session_id}/p-sheets/{sheet_id}/image', name='p_sheet_image')
-def p_sheet_image(session_id: str, sheet_id: str, db: Session = Depends(get_db)):
+def p_sheet_image(session_id: str, sheet_id: str, request: Request, db: Session = Depends(get_db)):
     require_session(session_id, db)
     sheet = db.query(PPositionSheet).filter(
         PPositionSheet.id == sheet_id,
@@ -245,11 +257,7 @@ def p_sheet_image(session_id: str, sheet_id: str, db: Session = Depends(get_db))
     ).first()
     if sheet is None:
         raise HTTPException(404, "P-Sheet image not found")
-    return Response(
-        content=sheet.image_data,
-        media_type=sheet.content_type,
-        headers={"Cache-Control": "private, max-age=3600"},
-    )
+    return image_response(request, sheet.image_data, sheet.content_type)
 
 
 @router.post('/{session_id}/p-sheets/{sheet_id}/delete', name='p_sheet_delete')
@@ -261,8 +269,10 @@ def p_sheet_delete(session_id: str, sheet_id: str, db: Session = Depends(get_db)
     ).first()
     if sheet is None:
         raise HTTPException(404, "P-Sheet not found")
+    stored = sheet.image_data
     db.delete(sheet)
     db.commit()
+    cleanup_image_data([stored])
     return RedirectResponse(f"/sessions/{session_id}?tab=p-sheets", status_code=303)
 
 

@@ -129,20 +129,34 @@ def same_origin_mutation(request):
 class GolfOwnerAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         request.state.golf_owner = None
+        request.state.golf_student = None
+        request.state.online_instruction_enabled = os.getenv('ONLINE_INSTRUCTION_ENABLED') == '1'
         token = request.cookies.get(SESSION_COOKIE, '')
         if re.fullmatch(r'[a-f0-9]{64}', token):
             with SessionLocal() as db:
                 session = db.get(GolfSession, digest(token))
                 if session and session.expires_at > now_utc() and session.owner_email == owner_email():
                     request.state.golf_owner = session.owner_email
-        public = service_endpoint(request.url.path, request.method)
-        if not public and not request.state.golf_owner:
-            if request.method in {'GET', 'HEAD'} and 'text/html' in request.headers.get('accept', ''):
+        # Student sessions authorize only the dedicated /learn namespace.
+        # All existing workspace and media routes remain owner-only.
+        from app.online_instruction import student_for_cookie, student_endpoint, invite_endpoint
+        student_path = student_endpoint(request.url.path)
+        invite_path = invite_endpoint(request.url.path, request.method)
+        if request.state.online_instruction_enabled and student_path:
+            request.state.golf_student = student_for_cookie(request)
+        public = service_endpoint(request.url.path, request.method) or invite_path
+        if (student_path or request.url.path.startswith('/online-instruction')) and not request.state.online_instruction_enabled:
+            response = JSONResponse({'detail': 'Online instruction is not available yet.'}, status_code=404)
+        elif not public and not request.state.golf_owner and not (student_path and request.state.golf_student):
+            if student_path and request.method in {'GET', 'HEAD'} and 'text/html' in request.headers.get('accept', ''):
+                response = templates.TemplateResponse(request=request, name='online_student.html',
+                    context={'mode': 'invite', 'valid': False}, status_code=401)
+            elif request.method in {'GET', 'HEAD'} and 'text/html' in request.headers.get('accept', ''):
                 destination = safe_next(request.url.path + ('?' + request.url.query if request.url.query else ''))
                 response = RedirectResponse('/login?' + urlencode({'next': destination}), status_code=303)
             else:
                 response = JSONResponse({'detail': 'Sign in to your private workspace.'}, status_code=401)
-        elif (not public and request.method not in {'GET', 'HEAD', 'OPTIONS'}
+        elif ((not public or student_path) and request.method not in {'GET', 'HEAD', 'OPTIONS'}
               and not same_origin_mutation(request)):
             response = JSONResponse({'detail': 'Please submit changes from your Golf Coach portal.'}, status_code=403)
         else:

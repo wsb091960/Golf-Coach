@@ -27,6 +27,7 @@ from app.routers.mediapipe_assets import router as mediapipe_assets_router
 from app.routers.ocr_assets import router as ocr_assets_router
 from app.routers.biomechanics import router as biomechanics_router
 from app.routers import crm_sync as crm_sync_router
+from app.routers.online_instruction import router as online_instruction_router
 from app.mcp.simulator_server import mcp as simulator_mcp, http_app as simulator_mcp_http_app
 
 APP_DIR = Path(__file__).resolve().parent
@@ -57,6 +58,7 @@ app.mount(
 )
 
 app.include_router(auth_router)
+app.include_router(online_instruction_router)
 app.include_router(public_home_router)
 app.include_router(dashboard_router)
 app.include_router(coach_assistant_router)

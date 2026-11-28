@@ -8,6 +8,7 @@ on:
       - 'scripts/*simulator*'
       - 'tests/portable_simulators.test.cjs'
       - 'tests/d_plane_model.test.cjs'
+      - 'tests/d_plane_dials.test.cjs'
       - '.github/workflows/portable-simulators.yml'
 permissions:
   contents: read
@@ -26,6 +27,8 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm install --no-save --package-lock=false playwright@1.64.1
       - run: node --test tests/d_plane_model.test.cjs
+      - run: node tests/d_plane_dials.test.cjs
+        if: matrix.engine == 'chromium'
       - run: node tests/portable_simulators.test.cjs
         env:
           SIMULATOR_BROWSER: ${{ matrix.engine }}
@@ -33,5 +36,7 @@ jobs:
         if: always()
         with:
           name: simulator-tablet-phone-layouts-${{ matrix.engine }}
-          path: /tmp/golf-simulators-*.png
+          path: |
+            /tmp/golf-simulators-*.png
+            /tmp/d-plane-dials-*.png
           retention-days: 7

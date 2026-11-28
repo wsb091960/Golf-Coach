@@ -28,21 +28,6 @@ static mount. No student/session/CRM data is included or downloaded.
 
 ## Build and cache design
 
-### Compact D-Plane dials — November 27, 2026
-
-All seven delivery adjustments, including plane rotation, use compact dials.
-Drag vertically for relative adjustment (20 pixels per degree), use +/− or
-arrow keys for 0.1° steps, or enter an exact number. Shift+arrow and Page Up/Down
-adjust 1°; Home/End reach the limits. Touching the dial never jumps to a new
-value. The 3D canvas, view buttons, labels toggle and square-to-target action
-remain available. Detailed delivery notes collapse below the dial grid.
-
-The same controls are built into the installed app; its existing update button
-activates the new cache. Existing demonstration presets remain compatible.
-`node tests/d_plane_dials.test.cjs` verifies four tablet/phone viewport sizes,
-relative drag sensitivity, limits, precise buttons/keys, preset restoration,
-live canvas changes and offline reopening. No impact-model equations change.
-
 ### Compact live workbench and shaft lean
 
 Both online and installed simulators use a bounded workbench. The controls scroll

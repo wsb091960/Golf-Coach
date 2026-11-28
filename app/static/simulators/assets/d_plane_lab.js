@@ -2,14 +2,14 @@
 'use strict';
 const lab=document.getElementById('d-plane-lab'); if(!lab)return;
 const $=id=>lab.querySelector('#'+id), M=DPlane, colors={path:'#52d6ef',face:'#f6bf64',launch:'#ffffff',spin:'#ed9bdd',plane:'#68c99b'};
-const defs=[['lean','Shaft lean',-10,25,0,'Back','Forward'],['lieOffset','Face lie adjustment',-10,10,0,'Toe down','Toe up'],['path','Swing direction',-15,15,4,'Left','Right'],['face','Face at zero lean',-15,15,2,'Left','Right'],['attack','Attack angle',-12,12,-4,'Down','Up'],['loft','Loft at zero lean',0,65,25,'Lower loft','Higher loft']];
+const defs=[['lean','Shaft lean',-10,10,0,'Back','Forward'],['lieOffset','Face lie adjustment',-10,10,0,'Toe down','Toe up'],['path','Swing direction',-10,10,4,'Left','Right'],['face','Face at zero lean',-10,10,2,'Left','Right'],['attack','Attack angle',-10,10,-4,'Down','Up'],['loft','Loft at zero lean',0,65,25,'Lower loft','Higher loft']];
 const state={planeRotation:0,lean:0,lieOffset:0,path:4,face:2,attack:-4,loft:25,weight:.75,hand:'right'};let result,view='perspective',yaw=.55,pitch=.32,lastPreset='draw',playStart=performance.now(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const signed=(n,d=1)=>(Math.abs(n)<.05?'0.0':(n>0?'+':'−')+Math.abs(n).toFixed(d))+'°';
 for(const [key,label,min,max,value,left,right]of defs){const row=document.createElement('div');row.className='slider-row';row.innerHTML=`<div class="slider-head"><label for="${key}">${label}</label><span class="value"><input id="${key}Number" type="number" min="${min}" max="${max}" step="0.1" value="${value}" aria-label="${label} degrees">°</span></div><input id="${key}" type="range" min="${min}" max="${max}" step="0.1" value="${value}" aria-label="${label}"><div class="limits"><span>${min}° ${left}</span><span>+${max}° ${right}</span></div>`;$('sliders').append(row);for(const id of[key,key+'Number'])$(id).addEventListener('input',()=>{if($(id).value===''||!Number.isFinite(+$(id).value))return;state[key]=Math.max(min,Math.min(max,+$(id).value));$(key).value=state[key];if(id===key)$(key+'Number').value=state[key];lastPreset=null;highlight();update();});$(key+'Number').addEventListener('change',()=>{$(key+'Number').value=state[key];});}
 const rotation = $('planeRotation');
 const rotationNumber = $('planeRotationNumber');
 function setRotation(angle, editingNumber = false) {
-    state.planeRotation = Math.max(-90, Math.min(90, Math.round(angle * 10) / 10));
+    state.planeRotation = Math.max(-10, Math.min(10, Math.round(angle * 10) / 10));
     rotation.value = state.planeRotation;
     if (!editingNumber) rotationNumber.value = state.planeRotation;
     lastPreset = null;
